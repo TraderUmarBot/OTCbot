@@ -11,13 +11,16 @@ OTC_PAIRS = [
     "EUR/USD OTC", "GBP/USD OTC", "USD/JPY OTC", "AUD/USD OTC", "USD/CAD OTC",
     "EUR/JPY OTC", "GBP/JPY OTC", "EUR/GBP OTC", "NZD/USD OTC", "USD/CHF OTC",
     "AUD/JPY OTC", "CAD/JPY OTC", "CHF/JPY OTC", "EUR/CAD OTC", "EUR/AUD OTC",
-    "GBP/CAD OTC", "GBP/AUD OTC", "AUD/CAD OTC", "AUD/NZD OTC", "USD/TRY OTC"
+    "GBP/CAD OTC", "GBP/AUD OTC", "AUD/CAD OTC", "AUD/NZD OTC", "EUR/TRY OTC"
 ]
+
+# ID твоих фотографий
+PHOTO_UP = "AgACAgIAAxkBAAEZj6FpQ31kq_vYqbvGsYxfYz3ptnD57wACCwxrG6GBIUoqMfq1yutTpAEAAwIAA3gAAzYE"
+PHOTO_DOWN = "AgACAgIAAxkBAAEZj6lpQ4B40ntminGu3KGeG1JkXJBzEAACFgxrG6GBIUqHzrlm2KCUagEAAwIAA3gAAzYE"
 
 # --- ЯДРО АНАЛИТИКИ (15 индикаторов) ---
 def get_technical_signal():
     try:
-        # Имитация получения 100 свечей (в будущем здесь данные из WebSocket)
         np.random.seed(None)
         close_prices = np.cumsum(np.random.randn(100)) + 100
         df = pd.DataFrame({
@@ -30,55 +33,46 @@ def get_technical_signal():
         up_score = 0
         down_score = 0
 
-        # 1. RSI (Осциллятор)
         rsi = ta.rsi(df['close'], length=14).iloc[-1]
-        if rsi < 30: up_score += 2  # Сильная перепроданность
+        if rsi < 30: up_score += 2
         elif rsi > 70: down_score += 2
 
-        # 2. Bollinger Bands (Тренд/Волатильность) - Исправлено через iloc
         bb = ta.bbands(df['close'], length=20, std=2)
-        lower_band = bb.iloc[-1, 0] # BBL
-        upper_band = bb.iloc[-1, 2] # BBU
+        lower_band = bb.iloc[-1, 0] 
+        upper_band = bb.iloc[-1, 2] 
         current_price = df['close'].iloc[-1]
         if current_price <= lower_band: up_score += 2
         elif current_price >= upper_band: down_score += 2
 
-        # 3. Stochastic (Разворот)
         stoch = ta.stoch(df['high'], df['low'], df['close'])
         k = stoch.iloc[-1, 0]
         if k < 20: up_score += 1
         elif k > 80: down_score += 1
 
-        # 4. MACD (Импульс)
         macd = ta.macd(df['close'])
         if macd.iloc[-1, 0] > macd.iloc[-1, 2]: up_score += 1
         else: down_score += 1
 
-        # 5. EMA (Среднесрочный тренд)
         ema10 = ta.ema(df['close'], length=10).iloc[-1]
         ema20 = ta.ema(df['close'], length=20).iloc[-1]
         if ema10 > ema20: up_score += 1
         else: down_score += 1
 
-        # Итоговый расчет (Confluence)
-        max_possible = 7 # Сумма весов индикаторов
+        max_possible = 7 
         best_score = max(up_score, down_score)
         accuracy = int((best_score / max_possible) * 100)
-        
-        # Рандомизация точности для реализма в пределах 82-97%
         accuracy = min(97, max(82, accuracy + np.random.randint(-5, 5)))
         
-        direction = "ВВЕРХ 🟢" if up_score >= down_score else "ВНИЗ 🔴"
+        direction = "ВВЕРХ" if up_score >= down_score else "ВНИЗ"
         return direction, accuracy
 
     except Exception as e:
         print(f"Ошибка в блоке анализа: {e}")
-        return "ОШИБКА ⚠️", 0
+        return "ОШИБКА", 0
 
 # --- ИНТЕРФЕЙС ТЕЛЕГРАМ ---
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    # Очищаем данные пользователя при возврате в меню
     context.user_data.clear()
     
     keyboard = []
@@ -95,7 +89,9 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if update.message:
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
     else:
-        await update.callback_query.edit_message_text(text, reply_markup=reply_markup, parse_mode="Markdown")
+        # Если это возврат в меню, удаляем старое фото-сообщение и шлем новое текстовое
+        await update.callback_query.message.delete()
+        await update.callback_query.message.chat.send_message(text, reply_markup=reply_markup, parse_mode="Markdown")
 
 async def handle_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -103,7 +99,6 @@ async def handle_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     data = query.data
 
-    # Выбор пары
     if data.startswith("p_"):
         pair_idx = int(data.split("_")[1])
         context.user_data['pair'] = OTC_PAIRS[pair_idx]
@@ -118,7 +113,6 @@ async def handle_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE)
             parse_mode="Markdown"
         )
 
-    # Генерация сигнала
     elif data.startswith("t_"):
         exp_raw = data.split("_")[1]
         exp_map = {"5s": "5 сек", "15s": "15 сек", "30s": "30 сек", "1m": "1 мин"}
@@ -126,25 +120,36 @@ async def handle_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE)
         pair = context.user_data.get('pair', 'Не выбрана')
 
         await query.edit_message_text(f"⏳ **Анализирую рынок...**\nПрименяю 15 индикаторов для {pair}")
-        
-        # Короткая пауза для стабильности Render
         await asyncio.sleep(1.2)
         
         direction, acc = get_technical_signal()
         
+        # Выбираем фото в зависимости от сигнала
+        photo_to_send = PHOTO_UP if direction == "ВВЕРХ" else PHOTO_DOWN
+        arrow_icon = "🟢" if direction == "ВВЕРХ" else "🔴"
+
         res_text = (
             f"✅ **СИГНАЛ ГОТОВ**\n"
             f"━━━━━━━━━━━━━━━\n"
             f"💎 **Актив:** {pair}\n"
             f"⏱ **Время:** {exp_text}\n"
-            f"📈 **Прогноз:** {direction}\n"
+            f"📈 **Прогноз:** {direction} {arrow_icon}\n"
             f"🎯 **Точность:** {acc}%\n"
             f"━━━━━━━━━━━━━━━\n"
             f"📢 *Входите сразу в начале новой свечи!*"
         )
         
         keyboard = [[InlineKeyboardButton("🏠 ГЛАВНОЕ МЕНЮ", callback_data="main_menu")]]
-        await query.edit_message_text(res_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        
+        # Удаляем текстовое сообщение "Анализирую" и отправляем КАРТИНКУ
+        await query.message.delete()
+        await context.bot.send_photo(
+            chat_id=query.message.chat_id,
+            photo=photo_to_send,
+            caption=res_text,
+            reply_markup=InlineKeyboardMarkup(keyboard),
+            parse_mode="Markdown"
+        )
 
     elif data == "main_menu":
         await start(update, context)
@@ -154,11 +159,11 @@ if __name__ == "__main__":
     TOKEN = os.getenv("TELEGRAM_TOKEN")
     
     if not TOKEN:
-        print("ОШИБКА: TELEGRAM_TOKEN не задан в переменных окружения!")
+        print("ОШИБКА: TELEGRAM_TOKEN не задан!")
     else:
         application = Application.builder().token(TOKEN).build()
         application.add_handler(CommandHandler("start", start))
         application.add_handler(CallbackQueryHandler(handle_interaction))
         
-        print("--- БОТ KURUT OTC ЗАПУЩЕН ---")
+        print("--- БОТ KURUT OTC ЗАПУЩЕН С ФОТО-СИГНАЛАМИ ---")
         application.run_polling(drop_pending_updates=True)
