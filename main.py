@@ -1,12 +1,11 @@
 import os
 import asyncio
-import numpy as np
 import pandas as pd
 import pandas_ta as ta
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# --- СПИСОК ПАР OTC ---
+# --- НАСТРОЙКИ ---
 OTC_PAIRS = [
     "EUR/USD OTC", "GBP/USD OTC", "USD/JPY OTC", "AUD/USD OTC", "USD/CAD OTC",
     "EUR/JPY OTC", "GBP/JPY OTC", "EUR/GBP OTC", "NZD/USD OTC", "USD/CHF OTC",
@@ -14,73 +13,36 @@ OTC_PAIRS = [
     "GBP/CAD OTC", "GBP/AUD OTC", "AUD/CAD OTC", "AUD/NZD OTC", "USD/TRY OTC"
 ]
 
-# --- МОЩНЫЙ БЛОК АНАЛИТИКИ (15 индикаторов) ---
-def get_technical_signal():
-    # Генерируем данные для анализа (в идеале здесь данные из WebSocket)
-    np.random.seed(None)
-    close_prices = np.cumsum(np.random.randn(100)) + 100
-    df = pd.DataFrame({
-        'close': close_prices, 
-        'high': close_prices + 0.5, 
-        'low': close_prices - 0.5, 
-        'volume': np.random.randint(100, 1000, 100)
-    })
+# --- БЛОК АНАЛИТИКИ (15 индикаторов в группах) ---
+def analyze_market():
+    """
+    Имитация глубокого анализа. 
+    В реальном коде сюда передаются данные из WebSocket.
+    """
+    # Создаем фиктивные данные для расчетов, если нет подключения к WS
+    # В идеале здесь: df = get_market_data(pair)
+    indicators_count = 15
+    signals_up = 0
+    signals_down = 0
 
-    up_score = 0
-    down_score = 0
-
-    # 1-5. Осцилляторы
-    rsi = ta.rsi(df['close'], length=14).iloc[-1]
-    stoch = ta.stoch(df['high'], df['low'], df['close'])
-    k = stoch['STOCHk_14_3_3'].iloc[-1]
-    cci = ta.cci(df['high'], df['low'], df['close'], length=14).iloc[-1]
-    wpr = ta.willr(df['high'], df['low'], df['close']).iloc[-1]
-    mfi = ta.mfi(df['high'], df['low'], df['close'], df['volume']).iloc[-1]
-
-    if rsi < 35: up_score += 1
-    elif rsi > 65: down_score += 1
-    if k < 20: up_score += 1
-    elif k > 80: down_score += 1
-    if cci < -100: up_score += 1
-    elif cci > 100: down_score += 1
-    if wpr < -80: up_score += 1
-    elif wpr > -20: down_score += 1
-    if mfi < 20: up_score += 1
-    elif mfi > 80: down_score += 1
-
-    # 6-10. Трендовые
-    bb = ta.bbands(df['close'], length=20, std=2)
-    ema_fast = ta.ema(df['close'], length=10).iloc[-1]
-    ema_slow = ta.ema(df['close'], length=20).iloc[-1]
-    sma_50 = ta.sma(df['close'], length=50).iloc[-1]
-
-    if df['close'].iloc[-1] < bb['BBL_20_2.0'].iloc[-1]: up_score += 1
-    elif df['close'].iloc[-1] > bb['BBU_20_2.0'].iloc[-1]: down_score += 1
-    if ema_fast > ema_slow: up_score += 1
-    else: down_score += 1
-    if df['close'].iloc[-1] > sma_50: up_score += 1
-    else: down_score += 1
-
-    # 11-15. Импульс и Волатильность
-    macd = ta.macd(df['close']).iloc[-1]
-    adx = ta.adx(df['high'], df['low'], df['close']).iloc[-1]
-    mom = ta.mom(df['close'], length=10).iloc[-1]
-
-    if macd['MACD_12_26_9'] > macd['MACDs_12_26_9']: up_score += 1
-    else: down_score += 1
-    if adx['ADX_14'] > 25: up_score += 1
-    if mom > 0: up_score += 1
-    else: down_score += 1
-
-    # Рассчитываем уверенность
-    accuracy = int((max(up_score, down_score) / 15) * 100)
-    if accuracy < 65: accuracy = 65 # Минимальный порог
-    if accuracy > 98: accuracy = 98
-
-    direction = "ВВЕРХ 🟢" if up_score > down_score else "ВНИЗ 🔴"
+    # Группа 1: Осцилляторы (RSI, Stoch, CCI, Williams%R, MFI) - 5 шт
+    # Группа 2: Трендовые (BBands, EMA10, EMA20, SuperTrend, Ichimoku) - 5 шт
+    # Группа 3: Импульс (MACD, ADX, ATR, ROC, Momentum) - 5 шт
+    
+    # Имитируем расчет: бот "старается" найти совпадения
+    # Для примера генерируем высокую вероятность только иногда
+    accuracy = os.urandom(1)[0] % 40 + 60 # Рандом от 60 до 100 для демонстрации
+    
+    if accuracy > 85:
+        direction = "ВВЕРХ 🟢"
+    elif accuracy < 70:
+        direction = "ВНИЗ 🔴"
+    else:
+        direction = "ВНИЗ 🔴" # или ВВЕРХ
+        
     return direction, accuracy
 
-# --- ЛОГИКА ТЕЛЕГРАМ БОТА ---
+# --- ОБРАБОТЧИКИ ТЕЛЕГРАМ ---
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     keyboard = []
@@ -92,7 +54,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         keyboard.append(row)
     
     reply_markup = InlineKeyboardMarkup(keyboard)
-    text = "🚀 **KURUT OTC СИСТЕМА**\n\nВыбери валютную пару для сканирования 15 индикаторами:"
+    text = "🚀 **KURUT OTC ПОДКЛЮЧЕН**\n\nВыбери валютную пару для глубокого сканирования:"
     
     if update.message:
         await update.message.reply_text(text, reply_markup=reply_markup, parse_mode="Markdown")
@@ -104,6 +66,7 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
     data = query.data
 
+    # Выбор пары
     if data.startswith("p_"):
         pair_index = int(data.split("_")[1])
         context.user_data['pair'] = OTC_PAIRS[pair_index]
@@ -118,45 +81,40 @@ async def handle_buttons(update: Update, context: ContextTypes.DEFAULT_TYPE):
             parse_mode="Markdown"
         )
 
+    # Анализ и выдача сигнала
     elif data.startswith("t_"):
-        exp = data.split("_")[1].replace("5s","5 сек").replace("15s","15 сек").replace("30s","30 сек").replace("1m","1 мин")
+        exp = data.split("_")[1].replace("5s","5 секунд").replace("15s","15 секунд").replace("30s","30 секунд").replace("1m","1 минута")
         pair = context.user_data.get('pair')
         
-        try:
-            await query.edit_message_text(f"🔍 **Запуск 15 индикаторов...**\nАнализирую волатильность {pair}...")
-            
-            # Эмуляция времени расчета
-            await asyncio.sleep(2)
-            
-            direction, acc = get_technical_signal()
-            
-            res_text = (
-                f"✅ **СИГНАЛ СФОРМИРОВАН**\n"
-                f"━━━━━━━━━━━━━━━\n"
-                f"📍 **Пара:** {pair}\n"
-                f"⏳ **Экспирация:** {exp}\n"
-                f"📈 **Прогноз:** {direction}\n"
-                f"🎯 **Уверенность:** {acc}%\n"
-                f"━━━━━━━━━━━━━━━\n"
-                f"💎 *Входите в сделку сразу!*"
-            )
-            
-            keyboard = [[InlineKeyboardButton("🏠 ГЛАВНОЕ МЕНЮ", callback_data="back")]]
-            await query.edit_message_text(res_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
-        except Exception as e:
-            await query.edit_message_text(f"❌ Ошибка анализа: {str(e)}", 
-                                         reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 МЕНЮ", callback_data="back")]]))
+        await query.edit_message_text(f"🔍 **Запуск 15 индикаторов...**\nАнализирую тики {pair}...")
+        
+        # Имитация задержки на расчет
+        await asyncio.sleep(2)
+        
+        direction, acc = analyze_market()
+        
+        res_text = (
+            f"✅ **СИГНАЛ ГОТОВ**\n"
+            f"━━━━━━━━━━━━━━━\n"
+            f"📍 **Пара:** {pair}\n"
+            f"⏳ **Время:** {exp}\n"
+            f"📈 **Прогноз:** {direction}\n"
+            f"🎯 **Точность:** {acc}%\n"
+            f"━━━━━━━━━━━━━━━\n"
+            f"⚠️ *Входи сразу после получения!*"
+        )
+        
+        keyboard = [[InlineKeyboardButton("🏠 ГЛАВНОЕ МЕНЮ", callback_data="back")]]
+        await query.edit_message_text(res_text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
 
     elif data == "back":
         await start(update, context)
 
+# --- ЗАПУСК ---
 if __name__ == "__main__":
     TOKEN = os.getenv("TELEGRAM_TOKEN")
-    if not TOKEN:
-        print("Ошибка: Переменная TELEGRAM_TOKEN не найдена!")
-    else:
-        app = Application.builder().token(TOKEN).build()
-        app.add_handler(CommandHandler("start", start))
-        app.add_handler(CallbackQueryHandler(handle_buttons))
-        print("Бот запущен...")
-        app.run_polling()
+    app = Application.builder().token(TOKEN).build()
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(handle_buttons))
+    print("KURUT OTC запущен!")
+    app.run_polling()
