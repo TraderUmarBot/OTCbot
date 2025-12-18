@@ -92,7 +92,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
                InlineKeyboardButton(OTC_PAIRS[i+1], callback_data=f"p_{i+1}")]
         keyboard.append(row)
     
-    text = "🚀 **ULTRA TRADE AI v4.0**\n\nСистема готова. Выберите валютную пару:"
+    text = "🚀 **ULTRA KURUT OTC SIGNAL**\n\nСистема готова. Выберите валютную пару:"
     if update.message:
         await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
     else:
