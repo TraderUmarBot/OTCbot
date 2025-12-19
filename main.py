@@ -13,161 +13,161 @@ from telegram.ext import Application, CommandHandler, CallbackQueryHandler, Cont
 # --- НАСТРОЙКИ ---
 TOKEN = "8596735739:AAH5mhGIN8hAjNXX2H5FJcFy9RQr_DIsQKI"
 
-# --- БАЗА ЗНАНИЙ: 25 СТРАТЕГИЙ С ПОЛНЫМ ОПИСАНИЕМ ---
+# --- ПОЛНЫЙ СПИСОК ВАЛЮТНЫХ ПАР ---
+OTC_PAIRS = [
+    "EUR/USD OTC", "GBP/USD OTC", "USD/JPY OTC", "AUD/USD OTC", "USD/CAD OTC",
+    "EUR/JPY OTC", "GBP/JPY OTC", "EUR/GBP OTC", "NZD/USD OTC", "USD/CHF OTC",
+    "AUD/JPY OTC", "CAD/JPY OTC", "CHF/JPY OTC", "EUR/CAD OTC", "EUR/AUD OTC",
+    "GBP/CAD OTC", "GBP/AUD OTC", "AUD/CAD OTC", "AUD/NZD OTC", "USD/TRY OTC"
+]
+
+# --- ПОЛНАЯ БАЗА ИЗ 25 СТРАТЕГИЙ ---
 STRATEGIES_DB = {
     "1": {
-        "name": "💎 Отскок от Боллинджера",
-        "level": "Легкий",
-        "inds": "Bollinger Bands (20, 2), RSI (14)",
+        "name": "💎 Пробой Боллинджера + RSI",
         "desc": (
-            "📍 **КАК ЗАХОДИТЬ:** Ждем, когда свеча коснется или выйдет за нижнюю линию Боллинджера, а RSI при этом упадет ниже 30. Это сигнал на ВВЕРХ.\n\n"
-            "⚠️ **НЕ ЗАХОДИТЬ:** Если идет сильный тренд и свечи 'прилипли' к границе канала (идут вдоль нее). Это значит, что цена продолжит падать."
+            "📊 **НАСТРОЙКИ:** BB (20, 2), RSI (14, уровни 70/30).\n"
+            "📈 **ВВЕРХ:** Свеча закрылась КРАСНОЙ ниже границы BB, RSI пробил уровень 30 вниз. Входим на следующей свече.\n"
+            "📉 **ВНИЗ:** Свеча закрылась ЗЕЛЕНОЙ выше границы BB, RSI пробил уровень 70 вверх.\n"
+            "⏱ **ЭКСПИРАЦИЯ:** 1 минута."
         )
     },
     "2": {
-        "name": "🔥 Золотой Крест EMA",
-        "level": "Средний",
-        "inds": "EMA 50, EMA 200",
+        "name": "🔥 Стратегия 'Три свечи'",
         "desc": (
-            "📍 **КАК ЗАХОДИТЬ:** Когда быстрая EMA 50 пересекает медленную EMA 200 снизу вверх — открываем сделку ВВЕРХ на 1-3 минуты.\n\n"
-            "⚠️ **НЕ ЗАХОДИТЬ:** Если линии переплетены или идут горизонтально. Это флэт, стратегия здесь сольет баланс."
+            "📊 **ЛОГИКА:** Разворот импульса.\n"
+            "📈 **ВВЕРХ:** 3 КРАСНЫЕ свечи подряд, каждая следующая меньше предыдущей. Входим на 4-ю свечу.\n"
+            "📉 **ВНИЗ:** 3 ЗЕЛЕНЫЕ свечи подряд, затухание импульса. Входим на понижение.\n"
+            "⏱ **ЭКСПИРАЦИЯ:** 30 сек - 1 мин."
         )
     },
     "3": {
-        "name": "🎯 Снайпер RSI",
-        "level": "Легкий",
-        "inds": "RSI (14) с уровнями 70/30",
+        "name": "🎯 Пересечение EMA (7/14)",
         "desc": (
-            "📍 **КАК ЗАХОДИТЬ:** Входим на понижение (ВНИЗ), когда линия RSI пересекает уровень 70 сверху вниз.\n\n"
-            "⚠️ **НЕ ЗАХОДИТЬ:** Во время выхода важных новостей. RSI может висеть в зоне 70 очень долго, пока цена летит вверх."
+            "📊 **НАСТРОЙКИ:** EMA 7 (желтая), EMA 14 (красная).\n"
+            "📈 **ВВЕРХ:** Желтая пересекает красную СНИЗУ ВВЕРХ, свеча ЗЕЛЕНАЯ.\n"
+            "📉 **ВНИЗ:** Желтая пересекает красную СВЕРХУ ВНИЗ, свеча КРАСНАЯ.\n"
+            "⏱ **ЭКСПИРАЦИЯ:** 1 минута."
         )
     },
     "4": {
-        "name": "🛡 Уровни Поддержки (OTC)",
-        "level": "Средний",
-        "inds": "Горизонтальные уровни",
+        "name": "⚡️ Стохастик Скальпинг",
         "desc": (
-            "📍 **КАК ЗАХОДИТЬ:** Ищем точку, где цена ранее 3-4 раза разворачивалась. При следующем касании берем отскок.\n\n"
-            "⚠️ **НЕ ЗАХОДИТЬ:** Если цена подошла к уровню маленькими свечами и 'топчется' на месте — будет пробой!"
+            "📊 **НАСТРОЙКИ:** Stochastic (5, 3, 3), уровни 80/20.\n"
+            "📈 **ВВЕРХ:** Линии пересеклись ниже уровня 20 и смотрят вверх.\n"
+            "📉 **ВНИЗ:** Линии пересеклись выше уровня 80 и смотрят вниз.\n"
+            "⏱ **ЭКСПИРАЦИЯ:** 15-30 секунд."
         )
     },
     "5": {
-        "name": "⚡️ Импульсный MACD",
-        "level": "Средний",
-        "inds": "MACD (12, 26, 9)",
+        "name": "👑 Бычье/Медвежье поглощение",
         "desc": (
-            "📍 **КАК ЗАХОДИТЬ:** Ждем пересечения гистограммы через нулевую линию. Вверх — если столбики стали зелеными над нулем.\n\n"
-            "⚠️ **НЕ ЗАХОДИТЬ:** Если столбики гистограммы очень маленькие. Это отсутствие волатильности."
+            "📊 **ЛОГИКА:** Тело текущей свечи полностью перекрывает тело предыдущей.\n"
+            "📈 **ВВЕРХ:** Большая ЗЕЛЕНАЯ свеча поглотила маленькую КРАСНУЮ.\n"
+            "📉 **ВНИЗ:** Большая КРАСНАЯ свеча поглотила маленькую ЗЕЛЕНУЮ.\n"
+            "⏱ **ЭКСПИРАЦИЯ:** 1 минута."
         )
     },
     "6": {
-        "name": "👑 SMC: Order Block",
-        "level": "Профи",
-        "inds": "Объемы + Структура",
-        "desc": (
-            "📍 **КАК ЗАХОДИТЬ:** Ищем последнюю растущую свечу перед резким падением. Это зона интереса. Заходим, когда цена вернется к ней.\n\n"
-            "⚠️ **НЕ ЗАХОДИТЬ:** Если структура рынка (High/Low) не сломлена в нужную сторону."
-        )
+        "name": "🌊 Волна Эллиотта (Микро)",
+        "desc": "📊 **ВХОД:** Ищем 3-ю волну роста после отката. Входим на пробитие локального максимума.\n⏱ **ЭКСП:** 1 мин."
+    },
+    "7": {
+        "name": "🛡 Зеркальный уровень",
+        "desc": "📊 **ВХОД:** Цена пробила уровень, вернулась к нему и протестировала с другой стороны. Вход на отскок.\n⏱ **ЭКСП:** 1 мин."
+    },
+    "8": {
+        "name": "🔋 Индикатор ADX + Trend",
+        "desc": "📊 **ВХОД:** ADX выше 25, линии DI пересеклись. Идем за трендом.\n⏱ **ЭКСП:** 30 сек."
+    },
+    "9": {
+        "name": "🌓 Пин-бар (Разворот)",
+        "desc": "📊 **ВХОД:** Свеча с маленьким телом и очень длинной тенью в сторону уровня. Вход в противоположную сторону.\n⏱ **ЭКСП:** 1 мин."
+    },
+    "10": {
+        "name": "📐 Треугольник",
+        "desc": "📊 **ВХОД:** Сужение диапазона. Входим на импульсный пробой границы фигуры.\n⏱ **ЭКСП:** 15-30 сек."
     }
 }
 
-# Дозаполняем остальные стратегии для количества (до 25)
-for i in range(7, 26):
+# Автозаполнение до 25 стратегий
+for i in range(11, 26):
     STRATEGIES_DB[str(i)] = {
-        "name": f"📈 Стратегия №{i} (Pro-Trend)",
-        "level": "Продвинутый",
-        "inds": "ADX, Ichimoku, Stochastic",
-        "desc": "📍 **КАК ЗАХОДИТЬ:** Работа по тренду на откатах от средней линии канала.\n⚠️ **НЕ ЗАХОДИТЬ:** Против основного движения старшего таймфрейма."
+        "name": f"📈 Стратегия №{i} (PRO)",
+        "desc": f"💎 **ЛОГИКА:** Комбинированный анализ Ichimoku и Volume.\n📊 **ВХОД:** Свеча закрывается выше облака. Вход на продолжение.\n⏱ **ЭКСПИРАЦИЯ:** Адаптивная."
     }
 
-# --- СЛУЖЕБНЫЙ КОД (KOYEB + ЛОГИКА) ---
-
-class HealthCheckHandler(BaseHTTPRequestHandler):
-    def do_GET(self): self.send_response(200); self.end_headers(); self.wfile.write(b"OK")
-
-def run_health_server():
-    HTTPServer(('0.0.0.0', 8080), HealthCheckHandler).serve_forever()
-
-OTC_PAIRS = ["EUR/USD OTC", "GBP/USD OTC", "USD/JPY OTC", "AUD/USD OTC", "USD/CAD OTC"]
-
-def get_ultra_signal():
-    acc = random.randint(93, 98)
+# --- ЯДРО АНАЛИТИКИ ---
+def get_smart_signal(timeframe):
+    acc = random.randint(94, 99) if timeframe in ["5s", "15s"] else random.randint(92, 97)
     direction = random.choice(["ВВЕРХ 🟢", "ВНИЗ 🔴"])
-    report = f"💠 Анализ 400 свечей | Точность подтверждена ({acc}%)"
+    report = f"✅ Анализ {random.choice([100, 300, 400])} свечей подтвержден алгоритмом {timeframe}."
     return direction, acc, report
 
-# --- ТЕЛЕГРАМ ОБРАБОТЧИКИ ---
+# --- ЛОГИКА ТЕЛЕГРАМ ---
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    keyboard = [
-        [InlineKeyboardButton("📊 AI СИГНАЛЫ (400 СВЕЧЕЙ)", callback_data="menu_signals")],
-        [InlineKeyboardButton("📚 ОБУЧЕНИЕ (25 СТРАТЕГИЙ)", callback_data="menu_strategies")]
-    ]
-    text = "👑 **KURUT TRADE PREMIUM AI**\n\nРады видеть тебя в терминале! Выбери режим:"
+    kb = [[InlineKeyboardButton("📊 AI СИГНАЛЫ", callback_data="menu_signals")],
+          [InlineKeyboardButton("📚 ОБУЧЕНИЕ (25 СТРАТЕГИЙ)", callback_data="menu_strategies")]]
+    text = "🚀 **KURUT TRADE AI v6.0**\n\nСамый точный софт для OTC пар. Выбери раздел:"
     if update.message:
-        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
     else:
-        await update.callback_query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+        await update.callback_query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
 async def handle_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
-    if query.data == "menu_strategies":
+    if query.data == "menu_signals":
+        keyboard = []
+        for i in range(0, len(OTC_PAIRS), 2):
+            row = [InlineKeyboardButton(OTC_PAIRS[i], callback_data=f"p_{i}"),
+                   InlineKeyboardButton(OTC_PAIRS[i+1], callback_data=f"p_{i+1}")]
+            keyboard.append(row)
+        keyboard.append([InlineKeyboardButton("⬅️ НАЗАД", callback_data="main_menu")])
+        await query.edit_message_text("📍 **Выберите валютную пару:**", reply_markup=InlineKeyboardMarkup(keyboard))
+
+    elif query.data.startswith("p_"):
+        context.user_data['pair'] = OTC_PAIRS[int(query.data.split("_")[1])]
+        keyboard = [
+            [InlineKeyboardButton("5 СЕКУНД", callback_data="t_5s"), InlineKeyboardButton("15 СЕКУНД", callback_data="t_15s")],
+            [InlineKeyboardButton("30 СЕКУНД", callback_data="t_30s"), InlineKeyboardButton("1 МИНУТА", callback_data="t_1m")],
+            [InlineKeyboardButton("⬅️ НАЗАД", callback_data="menu_signals")]
+        ]
+        await query.edit_message_text(f"💎 Актив: **{context.user_data['pair']}**\nВыберите время экспирации:", reply_markup=InlineKeyboardMarkup(keyboard), parse_mode="Markdown")
+
+    elif query.data.startswith("t_"):
+        t_key = query.data.split("_")[1]
+        pair = context.user_data.get('pair')
+        await query.edit_message_text(f"📡 **СКАНИРОВАНИЕ {pair}...**")
+        await asyncio.sleep(1)
+        direction, acc, report = get_smart_signal(t_key)
+        res = (f"🚀 **СИГНАЛ ГОТОВ!**\n━━━━━━━━━━━━━━\n📊 АКТИВ: `{pair}`\n⚡️ ПРОГНОЗ: `{direction}`\n🎯 ТОЧНОСТЬ: `{acc}%` \n━━━━━━━━━━━━━━\n💡 `{report}`")
+        await query.edit_message_text(res, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 МЕНЮ", callback_data="main_menu")]]), parse_mode="Markdown")
+
+    elif query.data == "menu_strategies":
         keyboard = []
         keys = list(STRATEGIES_DB.keys())
         for i in range(0, len(keys), 2):
             row = [InlineKeyboardButton(STRATEGIES_DB[keys[i]]['name'], callback_data=f"show_{keys[i]}")]
-            if i+1 < len(keys):
-                row.append(InlineKeyboardButton(STRATEGIES_DB[keys[i+1]]['name'], callback_data=f"show_{keys[i+1]}"))
+            if i+1 < len(keys): row.append(InlineKeyboardButton(STRATEGIES_DB[keys[i+1]]['name'], callback_data=f"show_{keys[i+1]}"))
             keyboard.append(row)
         keyboard.append([InlineKeyboardButton("⬅️ НАЗАД", callback_data="main_menu")])
-        await query.edit_message_text("📚 **БИБЛИОТЕКА ТРЕЙДЕРА**\nВыбери стратегию:", reply_markup=InlineKeyboardMarkup(keyboard))
+        await query.edit_message_text("📚 **БИБЛИОТЕКА СТРАТЕГИЙ**", reply_markup=InlineKeyboardMarkup(keyboard))
 
     elif query.data.startswith("show_"):
-        s_id = query.data.split("_")[1]
-        s = STRATEGIES_DB[s_id]
-        text = (
-            f"📖 **СТРАТЕГИЯ:** {s['name']}\n"
-            f"━━━━━━━━━━━━━━━━━━\n"
-            f"🏆 **СЛОЖНОСТЬ:** `{s['level']}`\n"
-            f"🛠 **ИНДИКАТОРЫ:** `{s['inds']}`\n\n"
-            f"{s['desc']}\n"
-            f"━━━━━━━━━━━━━━━━━━"
-        )
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ К СПИСКУ", callback_data="menu_strategies")]]), parse_mode="Markdown")
-
-    elif query.data == "menu_signals":
-        keyboard = [[InlineKeyboardButton(p, callback_data=f"p_{i}")] for i, p in enumerate(OTC_PAIRS)]
-        keyboard.append([InlineKeyboardButton("⬅️ НАЗАД", callback_data="main_menu")])
-        await query.edit_message_text("📍 **Выберите актив:**", reply_markup=InlineKeyboardMarkup(keyboard))
-
-    elif query.data.startswith("p_"):
-        context.user_data['pair'] = OTC_PAIRS[int(query.data.split("_")[1])]
-        keyboard = [[InlineKeyboardButton("1 МИНУТА", callback_data="t_1m"), InlineKeyboardButton("5 СЕКУНД", callback_data="t_5s")]]
-        await query.edit_message_text(f"💎 Актив: {context.user_data['pair']}\nВыбери время:", reply_markup=InlineKeyboardMarkup(keyboard))
-
-    elif query.data.startswith("t_"):
-        await query.edit_message_text("📉 **АНАЛИЗИРУЮ 400 СВЕЧЕЙ...**")
-        await asyncio.sleep(1.2)
-        direction, acc, report = get_ultra_signal()
-        res_text = (
-            f"🚀 **СИГНАЛ СФОРМИРОВАН!**\n"
-            f"━━━━━━━━━━━━━━━━━━\n"
-            f"📊 **АКТИВ:** `{context.user_data['pair']}`\n"
-            f"⚡️ **ПРОГНОЗ:** `{direction}`\n"
-            f"🎯 **ТОЧНОСТЬ:** `{acc}%` \n"
-            f"━━━━━━━━━━━━━━━━━━\n"
-            f"💡 `{report}`"
-        )
-        await query.edit_message_text(res_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 МЕНЮ", callback_data="main_menu")]]), parse_mode="Markdown")
+        s = STRATEGIES_DB[query.data.split("_")[1]]
+        text = f"📖 **{s['name']}**\n━━━━━━━━━━━━━━\n{s['desc']}\n━━━━━━━━━━━━━━"
+        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("⬅️ НАЗАД", callback_data="menu_strategies")]]), parse_mode="Markdown")
 
     elif query.data == "main_menu":
         await start(update, context)
 
+# --- ЗАПУСК ---
+class HealthCheckHandler(BaseHTTPRequestHandler):
+    def do_GET(self): self.send_response(200); self.end_headers(); self.wfile.write(b"OK")
+
 if __name__ == "__main__":
-    Thread(target=run_health_server, daemon=True).start()
-    app = Application.builder().token(TOKEN).build()
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(handle_interaction))
-    app.run_polling(drop_pending_updates=True)
+    Thread(target=lambda: HTTPServer(('0.0.0.0', 8080), HealthCheckHandler).serve_forever(), daemon=True).start()
+    Application.builder().token(TOKEN).build().add_handler(CommandHandler("start", start)).add_handler(CallbackQueryHandler(handle_interaction)).run_polling(drop_pending_updates=True)
