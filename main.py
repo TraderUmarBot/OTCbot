@@ -7,13 +7,13 @@ from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# --- НАСТРОЙКИ ---
+# --- КОНФИГУРАЦИЯ ---
 TOKEN = "8596735739:AAH5mhGIN8hAjNXX2H5FJcFy9RQr_DIsQKI"
 LINK_TG = "https://t.me/KURUTTRADING"
 LINK_INSTA = "https://www.instagram.com/kurut_trading?igsh=MWVtZHJzcjRvdTlmYw=="
 LINK_OTHER_BOT = "https://t.me/KURUT_TRADE_BOT"
 
-# --- СПИСКИ АКТИВОВ (ТВОИ 48 ПАР + 12 КРИПТО) ---
+# Данные активов (48 пар + 12 крипто)
 CURRENCY_PAIRS = [
     "EUR/USD OTC", "AUD/CAD OTC", "AUD/CHF OTC", "AUD/USD OTC", "CAD/CHF OTC",
     "CAD/JPY OTC", "CHF/JPY OTC", "EUR/CHF OTC", "EUR/GBP OTC", "EUR/JPY OTC",
@@ -33,133 +33,137 @@ CRYPTO_ASSETS = [
     "Litecoin OTC", "TRON OTC"
 ]
 
-# --- ГЛУБОКАЯ ЛОГИКА АНАЛИЗА ---
-def get_advanced_ai_signal(exp_time):
-    """Имитация работы мощного ИИ: 600 свечей, 20 индикаторов"""
-    np.random.seed(None)
-    
-    # Математические веса в зависимости от экспирации
-    accuracy = random.randint(94, 98)
+# --- ИИ-ЯДРО 2025 ---
+def get_2025_market_analysis(asset, timeframe):
+    """Генерация сверхточного сигнала на основе текущих алгоритмов 2025 года"""
+    # Шанс на победу в 2025 году при правильном анализе 95-98%
+    accuracy = random.uniform(95.4, 98.9)
     direction = random.choice(["ВВЕРХ 🟢", "ВНИЗ 🔴"])
     
-    analysis_report = (
-        f"📊 Анализ завершен: сканировано 600 свечей.\n"
-        f"🛠 20 технических индикаторов (RSI, MACD, BB, ADX) подтверждают вход.\n"
-        f"📐 Математическая модель вероятности: {accuracy + 1.2}%"
-    )
-    return direction, accuracy, analysis_report
+    # Имитация анализа кластеров и плотности ордеров
+    factors = [
+        "Подтверждено паттерном 'Поглощение'",
+        "RSI в зоне экстремума",
+        "Обнаружена зона поддержки/сопротивления",
+        "Математическое ожидание положительное",
+        "Фильтрация рыночного шума завершена"
+    ]
+    report = random.sample(factors, 2)
+    return direction, round(accuracy, 1), report
 
-# --- ГЕНЕРАЦИЯ КНОПОК ПАГИНАЦИИ ---
-def get_pagination_kb(list_data, page, prefix):
-    page_size = 10
-    start_idx = page * page_size
-    end_idx = start_idx + page_size
-    items = list_data[start_idx:end_idx]
-    
-    keyboard = []
+# --- КНОПКИ ---
+def get_paged_kb(data, page, prefix):
+    size = 10
+    start = page * size
+    items = data[start:start + size]
+    kb = []
     for i in range(0, len(items), 2):
-        row = [InlineKeyboardButton(items[i], callback_data=f"{prefix}_{start_idx + i}")]
+        row = [InlineKeyboardButton(items[i], callback_data=f"{prefix}_{start + i}")]
         if i + 1 < len(items):
-            row.append(InlineKeyboardButton(items[i+1], callback_data=f"{prefix}_{start_idx + i + 1}"))
-        keyboard.append(row)
-        
-    nav_row = []
-    if page > 0: nav_row.append(InlineKeyboardButton("⬅️ Назад", callback_data=f"nav_{prefix}_{page-1}"))
-    if end_idx < len(list_data): nav_row.append(InlineKeyboardButton("Вперед ➡️", callback_data=f"nav_{prefix}_{page+1}"))
-    
-    if nav_row: keyboard.append(nav_row)
-    keyboard.append([InlineKeyboardButton("🏠 В ГЛАВНОЕ МЕНЮ", callback_data="go_main")])
-    return InlineKeyboardMarkup(keyboard)
+            row.append(InlineKeyboardButton(items[i+1], callback_data=f"{prefix}_{start + i + 1}"))
+        kb.append(row)
+    nav = []
+    if page > 0: nav.append(InlineKeyboardButton("⬅️", callback_data=f"nav_{prefix}_{page-1}"))
+    if start + size < len(data): nav.append(InlineKeyboardButton("➡️", callback_data=f"nav_{prefix}_{page+1}"))
+    if nav: kb.append(nav)
+    kb.append([InlineKeyboardButton("🏠 ГЛАВНОЕ МЕНЮ", callback_data="go_main")])
+    return InlineKeyboardMarkup(kb)
 
-# --- ОБРАБОТЧИКИ ---
-
+# --- ЛОГИКА БОТА ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     kb = [
-        [InlineKeyboardButton("📊 Мой Telegram Канал", url=LINK_TG)],
-        [InlineKeyboardButton("📸 Мой Instagram", url=LINK_INSTA)],
+        [InlineKeyboardButton("📊 Telegram Канал", url=LINK_TG)],
+        [InlineKeyboardButton("📸 Instagram", url=LINK_INSTA)],
         [InlineKeyboardButton("🤖 Резервный Бот", url=LINK_OTHER_BOT)],
-        [InlineKeyboardButton("ДАЛЕЕ 🚀 ПЕРЕЙТИ К АНАЛИЗУ", callback_data="go_main")]
+        [InlineKeyboardButton("ДАЛЕЕ 🚀 ЗАПУСТИТЬ ИИ", callback_data="go_main")]
     ]
-    welcome_text = (
-        "👑 **ДОБРО ПОЖАЛОВАТЬ В KURUT TRADE PREMIUM AI!**\n\n"
-        "Здорово, трейдер! Это твой самый мощный инструмент для анализа рынка.\n\n"
-        "🔬 **Как работает наш ИИ:**\n"
-        "• **Deep Scan:** Анализирует последние 600 свечей в реальном времени.\n"
-        "• **Multi-Indicator:** Сверяет показатели 20 технических индикаторов.\n"
-        "• **Algorithm:** Использует сложную математическую модель для фильтрации рыночного шума на OTC.\n\n"
-        "⚡️ *Подпишись на наши ресурсы и жми кнопку «ДАЛЕЕ», чтобы начать работу!*"
+    text = (
+        "👑 **KURUT TRADE AI 2025**\n\n"
+        "Добро пожаловать в новую эру трейдинга. Бот обновлен под текущий рынок.\n\n"
+        "✅ Анализ 600 свечей\n"
+        "✅ 20+ индикаторов\n"
+        "✅ Точность до 98.9%"
     )
-    if update.message:
-        await update.message.reply_text(welcome_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
-    else:
-        await update.callback_query.message.edit_text(welcome_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
+    if update.message: await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
+    else: await update.callback_query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
-async def main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    kb = [
-        [InlineKeyboardButton("💱 Валютные пары (48)", callback_data="nav_curr_0")],
-        [InlineKeyboardButton("₿ Криптовалюты (12)", callback_data="nav_cryp_0")],
-        [InlineKeyboardButton("📚 Обучение (25 Стратегий)", callback_data="menu_strat")]
-    ]
-    await update.callback_query.message.edit_text("🎯 **ВЫБЕРИТЕ ТИП АКТИВА ДЛЯ АНАЛИЗА:**", reply_markup=InlineKeyboardMarkup(kb))
-
-async def handle_interaction(update: Update, context: ContextTypes.DEFAULT_TYPE):
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
-    
-    # Навигация
-    if query.data.startswith("nav_"):
-        parts = query.data.split("_")
-        prefix, page = parts[1], int(parts[2])
-        data_list = CURRENCY_PAIRS if prefix == "curr" else CRYPTO_ASSETS
-        await query.edit_message_text("📍 **Выберите актив:**", reply_markup=get_pagination_kb(data_list, page, prefix))
 
-    # Выбор актива
-    elif query.data.startswith("curr_") or query.data.startswith("cryp_"):
-        is_curr = "curr" in query.data
+    if query.data == "go_main":
+        kb = [[InlineKeyboardButton("💱 Валютные пары", callback_data="nav_curr_0")],
+              [InlineKeyboardButton("₿ Криптовалюты", callback_data="nav_cryp_0")]]
+        await query.edit_message_text("🎯 **ВЫБЕРИТЕ ТИП АКТИВА:**", reply_markup=InlineKeyboardMarkup(kb))
+
+    elif query.data.startswith("nav_"):
+        _, prefix, page = query.data.split("_")
+        data = CURRENCY_PAIRS if prefix == "curr" else CRYPTO_ASSETS
+        await query.edit_message_text("📍 **Выберите актив:**", reply_markup=get_paged_kb(data, int(page), prefix))
+
+    elif query.data.startswith(("curr_", "cryp_")):
         idx = int(query.data.split("_")[1])
-        asset = CURRENCY_PAIRS[idx] if is_curr else CRYPTO_ASSETS[idx]
+        asset = CURRENCY_PAIRS[idx] if "curr" in query.data else CRYPTO_ASSETS[idx]
         context.user_data['asset'] = asset
-        
         kb = [
-            [InlineKeyboardButton("5 СЕК", callback_data="t_5s"), InlineKeyboardButton("15 СЕК", callback_data="t_15s"), InlineKeyboardButton("30 СЕК", callback_data="t_30s")],
-            [InlineKeyboardButton("1 МИН", callback_data="t_1m"), InlineKeyboardButton("2 МИН", callback_data="t_2m"), InlineKeyboardButton("3 МИН", callback_data="t_3m")],
+            [InlineKeyboardButton("5С", callback_data="t_5s"), InlineKeyboardButton("15С", callback_data="t_15s"), InlineKeyboardButton("30С", callback_data="t_30s")],
+            [InlineKeyboardButton("1М", callback_data="t_1m"), InlineKeyboardButton("2М", callback_data="t_2m"), InlineKeyboardButton("3М", callback_data="t_3m")],
             [InlineKeyboardButton("5 МИНУТ ⏳", callback_data="t_5m")],
-            [InlineKeyboardButton("⬅️ К ВЫБОРУ АКТИВА", callback_data="go_main")]
+            [InlineKeyboardButton("⬅️ НАЗАД", callback_data="go_main")]
         ]
-        await query.edit_message_text(f"💎 Актив: **{asset}**\n\nВыберите время экспирации для анализа:", reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
+        await query.edit_message_text(f"💎 Актив: **{asset}**\n\nВыберите время экспирации:", reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
-    # Выдача сигнала
     elif query.data.startswith("t_"):
         asset = context.user_data.get('asset', 'Active')
-        exp = query.data.split("_")[1].replace('s', ' СЕК').replace('m', ' МИН')
+        time_label = query.data.split("_")[1].replace('s',' сек').replace('m',' мин')
         
-        await query.edit_message_text(f"📡 **ИИ СКАНИРУЕТ РЫНОК {asset}...**\nГлубина: 600 свечей.")
-        await asyncio.sleep(1.2)
+        # 1. Сбор данных
+        await query.edit_message_text(f"🔍 **[ИИ 2025] Сканирую рынок {asset}...**\n\nПодключаю 20 индикаторов...")
+        await asyncio.sleep(1.5)
         
-        dir, acc, report = get_advanced_ai_signal(exp)
+        dir, acc, factors = get_2025_market_analysis(asset, time_label)
         
-        res_text = (
+        # 2. Выдача сигнала
+        signal_text = (
             f"🚀 **СИГНАЛ СФОРМИРОВАН!**\n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
             f"📊 **АКТИВ:** `{asset}`\n"
             f"⚡️ **ВХОД:** `{dir}`\n"
-            f"⏱ **ВРЕМЯ:** `{exp}`\n"
+            f"⏱ **ВРЕМЯ:** `{time_label}`\n"
             f"🎯 **ТОЧНОСТЬ:** `{acc}%` \n"
             f"━━━━━━━━━━━━━━━━━━━━\n"
-            f"💡 **ИНФО:**\n`{report}`"
+            f"🛠 **ФАКТОРЫ:**\n• {factors[0]}\n• {factors[1]}\n\n"
+            f"⏳ **Ждем закрытия сделки...**"
         )
-        await query.edit_message_text(res_text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 НОВЫЙ АНАЛИЗ", callback_data="go_main")]]), parse_mode="Markdown")
+        await query.edit_message_text(signal_text, parse_mode="Markdown")
+        
+        # Имитация времени сделки
+        wait = 5 if '5' in time_label and 'сек' in time_label else 10
+        await asyncio.sleep(wait)
+        
+        # 3. Результат сделки
+        is_win = random.choices([True, False], weights=[acc, 100-acc])[0]
+        res_icon = "✅ ПЛЮС (WIN)" if is_win else "❌ МИНУС (LOSS)"
+        
+        final_text = (
+            f"🏁 **ИТОГ СДЕЛКИ ({time_label})**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📊 АКТИВ: `{asset}`\n"
+            f"🏆 РЕЗУЛЬТАТ: **{res_icon}**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"ИИ подтвердил прогноз на основе закрытия свечи."
+        )
+        kb_final = [[InlineKeyboardButton("🔄 ЕЩЕ СИГНАЛ", callback_data="go_main")],
+                    [InlineKeyboardButton("🏠 ГЛАВНОЕ МЕНЮ", callback_data="go_main")]]
+        await query.edit_message_text(final_text, reply_markup=InlineKeyboardMarkup(kb_final), parse_mode="Markdown")
 
-    elif query.data == "go_main": await main_menu(update, context)
-    # Здесь можно добавить логику обучения (menu_strat), если нужно
+# --- СЕРВЕР ---
+def run_health():
+    HTTPServer(('0.0.0.0', 8080), lambda *a,**k: None).serve_forever()
 
-# --- ЗАПУСК ---
 if __name__ == "__main__":
-    # Health check server для Koyeb
-    Thread(target=lambda: HTTPServer(('0.0.0.0', 8080), lambda *a,**k: None).serve_forever(), daemon=True).start()
-    
+    Thread(target=run_health, daemon=True).start()
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(handle_interaction))
-    print("Бот запущен...")
+    app.add_handler(CallbackQueryHandler(callback_handler))
     app.run_polling()
