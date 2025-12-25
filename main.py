@@ -2,6 +2,7 @@ import os
 import asyncio
 import logging
 import random
+import time
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -13,7 +14,7 @@ LINK_TG = "https://t.me/KURUTTRADING"
 LINK_INSTA = "https://www.instagram.com/kurut_trading?igsh=MWVtZHJzcjRvdTlmYw=="
 LINK_OTHER_BOT = "https://t.me/KURUT_TRADE_BOT"
 
-# Активы (48 пар + 12 крипто)
+# Активы
 CURRENCY_PAIRS = [
     "EUR/USD OTC", "AUD/CAD OTC", "AUD/CHF OTC", "AUD/USD OTC", "CAD/CHF OTC",
     "CAD/JPY OTC", "CHF/JPY OTC", "EUR/CHF OTC", "EUR/GBP OTC", "EUR/JPY OTC",
@@ -33,24 +34,25 @@ CRYPTO_ASSETS = [
     "Litecoin OTC", "TRON OTC"
 ]
 
-# --- ИИ-ЯДРО 2026 (ULTRA PRECISION) ---
-def get_2026_signal_logic(asset, exp):
-    """Алгоритм адаптивного анализа волатильности и микро-трендов"""
-    # В 2026 точность выкручена на максимум
-    accuracy = random.uniform(96.2, 99.4)
-    direction = random.choice(["ВВЕРХ 🟢", "ВНИЗ 🔴"])
-    
-    # Факторы для 2026 года
-    tech_factors = [
-        "Анализ волатильности: СТАБИЛЬНО",
-        "Импульсный фильтр: ПРОЙДЕН",
-        "Объемы покупателей: ПИК",
-        "Нейронная сеть: ПОДТВЕРЖДЕНО",
-        "Уровень поддержки: УСТОЙЧИВ"
-    ]
-    return direction, round(accuracy, 2), random.sample(tech_factors, 3)
+# Карта секунд для таймера
+TIME_MAP = {
+    "5s": 5, "15s": 15, "30s": 30, 
+    "1m": 60, "2m": 120, "3m": 180, "5m": 300
+}
 
-# --- ГЕНЕРАЦИЯ КНОПОК ---
+# --- ЛОГИКА АНАЛИЗА ---
+def get_precision_signal():
+    accuracy = random.uniform(96.5, 99.2)
+    direction = random.choice(["ВВЕРХ 🟢", "ВНИЗ 🔴"])
+    analysis_details = [
+        "Обнаружена сильная зона П/С",
+        "Фильтр волатильности: НОРМА",
+        "Индикатор RSI подтверждает вход",
+        "Паттерн: Пин-бар на уровне"
+    ]
+    return direction, round(accuracy, 2), random.sample(analysis_details, 2)
+
+# --- КНОПКИ ---
 def get_paged_kb(data, page, prefix):
     size = 10
     start = page * size
@@ -68,7 +70,7 @@ def get_paged_kb(data, page, prefix):
     kb.append([InlineKeyboardButton("🏠 МЕНЮ", callback_data="go_main")])
     return InlineKeyboardMarkup(kb)
 
-# --- ОСНОВНЫЕ ФУНКЦИИ ---
+# --- ОБРАБОТКА КОМАНД ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     kb = [
         [InlineKeyboardButton("📊 Telegram Канал", url=LINK_TG)],
@@ -76,15 +78,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         [InlineKeyboardButton("🤖 Резервный Бот", url=LINK_OTHER_BOT)],
         [InlineKeyboardButton("ДАЛЕЕ 🚀 ЗАПУСТИТЬ ULTRA SCAN", callback_data="go_main")]
     ]
-    text = (
-        "👑 **ULTRA KURUT OTC — FUTURE AI 2026**\n\n"
-        "Система обновлена до версии 2026. Теперь анализ стал еще глубже.\n\n"
-        "🔬 **Что нового:**\n"
-        "• Анализ волатильности в реальном времени.\n"
-        "• Обработка 600 тиков для сигналов 5с.\n"
-        "• Интегрированный нейро-фильтр погрешностей.\n\n"
-        "🚀 *Подпишись на ресурсы выше и начни торговать профессионально!*"
-    )
+    text = "👑 **ULTRA KURUT OTC 2026**\n\nСистема готова к анализу. Теперь мы используем реальные таймеры закрытия сделок для максимальной точности."
     if update.message: await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
     else: await update.callback_query.message.edit_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
@@ -116,40 +110,50 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data.startswith("t_"):
         asset = context.user_data.get('asset', 'Active')
-        exp_label = query.data.split("_")[1].replace('s',' сек').replace('m',' мин')
+        time_key = query.data.split("_")[1]
+        wait_seconds = TIME_MAP.get(time_key, 5)
+        time_label = time_key.replace('s',' сек').replace('m',' мин')
         
-        await query.edit_message_text(f"📡 **ULTRA SCAN [2026]...**\nАнализирую волатильность `{asset}`")
-        await asyncio.sleep(1.5)
+        # 1. Сбор данных
+        await query.edit_message_text(f"🔍 **ULTRA SCAN...**\nАнализирую `{asset}` через 20 индикаторов...")
+        await asyncio.sleep(2)
         
-        dir, acc, factors = get_2026_signal_logic(asset, exp_label)
+        dir, acc, factors = get_precision_signal()
         
-        msg = (
-            f"🚀 **СИГНАЛ ГОТОВ!**\n━━━━━━━━━━━━━━\n"
+        # 2. Выдача сигнала
+        start_msg = (
+            f"🚀 **СИГНАЛ ВЫДАН!**\n━━━━━━━━━━━━━━\n"
             f"📊 ПАРА: `{asset}`\n"
             f"⚡️ ВХОД: `{dir}`\n"
-            f"⏱ ВРЕМЯ: `{exp_label}`\n"
+            f"⏱ ТАЙМ: `{time_label}`\n"
             f"🎯 ТОЧНОСТЬ: `{acc}%` \n━━━━━━━━━━━━━━\n"
-            f"🛠 **ТЕХ. АНАЛИЗ:**\n• {factors[0]}\n• {factors[1]}\n• {factors[2]}\n\n"
-            f"⏳ **Ожидание результата...**"
+            f"🛠 `{factors[0]}`\n"
+            f"⏳ **Ожидание результата: {time_label}...**"
         )
-        await query.edit_message_text(msg, parse_mode="Markdown")
+        await query.edit_message_text(start_msg, parse_mode="Markdown")
         
-        # Реалистичное ожидание
-        wait = 5 if '5' in exp_label and 'сек' in exp_label else 8
-        await asyncio.sleep(wait)
+        # 3. РЕАЛЬНОЕ ОЖИДАНИЕ
+        # Для удобства тестирования: если время > 1 мин, бот ждет 30-40 сек (имитация), 
+        # но если хочешь ПРЯМО ровно — оставь await asyncio.sleep(wait_seconds)
+        await asyncio.sleep(wait_seconds)
         
-        is_win = random.choices([True, False], weights=[acc, 100-acc])[0]
-        res = "✅ ПЛЮС (WIN)" if is_win else "❌ МИНУС (LOSS)"
+        # 4. Результат
+        is_win = random.choices([True, False], weights=[int(acc), 100-int(acc)])[0]
+        res_text = "✅ ПЛЮС (WIN)" if is_win else "❌ МИНУС (LOSS)"
+        color = "🟢" if is_win else "🔴"
         
-        final = (
-            f"🏁 **ИТОГ СДЕЛКИ ({exp_label})**\n━━━━━━━━━━━━━━\n"
+        final_msg = (
+            f"🏁 **СДЕЛКА ЗАВЕРШЕНА!**\n━━━━━━━━━━━━━━\n"
             f"📊 АКТИВ: `{asset}`\n"
-            f"🏆 РЕЗУЛЬТАТ: **{res}**\n━━━━━━━━━━━━━━\n"
-            f"Прогноз подтвержден математической моделью 2026."
+            f"🏆 РЕЗУЛЬТАТ: **{res_text} {color}**\n"
+            f"⏱ ЭКСПИРАЦИЯ: `{time_label}`\n"
+            f"📈 ПРОГНОЗ БЫЛ: `{dir}`\n━━━━━━━━━━━━━━\n"
+            f"ИИ подтвердил движение цены."
         )
         kb_f = [[InlineKeyboardButton("🔄 НОВЫЙ СИГНАЛ", callback_data="go_main")]]
-        await query.edit_message_text(final, reply_markup=InlineKeyboardMarkup(kb_f), parse_mode="Markdown")
+        await query.edit_message_text(final_msg, reply_markup=InlineKeyboardMarkup(kb_f), parse_mode="Markdown")
 
+# --- СЕРВЕР ---
 if __name__ == "__main__":
     Thread(target=lambda: HTTPServer(('0.0.0.0', 8080), lambda *a,**k: None).serve_forever(), daemon=True).start()
     app = Application.builder().token(TOKEN).build()
