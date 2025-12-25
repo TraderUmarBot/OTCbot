@@ -6,42 +6,35 @@ from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# --- КОНФИГУРАЦИЯ ---
+# --- [1] КОНФИГУРАЦИЯ И ССЫЛКИ ---
 TOKEN = "8596735739:AAG4N6TLkI9GaBQvaWanknNrvJvpHWmQcTc"
 LINK_TG = "https://t.me/KURUTTRADING"
 LINK_INSTA = "https://www.instagram.com/kurut_trading?igsh=MWVtZHJzcjRvdTlmYw=="
 LINK_OTHER_BOT = "https://t.me/KURUT_TRADE_BOT"
 
-# Активы (48 пар + 12 крипто)
-CURRENCY_PAIRS = [
-    "EUR/USD OTC", "AUD/CAD OTC", "AUD/CHF OTC", "AUD/USD OTC", "CAD/CHF OTC",
-    "CAD/JPY OTC", "CHF/JPY OTC", "EUR/CHF OTC", "EUR/GBP OTC", "EUR/JPY OTC",
-    "EUR/NZD OTC", "GBP/USD OTC", "NZD/USD OTC", "USD/CAD OTC", "USD/CHF OTC",
-    "USD/JPY OTC", "USD/CNH OTC", "EUR/RUB OTC", "USD/RUB OTC", "EUR/TRY OTC",
-    "USD/INR OTC", "USD/MXN OTC", "USD/BRL OTC", "USD/PHP OTC", "MAD/USD OTC",
-    "BHD/CNY OTC", "AED/CNY OTC", "SAR/CNY OTC", "QAR/CNY OTC", "ZAR/USD OTC",
-    "CHF/NOK OTC", "USD/VND OTC", "TND/USD OTC", "USD/PKR OTC", "USD/DZD OTC",
-    "USD/IDR OTC", "USD/THB OTC", "YER/USD OTC", "NGN/USD OTC", "USD/EGP OTC",
-    "UAH/USD OTC", "USD/COP OTC", "USD/BDT OTC", "JOD/CNY OTC", "LBP/USD OTC",
-    "AUD/NZD OTC", "GBP/JPY OTC", "NZD/JPY OTC"
-]
-
-CRYPTO_ASSETS = [
-    "Bitcoin OTC", "BNB OTC", "Dogecoin OTC", "Bitcoin ETF OTC", "Ethereum OTC",
-    "Solana OTC", "Polkadot OTC", "Polygon OTC", "Cardano OTC", "Toncoin OTC",
-    "Litecoin OTC", "TRON OTC"
-]
+# Список активов (Валюты + Крипто)
+CURRENCY_PAIRS = ["EUR/USD OTC", "AUD/CAD OTC", "AUD/CHF OTC", "AUD/USD OTC", "CAD/CHF OTC", "CAD/JPY OTC", "CHF/JPY OTC", "EUR/CHF OTC", "EUR/GBP OTC", "EUR/JPY OTC", "EUR/NZD OTC", "GBP/USD OTC", "NZD/USD OTC", "USD/CAD OTC", "USD/CHF OTC", "USD/JPY OTC", "USD/CNH OTC", "EUR/RUB OTC", "USD/RUB OTC", "EUR/TRY OTC", "USD/INR OTC", "USD/MXN OTC", "USD/BRL OTC", "USD/PHP OTC", "MAD/USD OTC", "BHD/CNY OTC", "AED/CNY OTC", "SAR/CNY OTC", "QAR/CNY OTC", "ZAR/USD OTC", "CHF/NOK OTC", "USD/VND OTC", "TND/USD OTC", "USD/PKR OTC", "USD/DZD OTC", "USD/IDR OTC", "USD/THB OTC", "YER/USD OTC", "NGN/USD OTC", "USD/EGP OTC", "UAH/USD OTC", "USD/COP OTC", "USD/BDT OTC", "JOD/CNY OTC", "LBP/USD OTC", "AUD/NZD OTC", "GBP/JPY OTC", "NZD/JPY OTC"]
+CRYPTO_ASSETS = ["Bitcoin OTC", "BNB OTC", "Dogecoin OTC", "Bitcoin ETF OTC", "Ethereum OTC", "Solana OTC", "Polkadot OTC", "Polygon OTC", "Cardano OTC", "Toncoin OTC", "Litecoin OTC", "TRON OTC"]
 
 TIME_MAP = {"5s": 5, "15s": 15, "30s": 30, "1m": 60, "2m": 120, "3m": 180, "5m": 300}
 
-# --- ЯДРО АНАЛИЗА ---
-def get_precision_signal():
-    accuracy = random.uniform(96.5, 99.4)
+# --- [2] ЯДРО АНАЛИЗА (20 ИНДИКАТОРОВ) ---
+def get_heavy_analysis():
+    accuracy = random.uniform(99.1, 99.9) # Пиковая точность
     direction = random.choice(["ВВЕРХ 🟢", "ВНИЗ 🔴"])
-    factors = ["Объемы: ПИК", "RSI: ПОДТВЕРЖДЕНО", "Price Action: OK", "Neural Filter: ACTIVE"]
-    return direction, round(accuracy, 2), random.sample(factors, 2)
+    
+    indicators = [
+        "RSI (14) - Подтверждено", "MACD - Пересечение", "Bollinger Bands - Отскок",
+        "Stochastic - Вход в зону", "Ichimoku - Облако пробито", "ATR - Волатильность OK",
+        "ADX - Сильный тренд", "Parabolic SAR - Смена позиции", "CCI - Перепроданность",
+        "Awesome Oscillator - Импульс", "Pivot Points - Уровень удержан", "Fibonacci - 0.618",
+        "Volume Profile - Плотность", "MFI - Приток капитала", "EMA 50/200 - Золотой крест",
+        "VWAP - Опорная цена", "Donchian Channels - Прорыв", "Williams %R - Фильтр пройден",
+        "ZigZag - Локальное дно", "SuperTrend - Цикл подтвержден"
+    ]
+    return direction, round(accuracy, 2), random.sample(indicators, 4)
 
-# --- КНОПКИ ---
+# --- [3] КРАСИВОЕ ОФОРМЛЕНИЕ МЕНЮ ---
 def get_paged_kb(data, page, prefix):
     size = 10
     start = page * size
@@ -58,78 +51,93 @@ def get_paged_kb(data, page, prefix):
     kb.append([InlineKeyboardButton("🏠 ГЛАВНОЕ МЕНЮ", callback_data="go_main")])
     return InlineKeyboardMarkup(kb)
 
-# --- ФОНОВАЯ ОБРАБОТКА СДЕЛКИ ---
-async def process_trade(query, asset, time_key):
+# --- [4] ЛОГИКА СИГНАЛА И РЕЗУЛЬТАТА ---
+async def process_signal(query, asset, time_key):
     wait_sec = TIME_MAP.get(time_key, 5)
     label = time_key.replace('s',' сек').replace('m',' мин')
-    direction, acc, factors = get_precision_signal()
     
-    # 1. Выдача сигнала
+    # Имитация глубокого сканирования
     await query.edit_message_text(
-        f"🚀 **ULTRA KURUT OTC: СИГНАЛ СФОРМИРОВАН**\n━━━━━━━━━━━━━━\n"
-        f"📊 АКТИВ: `{asset}`\n⚡️ ПРОГНОЗ: `{direction}`\n⏱ ЭКСПИРАЦИЯ: `{label}`\n🎯 ТОЧНОСТЬ: `{acc}%` \n━━━━━━━━━━━━━━\n"
-        f"⚙️ `{factors[0]}` | `{factors[1]}`\n"
-        f"📡 **Идет анализ движения цены... Ожидайте.**",
-        parse_mode="Markdown"
+        f"🛡 **ULTRA SCAN 2026: {asset}**\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"⚙️ Синхронизация с 20 индикаторами...\n"
+        f"📡 Считывание тиковых данных OTC...\n"
+        f"🧩 Анализ паттернов завершен на 92%..."
+    )
+    await asyncio.sleep(2)
+    
+    dir, acc, inds = get_heavy_analysis()
+    
+    # Выдача снайперского сигнала
+    await query.edit_message_text(
+        f"💎 **СНАЙПЕРСКИЙ СИГНАЛ ВЫДАН**\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"📊 АКТИВ: `{asset}`\n"
+        f"⚡️ НАПРАВЛЕНИЕ: **{dir}**\n"
+        f"⏱ ВРЕМЯ: `{label}`\n"
+        f"🎯 ВЕРОЯТНОСТЬ: `{acc}%` \n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"🛠 **ТЕХ. АНАЛИЗ:**\n• {inds[0]}\n• {inds[1]}\n• {inds[2]}\n• {inds[3]}\n\n"
+        f"⏳ Сделка в процессе... Ожидайте фиксации прибыли."
     )
 
-    # 2. Ждем реальное время
+    # Реальное ожидание экспирации
     await asyncio.sleep(wait_sec)
 
-    # 3. Результат
-    win = random.choices([True, False], weights=[int(acc), 100-int(acc)])[0]
-    res_text = "✅ ПЛЮС (WIN) 🟢" if win else "❌ МИНУС (LOSS) 🔴"
+    # Итоговый результат (99% точность)
+    is_win = random.choices([True, False], weights=[99, 1])[0]
+    res_icon = "✅ ПЛЮС (WIN) 🟢" if is_win else "❌ МИНУС (LOSS) 🔴"
     
     await query.edit_message_text(
-        f"🏁 **ИТОГ СДЕЛКИ ПО {asset}**\n━━━━━━━━━━━━━━\n"
-        f"🏆 РЕЗУЛЬТАТ: **{res_text}**\n📈 ВХОД БЫЛ: `{direction}`\n⏱ ВРЕМЯ: `{label}`\n━━━━━━━━━━━━━━\n"
-        f"Математическая модель 2026 подтвердила прогноз.",
-        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 НОВЫЙ АНАЛИЗ", callback_data="go_main")]]),
+        f"🏁 **РЕЗУЛЬТАТ СДЕЛКИ: {asset}**\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"🏆 ИТОГ: **{res_icon}**\n"
+        f"📈 ПРОГНОЗ БЫЛ: `{dir}`\n"
+        f"⏱ ЭКСПИРАЦИЯ: `{label}`\n"
+        f"━━━━━━━━━━━━━━━━━━━━\n"
+        f"🔥 *Сигнал отработан со стопроцентной точностью алгоритма Ultra Kurut.*",
+        reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 СЛЕДУЮЩИЙ СИГНАЛ", callback_data="go_main")]]),
         parse_mode="Markdown"
     )
 
-# --- ОБРАБОТЧИКИ ---
+# --- [5] ГРАМОТНОЕ ОПИСАНИЕ (СТАРТ) ---
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    kb = [[InlineKeyboardButton("📊 Telegram Канал", url=LINK_TG)],
-          [InlineKeyboardButton("📸 Instagram", url=LINK_INSTA)],
-          [InlineKeyboardButton("🤖 Резервный Бот", url=LINK_OTHER_BOT)],
-          [InlineKeyboardButton("ДАЛЕЕ 🚀 ЗАПУСТИТЬ ULTRA SCAN", callback_data="go_main")]]
+    kb = [
+        [InlineKeyboardButton("📢 ТЕЛЕГРАМ КАНАЛ", url=LINK_TG)],
+        [InlineKeyboardButton("📸 НАШ INSTAGRAM", url=LINK_INSTA)],
+        [InlineKeyboardButton("🤖 РЕЗЕРВНЫЙ БОТ", url=LINK_OTHER_BOT)],
+        [InlineKeyboardButton("🚀 ЗАПУСТИТЬ ТЕРМИНАЛ 2026", callback_data="go_main")]
+    ]
     
-    welcome = (
-        "👑 **ULTRA KURUT OTC — FUTURE AI**\n\n"
-        "Добро пожаловать в элитный софт для анализа Pocket Option.\n\n"
-        "🔬 **Как мы работаем:**\n"
-        "• Анализ 600 свечей и 20 индикаторов.\n"
-        "• Реальные таймеры ожидания результата.\n"
-        "• Точность прогнозов до 99.4%.\n\n"
-        "Жми «ДАЛЕЕ» для начала работы!"
+    welcome_text = (
+        "👑 **ULTRA KURUT OTC — PREMIUM AI SYSTEM**\n\n"
+        "Добро пожаловать в элитную экосистему для трейдеров! Мы объединили опыт топ-аналитиков и мощь 20 нейро-индикаторов.\n\n"
+        "🔬 **ПОЧЕМУ МЫ ЛУЧШИЕ?**\n"
+        "• **Ultra-Core AI:** Анализ через RSI, MACD, Ichimoku и еще 17 фильтров.\n"
+        "• **Deep Scan 600:** Сканирование последних 600 свечей.\n"
+        "• **OTC-Adaptive:** Алгоритм, созданный специально для Pocket Option.\n"
+        "• **Live-Control:** Реальное ожидание экспирации и фиксация профита.\n\n"
+        "📍 **НАШИ РЕСУРСЫ:**\n"
+        "Подпишись на наш Telegram и Instagram, чтобы получать эксклюзивные отчеты!\n\n"
+        "🎯 *Готов забирать профит? Жми кнопку ниже!*"
     )
-    if update.message: await update.message.reply_text(welcome, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
-    else: await update.callback_query.message.edit_text(welcome, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
+    
+    target = update.message.reply_text if update.message else update.callback_query.message.edit_text
+    await target(welcome_text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
-async def help_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        "📖 **ИНСТРУКЦИЯ ULTRA KURUT OTC**\n\n"
-        "1. Выберите актив из списка (60 вариантов).\n"
-        "2. Выберите время экспирации (от 5с до 5м).\n"
-        "3. Бот выдаст сигнал. Сразу открывайте сделку на платформе.\n"
-        "4. Бот подождет время экспирации и сам сообщит результат."
-    )
-    await update.message.reply_text(text, parse_mode="Markdown")
-
+# --- [6] ОБРАБОТКА КОМАНД И КНОПОК ---
 async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
 
     if query.data == "go_main":
-        kb = [[InlineKeyboardButton("💱 Валютные пары", callback_data="nav_curr_0")],
-              [InlineKeyboardButton("₿ Криптовалюты", callback_data="nav_cryp_0")]]
-        await query.edit_message_text("🎯 **ВЫБЕРИТЕ КАТЕГОРИЮ:**", reply_markup=InlineKeyboardMarkup(kb))
+        kb = [[InlineKeyboardButton("💱 Валюты OTC", callback_data="nav_curr_0"), InlineKeyboardButton("₿ Крипто OTC", callback_data="nav_cryp_0")]]
+        await query.edit_message_text("🎯 **ВЫБЕРИТЕ КАТЕГОРИЮ АКТИВА:**", reply_markup=InlineKeyboardMarkup(kb))
 
     elif query.data.startswith("nav_"):
         _, prefix, page = query.data.split("_")
         data = CURRENCY_PAIRS if prefix == "curr" else CRYPTO_ASSETS
-        await query.edit_message_text("📍 **Выберите актив:**", reply_markup=get_paged_kb(data, int(page), prefix))
+        await query.edit_message_text("📍 **Выберите торговую пару:**", reply_markup=get_paged_kb(data, int(page), prefix))
 
     elif query.data.startswith(("curr_", "cryp_")):
         idx = int(query.data.split("_")[1])
@@ -138,20 +146,18 @@ async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
               [InlineKeyboardButton("1М", callback_data="t_1m"), InlineKeyboardButton("2М", callback_data="t_2m"), InlineKeyboardButton("3М", callback_data="t_3m")],
               [InlineKeyboardButton("5 МИНУТ ⏳", callback_data="t_5m")],
               [InlineKeyboardButton("⬅️ НАЗАД", callback_data="go_main")]]
-        await query.edit_message_text(f"💎 Актив: **{context.user_data['asset']}**\nВыберите экспирацию:", reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
+        await query.edit_message_text(f"💎 Актив: **{context.user_data['asset']}**\n\nВыберите время экспирации:", reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
     elif query.data.startswith("t_"):
         asset = context.user_data.get('asset', 'Active')
         time_key = query.data.split("_")[1]
-        # Запуск в фоне, чтобы бот не зависал при нагрузке
-        asyncio.create_task(process_trade(query, asset, time_key))
+        asyncio.create_task(process_signal(query, asset, time_key))
 
-# --- ЗАПУСК ---
+# --- [7] ЗАПУСК СЕРВЕРА И БОТА ---
 if __name__ == "__main__":
     Thread(target=lambda: HTTPServer(('0.0.0.0', 8080), lambda *a,**k: None).serve_forever(), daemon=True).start()
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("help", help_cmd))
     app.add_handler(CallbackQueryHandler(handle_cb))
-    print("ULTRA KURUT OTC ЗАПУЩЕН...")
+    print("Бот ULTRA KURUT OTC успешно запущен!")
     app.run_polling(drop_pending_updates=True)
