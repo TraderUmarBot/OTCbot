@@ -109,54 +109,45 @@ def get_admin_contact_kb():
 # ================== СТАРТ ==================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = update.message.from_user.id
+
+    # Пользователь без доступа
     if not has_access(uid):
+        instruction_text = (
+            "❌ У вас нет доступа к боту.\n\n"
+            "👣 **Инструкция для получения доступа:**\n"
+            "1️⃣ Отправьте администратору ваш ID для выдачи доступа.\n"
+            f"Ваш ID: `{uid}`\n"
+            "2️⃣ После получения доступа, нажмите /start снова."
+        )
         await update.message.reply_text(
-            f"❌ У вас нет доступа. Обратитесь к администратору.\n"
-            f"Ваш ID: `{uid}`", parse_mode="Markdown", reply_markup=get_admin_contact_kb()
+            instruction_text,
+            parse_mode="Markdown",
+            reply_markup=get_admin_contact_kb()
         )
         return
 
+    # Пользователь с доступом (автор)
     welcome_text = (
         "👑 **ULTRA KURUT AI — ЭЛИТНЫЙ ТРЕЙДИНГ 2026**\n"
         "━━━━━━━━━━━━━━━━━━━━\n"
-        "Добро пожаловать в систему анализа OTC-рынков. Здесь вы можете использовать наш AI для анализа рынка.\n\n"
+        "Добро пожаловать! Все ссылки ниже доступны для быстрого перехода.\n\n"
         "📍 **Ссылки:**\n"
         f"• [Канал Telegram]({LINK_TG})\n"
         f"• [Instagram]({LINK_INSTA})\n"
         f"• [YouTube]({YOUTUBE})\n"
         f"• [Второй бот]({SECOND_BOT})\n"
         f"• [Реферальная ссылка]({REF_LINK})\n\n"
-        "━━━━━━━━━━━━━━━━━━━━\n"
-        "🎯 *Нажмите кнопку ниже, чтобы начать зарабатывать.*"
+        "━━━━━━━━━━━━━━━━━━━━"
     )
+    # Добавляем кнопки к админам внизу
+    admin_kb = get_admin_contact_kb()
 
-    await update.message.reply_text(welcome_text, reply_markup=get_main_kb(), parse_mode="Markdown", disable_web_page_preview=True)
-
-# ================== КОМАНДЫ АДМИНА ==================
-async def grant(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.message.from_user.id
-    if not is_admin(uid):
-        await update.message.reply_text("❌ У вас нет прав администратора.")
-        return
-    try:
-        target_id = int(context.args[0])
-        ALLOWED_USERS.add(target_id)
-        await update.message.reply_text(f"✅ Доступ выдан пользователю {target_id}.")
-    except:
-        await update.message.reply_text("Использование: /grant <user_id>")
-
-async def revoke(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.message.from_user.id
-    if not is_admin(uid):
-        await update.message.reply_text("❌ У вас нет прав администратора.")
-        return
-    try:
-        target_id = int(context.args[0])
-        ALLOWED_USERS.discard(target_id)
-        await update.message.reply_text(f"❌ Доступ отозван у пользователя {target_id}.")
-    except:
-        await update.message.reply_text("Использование: /revoke <user_id>")
-
+    await update.message.reply_text(
+        welcome_text,
+        parse_mode="Markdown",
+        reply_markup=admin_kb,
+        disable_web_page_preview=True
+    )
 # ================== ОБРАБОТЧИК CALLBACK ==================
 async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
