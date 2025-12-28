@@ -1,6 +1,5 @@
 import asyncio
 import random
-import time
 from http.server import HTTPServer
 from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
@@ -12,6 +11,9 @@ ALLOWED_USERS = set()
 
 def has_access(uid):
     return uid in ADMINS or uid in ALLOWED_USERS
+
+def is_admin(uid):
+    return uid in ADMINS
 
 # ================== НАСТРОЙКИ ==================
 TOKEN = "8596735739:AAG4N6TLkI9GaBQvaWanknNrvJvpHWmQcTc"
@@ -87,8 +89,8 @@ async def perform_analysis(query, asset, tf):
 def main_kb():
     return InlineKeyboardMarkup([
         [InlineKeyboardButton("📊 НАЧАТЬ АНАЛИЗ", callback_data="category")],
-        [InlineKeyboardButton("📘 ИНСТРУКЦИЯ", callback_data="guide")],
-        [InlineKeyboardButton("💰 КАК НАЧАТЬ", callback_data="ref")],
+        [InlineKeyboardButton("📘 ИНСТРУКЦИЯ", callback_data="guide1")],
+        [InlineKeyboardButton("💰 КАК НАЧАТЬ", callback_data="guide2")],
         [InlineKeyboardButton("📢 TG", url=LINK_TG), InlineKeyboardButton("📸 INST", url=LINK_INSTA)]
     ])
 
@@ -112,9 +114,20 @@ def paged_kb(data, page, prefix):
     if page>0: nav.append(InlineKeyboardButton("⬅️", callback_data=f"nav_{prefix}_{page-1}"))
     if start+size<len(data): nav.append(InlineKeyboardButton("➡️", callback_data=f"nav_{prefix}_{page+1}"))
     if nav: kb.append(nav)
-    kb.append(nav)
     kb.append([InlineKeyboardButton("🏠 В МЕНЮ", callback_data="go_main")])
     return InlineKeyboardMarkup(kb)
+
+def timeframe_kb():
+    return InlineKeyboardMarkup([
+        [InlineKeyboardButton("10С", callback_data="t_10s"),
+         InlineKeyboardButton("15С", callback_data="t_15s"),
+         InlineKeyboardButton("30С", callback_data="t_30s")],
+        [InlineKeyboardButton("1М", callback_data="t_1m"),
+         InlineKeyboardButton("2М", callback_data="t_2m"),
+         InlineKeyboardButton("3М", callback_data="t_3m"),
+         InlineKeyboardButton("4М", callback_data="t_4m"),
+         InlineKeyboardButton("5М", callback_data="t_5m")]
+    ])
 
 # ================== START ==================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -124,6 +137,15 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"❌ **ДОСТУП ЗАКРЫТ**\n\n🆔 Ваш ID: `{uid}`\n\nНапишите админам для активации",
             parse_mode="Markdown",
             reply_markup=admins_kb()
+        )
+        return
+
+    if is_admin(uid):
+        # Авторы/админы сразу видят меню анализа
+        await update.message.reply_text(
+            "👑 **ULTRA KURUT AI** — Авторский режим\n\nВыберите действие:",
+            parse_mode="Markdown",
+            reply_markup=main_kb()
         )
         return
 
@@ -138,6 +160,7 @@ async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     uid = q.from_user.id
     await q.answer()
+
     if not has_access(uid):
         await q.edit_message_text(
             f"❌ ДОСТУП ЗАКРЫТ\n\n🆔 Ваш ID: `{uid}`",
@@ -146,9 +169,11 @@ async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
         return
 
+    # ------------------ Меню ------------------
     if q.data == "go_main":
         await start(update, context)
 
+    # ------------------ Категории ------------------
     elif q.data == "category":
         kb = [
             [InlineKeyboardButton("💱 Валюты OTC", callback_data="nav_curr_0")],
@@ -170,18 +195,10 @@ async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
         await q.edit_message_text(
             f"Актив: **{data[idx]}**\nВыберите таймфрейм:",
             parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("10C", callback_data="t_10s"),
-                 InlineKeyboardButton("15C", callback_data="t_15s"),
-                 InlineKeyboardButton("30C", callback_data="t_30s")],
-                [InlineKeyboardButton("1М", callback_data="t_1m"),
-                 InlineKeyboardButton("2М", callback_data="t_2m"),
-                 InlineKeyboardButton("3М", callback_data="t_3m"),
-                 InlineKeyboardButton("4М", callback_data="t_4m"),
-                 InlineKeyboardButton("5М", callback_data="t_5m")]
-            ])
+            reply_markup=timeframe_kb()
         )
 
+    # ------------------ Таймфреймы ------------------
     elif q.data.startswith("t_"):
         tf = q.data[2:]
         asset = context.user_data["asset"]
@@ -199,33 +216,43 @@ async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 Новый анализ", callback_data="category")]])
         )
 
-    elif q.data == "guide":
-        await q.edit_message_text(
-            "📘 **ИНСТРУКЦИЯ**\n\n"
-            "1️⃣ Выберите актив\n"
-            "2️⃣ Выберите таймфрейм\n"
-            "3️⃣ Получите сигнал\n"
-            "4️⃣ Откройте сделку сразу\n\n"
-            "⚠️ Рекомендуемый риск: не более 5%",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("➡️ Далее", callback_data="ref")]])
-        )
-
-    elif q.data == "ref":
-        await q.edit_message_text(
-            f"💰 **КАК НАЧАТЬ**\n\n"
-            f"🔗 Регистрация через реферальку:\n{REF_LINK}\n\n"
-            f"💵 Депозит: 20–30$\n"
-            f"✍️ Напишите админу для доступа\n\n"
-            f"🆔 Ваш ID: `{uid}`",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("📺 YouTube", url=YOUTUBE)],
-                [InlineKeyboardButton("🤖 Второй бот", url=SECOND_BOT)],
-                [InlineKeyboardButton("✍️ Админы", callback_data="contact")]
-            ]),
-            disable_web_page_preview=True
-        )
+    # ------------------ Инструкция ------------------
+    elif q.data.startswith("guide"):
+        page = int(q.data[-1])
+        if page == 1:
+            await q.edit_message_text(
+                "📘 **ИНСТРУКЦИЯ (Страница 1)**\n\n"
+                "1️⃣ Выберите актив\n"
+                "2️⃣ Выберите таймфрейм\n"
+                "3️⃣ Получите сигнал\n"
+                "4️⃣ Откройте сделку сразу\n\n"
+                "⚠️ Рекомендуемый риск: не более 5%",
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("➡️ Далее", callback_data="guide2")]])
+            )
+        elif page == 2:
+            await q.edit_message_text(
+                "📘 **ИНСТРУКЦИЯ (Страница 2)**\n\n"
+                "💰 Регистрация через реферальку: {}\n"
+                "💵 Депозит: 20–30$\n"
+                "✍️ Напишите админу для активации\n\n"
+                "🆔 Ваш ID: `{}`".format(REF_LINK, uid),
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([
+                    [InlineKeyboardButton("➡️ Далее", callback_data="guide3")]
+                ])
+            )
+        elif page == 3:
+            await q.edit_message_text(
+                "📘 **ИНСТРУКЦИЯ (Страница 3)**\n\n"
+                "🔗 Реферальная ссылка: {}\n"
+                "📺 YouTube: {}\n"
+                "🤖 Второй бот: {}\n"
+                "📢 TG: {}\n"
+                "📸 INST: {}".format(REF_LINK,YOUTUBE,SECOND_BOT,LINK_TG,LINK_INSTA),
+                parse_mode="Markdown",
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✍️ Админы", callback_data="contact")]])
+            )
 
     elif q.data == "contact":
         await q.edit_message_text("Связь с админами:", reply_markup=admins_kb())
