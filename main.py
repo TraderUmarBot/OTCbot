@@ -54,20 +54,24 @@ STOCK_ASSETS = [
 ]
 
 TECH_INDICATORS = [
-    "RSI","MACD","Bollinger Bands","Stochastic","EMA 50","EMA 200",
-    "VWAP","ATR","ADX","SuperTrend","CCI","OBV","ROC","Williams %R"
+    "RSI (14)","MACD (12,26,9)","Bollinger Bands","Stochastic (5,3,3)","EMA 50",
+    "EMA 200","VWAP","ATR (14)","ADX (14)","SuperTrend","CCI (20)","OBV",
+    "ROC","Williams %R","Parabolic SAR","ATR Bands","MFI","TRIX","Ultimate Oscillator",
+    "Chaikin Money Flow","Keltner Channels","Donchian Channels","Hull MA","Rate of Change",
+    "Bulls Power","Bears Power","Pivot Points","Fibonacci Retracement","Awesome Oscillator","Ichimoku Cloud"
 ]
 
 # ================== АНАЛИЗ ==================
 async def perform_analysis(query, asset, tf):
     steps = [
-        "🔍 Сканирование рынка...",
-        "📊 Анализ индикаторов...",
-        "🧠 Фильтрация сигнала...",
-        "🎯 Формирование входа..."
+        f"🔍 Сканирование графика {asset} на ТФ {tf}...",
+        "📉 Построение уровней поддержки и сопротивления (S/R)...",
+        "⚙️ Проверка 30 тех. индикаторов...",
+        "🧠 Фильтрация сигнала через кластерный анализ...",
+        "🎯 Формирование финального сигнала..."
     ]
     for s in steps:
-        await query.edit_message_text(f"⏳ **АНАЛИЗ**\n\n{s}")
+        await query.edit_message_text(f"⏳ **АНАЛИЗ В ПРОЦЕССЕ**\n\n{s}")
         await asyncio.sleep(1)
 
     power = sum(random.uniform(-1, 1) for _ in TECH_INDICATORS)
@@ -75,7 +79,7 @@ async def perform_analysis(query, asset, tf):
     accuracy = min(99.8, 94 + abs(power))
     sup = round(random.uniform(1.0500, 1.1000), 5)
     res = round(sup + random.uniform(0.0010, 0.0050), 5)
-    confirmed = random.sample(TECH_INDICATORS, 4)
+    confirmed = random.sample(TECH_INDICATORS, 6)
 
     return direction, round(accuracy,2), confirmed, sup, res
 
@@ -90,10 +94,27 @@ def main_kb():
 
 def admins_kb():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("✍️ Админ 1", url="https://t.me/id6117198446")],
-        [InlineKeyboardButton("✍️ Админ 2", url="https://t.me/id7079260196")],
+        [InlineKeyboardButton("✍️ Админ 1", url="https://t.me/KURUTTRADING")],
+        [InlineKeyboardButton("✍️ Админ 2", url="https://t.me/KURUTTRADING")],
         [InlineKeyboardButton("🏠 В МЕНЮ", callback_data="go_main")]
     ])
+
+def paged_kb(data, page, prefix):
+    size = 10
+    start = page*size
+    items = data[start:start+size]
+    kb = []
+    for i in range(0,len(items),2):
+        row = [InlineKeyboardButton(items[i], callback_data=f"{prefix}_{start+i}")]
+        if i+1<len(items): row.append(InlineKeyboardButton(items[i+1], callback_data=f"{prefix}_{start+i+1}"))
+        kb.append(row)
+    nav = []
+    if page>0: nav.append(InlineKeyboardButton("⬅️", callback_data=f"nav_{prefix}_{page-1}"))
+    if start+size<len(data): nav.append(InlineKeyboardButton("➡️", callback_data=f"nav_{prefix}_{page+1}"))
+    if nav: kb.append(nav)
+    kb.append(nav)
+    kb.append([InlineKeyboardButton("🏠 В МЕНЮ", callback_data="go_main")])
+    return InlineKeyboardMarkup(kb)
 
 # ================== START ==================
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -107,7 +128,7 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
 
     await update.message.reply_text(
-        "👑 **ULTRA KURUT AI**\n\nВыберите действие:",
+        "👑 **ULTRA KURUT AI — ЭЛИТНЫЙ ТРЕЙДИНГ**\n\nВыберите действие:",
         parse_mode="Markdown",
         reply_markup=main_kb()
     )
@@ -117,7 +138,6 @@ async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     q = update.callback_query
     uid = q.from_user.id
     await q.answer()
-
     if not has_access(uid):
         await q.edit_message_text(
             f"❌ ДОСТУП ЗАКРЫТ\n\n🆔 Ваш ID: `{uid}`",
@@ -151,10 +171,13 @@ async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
             f"Актив: **{data[idx]}**\nВыберите таймфрейм:",
             parse_mode="Markdown",
             reply_markup=InlineKeyboardMarkup([
-                [InlineKeyboardButton("5C", callback_data="t_5s"),
+                [InlineKeyboardButton("10C", callback_data="t_10s"),
                  InlineKeyboardButton("15C", callback_data="t_15s"),
                  InlineKeyboardButton("30C", callback_data="t_30s")],
                 [InlineKeyboardButton("1М", callback_data="t_1m"),
+                 InlineKeyboardButton("2М", callback_data="t_2m"),
+                 InlineKeyboardButton("3М", callback_data="t_3m"),
+                 InlineKeyboardButton("4М", callback_data="t_4m"),
                  InlineKeyboardButton("5М", callback_data="t_5m")]
             ])
         )
@@ -191,8 +214,8 @@ async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
     elif q.data == "ref":
         await q.edit_message_text(
             f"💰 **КАК НАЧАТЬ**\n\n"
-            f"🔗 Регистрация:\n{REF_LINK}\n\n"
-            f"💵 Депозит: **20–30$**\n"
+            f"🔗 Регистрация через реферальку:\n{REF_LINK}\n\n"
+            f"💵 Депозит: 20–30$\n"
             f"✍️ Напишите админу для доступа\n\n"
             f"🆔 Ваш ID: `{uid}`",
             parse_mode="Markdown",
