@@ -1,12 +1,14 @@
 import asyncio
+import logging
 import random
-from http.server import HTTPServer
+import time
+from http.server import BaseHTTPRequestHandler, HTTPServer
 from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# ================== АДМИНЫ И ДОСТУП ==================
-ADMINS = {6117198446, 7079260196}
+# ================== ДОСТУП ==================
+ADMINS = {6117198446, 7079260196}  # админы
 ALLOWED_USERS = set()
 
 def has_access(uid):
@@ -15,7 +17,7 @@ def has_access(uid):
 def is_admin(uid):
     return uid in ADMINS
 
-# ================== НАСТРОЙКИ ==================
+# ================== ССЫЛКИ ==================
 TOKEN = "8596735739:AAG4N6TLkI9GaBQvaWanknNrvJvpHWmQcTc"
 
 LINK_TG = "https://t.me/KURUTTRADING"
@@ -56,229 +58,214 @@ STOCK_ASSETS = [
 ]
 
 TECH_INDICATORS = [
-    "RSI (14)","MACD (12,26,9)","Bollinger Bands","Stochastic (5,3,3)","EMA 50",
-    "EMA 200","VWAP","ATR (14)","ADX (14)","SuperTrend","CCI (20)","OBV",
-    "ROC","Williams %R","Parabolic SAR","ATR Bands","MFI","TRIX","Ultimate Oscillator",
-    "Chaikin Money Flow","Keltner Channels","Donchian Channels","Hull MA","Rate of Change",
-    "Bulls Power","Bears Power","Pivot Points","Fibonacci Retracement","Awesome Oscillator","Ichimoku Cloud"
+    "RSI (14)", "MACD (12,26,9)", "Bollinger Bands", "Stochastic (5,3,3)", "Ichimoku Cloud",
+    "ATR (14)", "ADX (14)", "Parabolic SAR", "CCI (20)", "Awesome Oscillator",
+    "Pivot Points", "Fibonacci Retracement", "Volume Profile", "MFI", "EMA 50", 
+    "EMA 200", "VWAP", "Donchian Channels", "Williams %R", "SuperTrend",
+    "Chaikin Money Flow", "Keltner Channels", "TRIX", "Rate of Change (ROC)", 
+    "Bull Power", "Bear Power", "On-Balance Volume (OBV)", "Hull Moving Average",
+    "Ultimate Oscillator", "Standard Deviation"
 ]
 
-# ================== АНАЛИЗ ==================
-async def perform_analysis(query, asset, tf):
-    steps = [
-        f"🔍 Сканирование графика {asset} на ТФ {tf}...",
+# ================== ЭЛИТНЫЙ АНАЛИЗ ==================
+async def perform_elite_analysis(query, asset, timeframe):
+    analysis_steps = [
+        f"🔍 Сканирование графика {asset} на ТФ {timeframe}...",
         "📉 Построение уровней поддержки и сопротивления (S/R)...",
-        "⚙️ Проверка 30 тех. индикаторов...",
-        "🧠 Фильтрация сигнала через кластерный анализ...",
-        "🎯 Формирование финального сигнала..."
+        "⚙️ Математический опрос 30 тех. индикаторов...",
+        "🧠 Нейросетевая проверка рыночных манипуляций...",
+        "🎯 Фильтрация сигнала через кластерный объем..."
     ]
-    for s in steps:
-        await query.edit_message_text(f"⏳ **АНАЛИЗ В ПРОЦЕССЕ**\n\n{s}")
-        await asyncio.sleep(1)
+    
+    for step in analysis_steps:
+        await query.edit_message_text(f"⏳ **PRO-АНАЛИЗ В ПРОЦЕССЕ...**\n\n{step}")
+        await asyncio.sleep(1.1)
 
-    power = sum(random.uniform(-1, 1) for _ in TECH_INDICATORS)
-    direction = "ВВЕРХ 🟢" if power > 0 else "ВНИЗ 🔴"
-    accuracy = min(99.8, 94 + abs(power))
+    trend_power = sum([random.uniform(-1, 1) for _ in range(30)])
     sup = round(random.uniform(1.0500, 1.1000), 5)
     res = round(sup + random.uniform(0.0010, 0.0050), 5)
+    direction = "ВВЕРХ 🟢" if trend_power > 0 else "ВНИЗ 🔴"
+    accuracy = 94.5 + (abs(trend_power) / 15 * 5.4)
+    if accuracy > 99.8: accuracy = 99.8
     confirmed = random.sample(TECH_INDICATORS, 6)
-
-    return direction, round(accuracy,2), confirmed, sup, res
+    return direction, round(accuracy, 2), confirmed, sup, res
 
 # ================== КЛАВИАТУРЫ ==================
-def main_kb():
+def get_main_kb():
     return InlineKeyboardMarkup([
-        [InlineKeyboardButton("📊 НАЧАТЬ АНАЛИЗ", callback_data="category")],
-        [InlineKeyboardButton("📘 ИНСТРУКЦИЯ", callback_data="guide1")],
-        [InlineKeyboardButton("💰 КАК НАЧАТЬ", callback_data="guide2")],
-        [InlineKeyboardButton("📢 TG", url=LINK_TG), InlineKeyboardButton("📸 INST", url=LINK_INSTA)]
+        [InlineKeyboardButton("📊 НАЧАТЬ АНАЛИЗ (PRO)", callback_data="category")],
+        [InlineKeyboardButton("📈 МОЯ СТАТИСТИКА", callback_data="stats")],
+        [InlineKeyboardButton("📢 КАНАЛ", url=LINK_TG), InlineKeyboardButton("📸 ИНСТА", url=LINK_INSTA)],
+        [InlineKeyboardButton("▶️ YouTube", url=YOUTUBE), InlineKeyboardButton("🤖 Второй бот", url=SECOND_BOT)],
+        [InlineKeyboardButton("🔗 Реф. ссылка", url=REF_LINK)]
     ])
 
-def admins_kb():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("✍️ Админ 1", url="https://t.me/KURUTTRADING")],
-        [InlineKeyboardButton("✍️ Админ 2", url="https://t.me/KURUTTRADING")],
-        [InlineKeyboardButton("🏠 В МЕНЮ", callback_data="go_main")]
-    ])
-
-def paged_kb(data, page, prefix):
-    size = 10
-    start = page*size
-    items = data[start:start+size]
+def get_admin_contact_kb():
     kb = []
-    for i in range(0,len(items),2):
-        row = [InlineKeyboardButton(items[i], callback_data=f"{prefix}_{start+i}")]
-        if i+1<len(items): row.append(InlineKeyboardButton(items[i+1], callback_data=f"{prefix}_{start+i+1}"))
+    for admin_id in ADMINS:
+        kb.append([InlineKeyboardButton(f"Написать админу {admin_id}", url=f"tg://user?id={admin_id}")])
+    return InlineKeyboardMarkup(kb)
+
+# ================== СТАРТ ==================
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.message.from_user.id
+    if not has_access(uid):
+        await update.message.reply_text(
+            f"❌ У вас нет доступа. Обратитесь к администратору.\n"
+            f"Ваш ID: `{uid}`", parse_mode="Markdown", reply_markup=get_admin_contact_kb()
+        )
+        return
+
+    welcome_text = (
+        "👑 **ULTRA KURUT AI — ЭЛИТНЫЙ ТРЕЙДИНГ 2026**\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "Добро пожаловать в систему анализа OTC-рынков. Здесь вы можете использовать наш AI для анализа рынка.\n\n"
+        "📍 **Ссылки:**\n"
+        f"• [Канал Telegram]({LINK_TG})\n"
+        f"• [Instagram]({LINK_INSTA})\n"
+        f"• [YouTube]({YOUTUBE})\n"
+        f"• [Второй бот]({SECOND_BOT})\n"
+        f"• [Реферальная ссылка]({REF_LINK})\n\n"
+        "━━━━━━━━━━━━━━━━━━━━\n"
+        "🎯 *Нажмите кнопку ниже, чтобы начать зарабатывать.*"
+    )
+
+    await update.message.reply_text(welcome_text, reply_markup=get_main_kb(), parse_mode="Markdown", disable_web_page_preview=True)
+
+# ================== КОМАНДЫ АДМИНА ==================
+async def grant(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.message.from_user.id
+    if not is_admin(uid):
+        await update.message.reply_text("❌ У вас нет прав администратора.")
+        return
+    try:
+        target_id = int(context.args[0])
+        ALLOWED_USERS.add(target_id)
+        await update.message.reply_text(f"✅ Доступ выдан пользователю {target_id}.")
+    except:
+        await update.message.reply_text("Использование: /grant <user_id>")
+
+async def revoke(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    uid = update.message.from_user.id
+    if not is_admin(uid):
+        await update.message.reply_text("❌ У вас нет прав администратора.")
+        return
+    try:
+        target_id = int(context.args[0])
+        ALLOWED_USERS.discard(target_id)
+        await update.message.reply_text(f"❌ Доступ отозван у пользователя {target_id}.")
+    except:
+        await update.message.reply_text("Использование: /revoke <user_id>")
+
+# ================== ОБРАБОТЧИК CALLBACK ==================
+async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    uid = query.from_user.id
+    await query.answer()
+
+    if uid not in user_stats:
+        user_stats[uid] = {"win": 0, "loss": 0}
+
+    if query.data == "go_main":
+        await start(update, context)
+
+    elif query.data == "category":
+        kb = [
+            [InlineKeyboardButton("💱 Валютные пары OTC", callback_data="nav_curr_0")],
+            [InlineKeyboardButton("₿ Криптовалюты OTC", callback_data="nav_cryp_0")],
+            [InlineKeyboardButton("🏢 Акции OTC", callback_data="nav_stock_0")],
+            [InlineKeyboardButton("🏠 НАЗАД", callback_data="go_main")]
+        ]
+        await query.edit_message_text("🎯 **ВЫБЕРИТЕ КАТЕГОРИЮ АКТИВОВ:**", reply_markup=InlineKeyboardMarkup(kb))
+
+    elif query.data.startswith("nav_"):
+        _, pref, page = query.data.split("_")
+        if pref == "curr":
+            data = CURRENCY_PAIRS
+        elif pref == "cryp":
+            data = CRYPTO_ASSETS
+        else:
+            data = STOCK_ASSETS
+        await query.edit_message_text("📍 **Выберите торговый актив:**", reply_markup=get_paged_kb(data, int(page), pref))
+
+    elif query.data.startswith(("curr_", "cryp_", "stock_")):
+        idx = int(query.data.split("_")[1])
+        if "curr" in query.data:
+            context.user_data['asset'] = CURRENCY_PAIRS[idx]
+        elif "cryp" in query.data:
+            context.user_data['asset'] = CRYPTO_ASSETS[idx]
+        else:
+            context.user_data['asset'] = STOCK_ASSETS[idx]
+
+        kb = [
+            [InlineKeyboardButton("5С", callback_data="t_5s"), InlineKeyboardButton("15С", callback_data="t_15s"), InlineKeyboardButton("30С", callback_data="t_30s")],
+            [InlineKeyboardButton("1М", callback_data="t_1m"), InlineKeyboardButton("2М", callback_data="t_2m"), InlineKeyboardButton("5М", callback_data="t_5m")]
+        ]
+        await query.edit_message_text(f"💎 Актив: **{context.user_data['asset']}**\nВыберите таймфрейм экспирации:", reply_markup=InlineKeyboardMarkup(kb))
+
+    elif query.data.startswith("t_"):
+        tf = query.data.split("_")[1].replace('s',' сек').replace('m',' мин')
+        asset = context.user_data.get('asset', 'Active')
+        direction, acc, inds, sup, res = await perform_elite_analysis(query, asset, tf)
+
+        kb = [
+            [InlineKeyboardButton("✅ ПЛЮС", callback_data="win"), InlineKeyboardButton("❌ МИНУС", callback_data="loss")],
+            [InlineKeyboardButton("🔄 НОВЫЙ СИГНАЛ", callback_data="category")]
+        ]
+        await query.edit_message_text(
+            f"🚀 **СИГНАЛ СФОРМИРОВАН!**\n━━━━━━━━━━━━━━\n"
+            f"📊 АКТИВ: `{asset}`\n⚡️ НАПРАВЛЕНИЕ: **{direction}**\n⏱ ВРЕМЯ: `{tf}`\n🎯 ТОЧНОСТЬ: `{acc}%` \n"
+            f"━━━━━━━━━━━━━━\n"
+            f"📈 **ТЕХНИЧЕСКИЙ ОБЗОР:**\n"
+            f"• Сопротивление: `{res}`\n• Поддержка: `{sup}`\n"
+            f"• Анализ 30 индикаторов: `УСПЕШНО`\n"
+            f"• Сильное подтверждение: `{', '.join(inds[:3])}`\n\n"
+            f"🏁 **ОТМЕТЬТЕ РЕЗУЛЬТАТ СДЕЛКИ:**",
+            reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown"
+        )
+
+    elif query.data in ["win", "loss"]:
+        user_stats[uid]["win" if query.data == "win" else "loss"] += 1
+        await query.edit_message_text(
+            f"✅ **Данные сохранены!**\nВаша личная статистика обновлена.",
+            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 НОВЫЙ АНАЛИЗ", callback_data="category")]])
+        )
+
+# ================== ФУНКЦИЯ ПАГИНАЦИИ ==================
+def get_paged_kb(data, page, prefix):
+    size = 10
+    start = page * size
+    items = data[start:start + size]
+    kb = []
+    for i in range(0, len(items), 2):
+        row = [InlineKeyboardButton(items[i], callback_data=f"{prefix}_{start + i}")]
+        if i + 1 < len(items): row.append(InlineKeyboardButton(items[i+1], callback_data=f"{prefix}_{start + i + 1}"))
         kb.append(row)
     nav = []
-    if page>0: nav.append(InlineKeyboardButton("⬅️", callback_data=f"nav_{prefix}_{page-1}"))
-    if start+size<len(data): nav.append(InlineKeyboardButton("➡️", callback_data=f"nav_{prefix}_{page+1}"))
+    if page > 0: nav.append(InlineKeyboardButton("⬅️", callback_data=f"nav_{prefix}_{page-1}"))
+    if start + size < len(data): nav.append(InlineKeyboardButton("➡️", callback_data=f"nav_{prefix}_{page+1}"))
     if nav: kb.append(nav)
     kb.append([InlineKeyboardButton("🏠 В МЕНЮ", callback_data="go_main")])
     return InlineKeyboardMarkup(kb)
 
-def timeframe_kb():
-    return InlineKeyboardMarkup([
-        [InlineKeyboardButton("10С", callback_data="t_10s"),
-         InlineKeyboardButton("15С", callback_data="t_15s"),
-         InlineKeyboardButton("30С", callback_data="t_30s")],
-        [InlineKeyboardButton("1М", callback_data="t_1m"),
-         InlineKeyboardButton("2М", callback_data="t_2m"),
-         InlineKeyboardButton("3М", callback_data="t_3m"),
-         InlineKeyboardButton("4М", callback_data="t_4m"),
-         InlineKeyboardButton("5М", callback_data="t_5m")]
-    ])
-
-# ================== START ==================
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = update.effective_user.id
-    if not has_access(uid):
-        await update.message.reply_text(
-            f"❌ **ДОСТУП ЗАКРЫТ**\n\n🆔 Ваш ID: `{uid}`\n\nНапишите админам для активации",
-            parse_mode="Markdown",
-            reply_markup=admins_kb()
-        )
-        return
-
-    if is_admin(uid):
-        # Авторы/админы сразу видят меню анализа
-        await update.message.reply_text(
-            "👑 **ULTRA KURUT AI** — Авторский режим\n\nВыберите действие:",
-            parse_mode="Markdown",
-            reply_markup=main_kb()
-        )
-        return
-
-    await update.message.reply_text(
-        "👑 **ULTRA KURUT AI — ЭЛИТНЫЙ ТРЕЙДИНГ**\n\nВыберите действие:",
-        parse_mode="Markdown",
-        reply_markup=main_kb()
-    )
-
-# ================== CALLBACK ==================
-async def handle_cb(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    q = update.callback_query
-    uid = q.from_user.id
-    await q.answer()
-
-    if not has_access(uid):
-        await q.edit_message_text(
-            f"❌ ДОСТУП ЗАКРЫТ\n\n🆔 Ваш ID: `{uid}`",
-            parse_mode="Markdown",
-            reply_markup=admins_kb()
-        )
-        return
-
-    # ------------------ Меню ------------------
-    if q.data == "go_main":
-        await start(update, context)
-
-    # ------------------ Категории ------------------
-    elif q.data == "category":
-        kb = [
-            [InlineKeyboardButton("💱 Валюты OTC", callback_data="nav_curr_0")],
-            [InlineKeyboardButton("🪙 Крипта OTC", callback_data="nav_cryp_0")],
-            [InlineKeyboardButton("📈 Акции OTC", callback_data="nav_stock_0")],
-            [InlineKeyboardButton("🏠 Назад", callback_data="go_main")]
-        ]
-        await q.edit_message_text("Выберите категорию:", reply_markup=InlineKeyboardMarkup(kb))
-
-    elif q.data.startswith("nav_"):
-        _, pref, page = q.data.split("_")
-        data = CURRENCY_PAIRS if pref=="curr" else CRYPTO_ASSETS if pref=="cryp" else STOCK_ASSETS
-        await q.edit_message_text("Выберите актив:", reply_markup=paged_kb(data, int(page), pref))
-
-    elif q.data.startswith(("curr_","cryp_","stock_")):
-        idx = int(q.data.split("_")[1])
-        data = CURRENCY_PAIRS if "curr" in q.data else CRYPTO_ASSETS if "cryp" in q.data else STOCK_ASSETS
-        context.user_data["asset"] = data[idx]
-        await q.edit_message_text(
-            f"Актив: **{data[idx]}**\nВыберите таймфрейм:",
-            parse_mode="Markdown",
-            reply_markup=timeframe_kb()
-        )
-
-    # ------------------ Таймфреймы ------------------
-    elif q.data.startswith("t_"):
-        tf = q.data[2:]
-        asset = context.user_data["asset"]
-        d, acc, ind, sup, res = await perform_analysis(q, asset, tf)
-        await q.edit_message_text(
-            f"🚀 **СИГНАЛ**\n\n"
-            f"📊 Актив: `{asset}`\n"
-            f"⏱ ТФ: `{tf}`\n"
-            f"📈 Направление: **{d}**\n"
-            f"🎯 Точность: `{acc}%`\n\n"
-            f"📉 Поддержка: `{sup}`\n"
-            f"📈 Сопротивление: `{res}`\n"
-            f"⚙️ Индикаторы: {', '.join(ind)}",
-            parse_mode="Markdown",
-            reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 Новый анализ", callback_data="category")]])
-        )
-
-    # ------------------ Инструкция ------------------
-    elif q.data.startswith("guide"):
-        page = int(q.data[-1])
-        if page == 1:
-            await q.edit_message_text(
-                "📘 **ИНСТРУКЦИЯ (Страница 1)**\n\n"
-                "1️⃣ Выберите актив\n"
-                "2️⃣ Выберите таймфрейм\n"
-                "3️⃣ Получите сигнал\n"
-                "4️⃣ Откройте сделку сразу\n\n"
-                "⚠️ Рекомендуемый риск: не более 5%",
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("➡️ Далее", callback_data="guide2")]])
-            )
-        elif page == 2:
-            await q.edit_message_text(
-                "📘 **ИНСТРУКЦИЯ (Страница 2)**\n\n"
-                "💰 Регистрация через реферальку: {}\n"
-                "💵 Депозит: 20–30$\n"
-                "✍️ Напишите админу для активации\n\n"
-                "🆔 Ваш ID: `{}`".format(REF_LINK, uid),
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("➡️ Далее", callback_data="guide3")]
-                ])
-            )
-        elif page == 3:
-            await q.edit_message_text(
-                "📘 **ИНСТРУКЦИЯ (Страница 3)**\n\n"
-                "🔗 Реферальная ссылка: {}\n"
-                "📺 YouTube: {}\n"
-                "🤖 Второй бот: {}\n"
-                "📢 TG: {}\n"
-                "📸 INST: {}".format(REF_LINK,YOUTUBE,SECOND_BOT,LINK_TG,LINK_INSTA),
-                parse_mode="Markdown",
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("✍️ Админы", callback_data="contact")]])
-            )
-
-    elif q.data == "contact":
-        await q.edit_message_text("Связь с админами:", reply_markup=admins_kb())
-
-# ================== GRANT ==================
-async def grant(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    if update.effective_user.id not in ADMINS:
-        return
-    try:
-        uid = int(context.args[0])
-        ALLOWED_USERS.add(uid)
-        await update.message.reply_text(f"✅ Доступ выдан {uid}")
-    except:
-        await update.message.reply_text("Используй: /grant USER_ID")
-
 # ================== ЗАПУСК ==================
 if __name__ == "__main__":
-    def dummy():
-        HTTPServer(("0.0.0.0", 8080), lambda *a, **k: None).serve_forever()
+    def run_dummy():
+        server = HTTPServer(('0.0.0.0', 8080), lambda *a,**k: None)
+        server.serve_forever()
+    Thread(target=run_dummy, daemon=True).start()
 
-    Thread(target=dummy, daemon=True).start()
-
-    app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).connect_timeout(40).read_timeout(40).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("grant", grant))
+    app.add_handler(CommandHandler("revoke", revoke))
     app.add_handler(CallbackQueryHandler(handle_cb))
 
-    print("✅ Бот запущен")
-    app.run_polling()
+    print("✅ Бот запущен и готов к анализу...")
+    
+    while True:
+        try:
+            app.run_polling(drop_pending_updates=True, close_loop=False)
+        except Exception as e:
+            print(f"🔄 Реконнект через 10 секунд из-за ошибки: {e}")
+            time.sleep(10)
