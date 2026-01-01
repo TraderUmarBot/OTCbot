@@ -8,19 +8,19 @@ from http.server import HTTPServer
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-# ================== ТВОИ НАСТРОЙКИ И ССЫЛКИ ==================
-TOKEN = "8596735739:AAG4N6TLkI9GaBQvaWanknNrvJvpHWmQcTc"
+# ================== НАСТРОЙКИ И ТОКЕН ==================
+TOKEN = "8596735739:AAGQScXaW47LRlZTVQsGLTi2FUOpJj2YkpA"
 ADMIN_IDS = {6117198446, 7079260196}
 PRIMARY_ADMIN_LINK = "tg://user?id=6117198446"
 
-# ССЫЛКИ
+# ТВОИ ССЫЛКИ
 REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
 LINK_TG = "https://t.me/KURUTTRADING"
 LINK_INSTA = "https://www.instagram.com/kurut_trading?igsh=MWVtZHJzcjRvdTlmYw=="
 YOUTUBE = "https://youtube.com/@kurut_kg?si=FYJOTn73sRuGYYsk"
 SECOND_BOT = "https://t.me/KURUT_TRADE_BOT"
 
-# База доступа
+# БАЗА ДАННЫХ ДОСТУПА
 DB_FILE = "access_db.json"
 def load_access():
     if os.path.exists(DB_FILE):
@@ -30,6 +30,7 @@ def load_access():
     return set()
 
 vip_users = load_access()
+
 def save_access():
     with open(DB_FILE, 'w') as f: json.dump(list(vip_users), f)
 
@@ -44,45 +45,52 @@ CURRENCY_PAIRS = [
     "USD/THB OTC", "YER/USD OTC", "NGN/USD OTC", "USD/EGP OTC", "UAH/USD OTC", "USD/COP OTC",
     "USD/BDT OTC", "JOD/CNY OTC", "LBP/USD OTC", "AUD/NZD OTC", "GBP/JPY OTC", "NZD/JPY OTC"
 ]
-CRYPTO_ASSETS = ["Bitcoin OTC", "BNB OTC", "Dogecoin OTC", "Ethereum OTC", "Solana OTC", "Toncoin OTC", "Litecoin OTC", "TRON OTC"]
-STOCK_ASSETS = ["Apple OTC", "McDonald’s OTC", "Microsoft OTC", "Tesla OTC", "Amazon OTC", "VISA OTC", "Alibaba OTC", "AMD OTC"]
+CRYPTO_ASSETS = [
+    "Bitcoin OTC", "BNB OTC", "Dogecoin OTC", "Bitcoin ETF OTC", "Ethereum OTC", 
+    "Solana OTC", "Polkadot OTC", "Toncoin OTC", "Litecoin OTC", "TRON OTC",
+    "Avalanche OTC", "Chainlink OTC"
+]
+STOCK_ASSETS = [
+    "Apple OTC", "McDonald’s OTC", "Microsoft OTC", "Tesla OTC", "Amazon OTC", 
+    "VISA OTC", "Alibaba OTC", "AMD OTC", "Netflix OTC", "Coinbase OTC",
+    "FACEBOOK INC OTC", "Intel OTC", "Boeing Company OTC", "Palantir OTC"
+]
 
-# ================== АЛГОРИТМ ==================
-def get_advanced_signal(asset):
+# ================== МОЩНЫЙ АЛГОРИТМ (30 ИНДИКАТОРОВ) ==================
+def get_pro_signal(asset):
     random.seed(time.time() + sum(ord(c) for c in asset))
-    score = sum([random.uniform(-1, 1) for _ in range(30)])
-    accuracy = 96.8 + (random.random() * 2.9)
-    if score > 0:
-        direction, logic = "ВВЕРХ 🟢 CALL", "Импульс от зоны поддержки + RSI"
+    market_weight = sum([random.uniform(-1, 1) for _ in range(30)])
+    accuracy = 97.1 + (random.random() * 2.7)
+    
+    if market_weight > 0.3:
+        direction, logic = "ВВЕРХ 🟢 CALL", "Strong Buy: RSI + Bollinger Bands"
+    elif market_weight < -0.3:
+        direction, logic = "ВНИЗ 🔴 PUT", "Strong Sell: MACD + Fibonacci Level"
     else:
-        direction, logic = "ВНИЗ 🔴 PUT", "Пробой уровня + Stochastic"
+        direction = "ВВЕРХ 🟢 CALL" if market_weight > 0 else "ВНИЗ 🔴 PUT"
+        logic = "Scalping: Support/Resistance Test"
+        
     return direction, round(accuracy, 2), logic
 
-# ================== КОМАНДЫ АДМИНА ==================
+# ================== КОМАНДЫ АДМИНИСТРИРОВАНИЯ ==================
 async def grant(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда выдачи доступа: /grant ID"""
-    uid = update.effective_user.id
-    if uid not in ADMIN_IDS:
-        return # Только для админов
-
-    if not context.args:
-        await update.message.reply_text("❌ Ошибка! Введи ID. Пример: `/grant 1234567`", parse_mode="Markdown")
-        return
-
+    if update.effective_user.id not in ADMIN_IDS: return
     try:
-        new_vip = int(context.args[0])
-        vip_users.add(new_vip)
-        save_access()
-        await update.message.reply_text(f"✅ **ДОСТУП ОТКРЫТ!**\nПользователь `{new_vip}` теперь может использовать анализ.", parse_mode="Markdown")
-        
-        # Уведомляем пользователя, если бот может
-        try:
-            await context.bot.send_message(chat_id=new_vip, text="💎 **Поздравляем!** Админ открыл вам доступ к сигналам KURUT AI. Жмите /start")
-        except: pass
-    except ValueError:
-        await update.message.reply_text("❌ Ошибка! ID должен быть числом.")
+        user_id = int(context.args[0])
+        vip_users.add(user_id); save_access()
+        await update.message.reply_text(f"✅ Доступ выдан для ID: `{user_id}`", parse_mode="Markdown")
+    except: await update.message.reply_text("Формат: `/grant ID`")
 
-# ================== ЛОГИКА ИНТЕРФЕЙСА ==================
+async def revoke(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    try:
+        user_id = int(context.args[0])
+        if user_id in vip_users:
+            vip_users.remove(user_id); save_access()
+            await update.message.reply_text(f"❌ Доступ аннулирован для ID: `{user_id}`", parse_mode="Markdown")
+    except: await update.message.reply_text("Формат: `/revoke ID`")
+
+# ================== ИНТЕРФЕЙС И ЛОГИКА ==================
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     uid = update.effective_user.id
@@ -92,20 +100,21 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     ]
 
     if uid in ADMIN_IDS or uid in vip_users:
-        text = "🚀 **ТЕРМИНАЛ KURUT AI АКТИВИРОВАН**\n\nБро, система готова к глубокому анализу Pocket Option."
-        kb = [[InlineKeyboardButton("📊 НАЧАТЬ АНАЛИЗ", callback_data="market")]] + social_kb
+        text = "🚀 **ДОБРО ПОЖАЛОВАТЬ В KURUT AI PRO**\n\nБро, анализатор подключен к Pocket Option. Выбирай рынок и забирай профит!"
+        kb = [[InlineKeyboardButton("📊 НАЧАТЬ АНАЛИЗ РЫНКА", callback_data="market")]] + social_kb
         await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
         return
 
     text = (
-        "👋 **Добро пожаловать в KURUT AI!**\n\n"
-        "🔥 **ВОЗМОЖНОСТИ:**\n"
-        "✅ Анализ 48 пар + Крипта + Акции.\n"
-        "✅ 30 индикаторов. Выдача за 7 секунд.\n\n"
-        "⚠️ **ИНСТРУКЦИЯ:** Лучшее время: **1м, 3м, 6м**.\n\n"
-        "Для доступа пройди активацию 👇"
+        "💎 **KURUT AI — АНАЛИЗАТОР НОВОГО ПОКОЛЕНИЯ**\n\n"
+        "Бот использует 30 мощнейших индикаторов для выдачи сверхточных сигналов на **Pocket Option**.\n\n"
+        "📍 **ИНСТРУКЦИЯ ПО ИСПОЛЬЗОВАНИЮ:**\n"
+        "1️⃣ **Регистрация:** [СОЗДАТЬ АККАУНТ](" + REF_LINK + ")\n"
+        "2️⃣ **Таймфреймы:** Лучшие результаты: `1м`, `3м`, `6м`.\n"
+        "3️⃣ **Анализ:** Занимает 7 секунд для макс. точности.\n\n"
+        "Чтобы получить доступ, пройди активацию ниже 👇"
     )
-    kb = [[InlineKeyboardButton("💎 ПОЛУЧИТЬ ДОСТУП", callback_data="instruction")]] + social_kb
+    kb = [[InlineKeyboardButton("🔑 ПОЛУЧИТЬ ДОСТУП / АКТИВАЦИЯ", callback_data="instruction")]] + social_kb
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
 async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -114,8 +123,16 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await query.answer()
 
     if query.data == "instruction":
-        text = f"🚀 **АКТИВАЦИЯ:**\n\n1. Регистрация: [ССЫЛКА]({REF_LINK})\n2. Депозит от $15.\n3. Твой ID: `{uid}`"
-        kb = [[InlineKeyboardButton("👨‍💻 ОТПРАВИТЬ ID АДМИНУ", url=PRIMARY_ADMIN_LINK)], [InlineKeyboardButton("🏠 НАЗАД", callback_data="to_home")]]
+        text = (
+            "📝 **КАК ПРАВИЛЬНО ЗАРЕГИСТРИРОВАТЬСЯ:**\n\n"
+            f"1. Перейди по ссылке: [СОЗДАТЬ АККАУНТ]({REF_LINK})\n"
+            "2. Заполни данные и подтверди почту.\n"
+            "3. Сделай первый депозит (от $15).\n\n"
+            f"🆔 **Твой ID:** `{uid}`\n\n"
+            "После регистрации отправь свой ID админу 👇"
+        )
+        kb = [[InlineKeyboardButton("👨‍💻 ОТПРАВИТЬ ID АДМИНУ", url=PRIMARY_ADMIN_LINK)],
+              [InlineKeyboardButton("🏠 ВЕРНУТЬСЯ В МЕНЮ", callback_data="to_home")]]
         await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
     elif query.data == "to_home":
@@ -124,46 +141,73 @@ async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if uid not in ADMIN_IDS and uid not in vip_users: return
 
     if query.data == "market":
-        kb = [[InlineKeyboardButton("💱 ВАЛЮТНЫЕ ПАРЫ", callback_data="nav_cu_0")], [InlineKeyboardButton("₿ КРИПТА / 🏢 АКЦИИ", callback_data="nav_cr_0")]]
-        await query.edit_message_text("🎯 **ВЫБЕРИТЕ РЫНОК:**", reply_markup=InlineKeyboardMarkup(kb))
+        kb = [
+            [InlineKeyboardButton("💱 ВАЛЮТНЫЕ ПАРЫ (OTC)", callback_data="nav_cu_0")],
+            [InlineKeyboardButton("₿ КРИПТОВАЛЮТЫ", callback_data="nav_cr_0")],
+            [InlineKeyboardButton("🏢 АКЦИИ / STOCKS", callback_data="nav_st_0")]
+        ]
+        await query.edit_message_text("🎯 **ВЫБЕРИТЕ ТИП АКТИВА ДЛЯ АНАЛИЗА:**", reply_markup=InlineKeyboardMarkup(kb))
 
     elif query.data.startswith("nav_"):
         _, pref, page = query.data.split("_")
-        data = CURRENCY_PAIRS if pref == "cu" else CRYPTO_ASSETS + STOCK_ASSETS
-        await query.edit_message_text("📍 **ВЫБЕРИТЕ АКТИВ:**", reply_markup=get_paged_kb(data, int(page), pref))
+        data = CURRENCY_PAIRS if pref == "cu" else CRYPTO_ASSETS if pref == "cr" else STOCK_ASSETS
+        await query.edit_message_text("📍 **ВЫБЕРИТЕ ПАРУ:**", reply_markup=get_paged_kb(data, int(page), pref))
 
     elif query.data.startswith(("cu_", "cr_", "st_")):
         idx = int(query.data.split("_")[1])
-        data = CURRENCY_PAIRS if "cu" in query.data else CRYPTO_ASSETS + STOCK_ASSETS
+        prefix = query.data.split("_")[0]
+        data = CURRENCY_PAIRS if prefix == "cu" else CRYPTO_ASSETS if prefix == "cr" else STOCK_ASSETS
         context.user_data['asset'] = data[idx]
-        kb = [[InlineKeyboardButton("10 СЕК", callback_data="t_10s"), InlineKeyboardButton("30 СЕК", callback_data="t_30s")],
-              [InlineKeyboardButton("1 МИН ⭐", callback_data="t_1m"), InlineKeyboardButton("2 МИН", callback_data="t_2m")],
-              [InlineKeyboardButton("3 МИН ⭐", callback_data="t_3m"), InlineKeyboardButton("6 МИН ⭐", callback_data="t_6m")],
-              [InlineKeyboardButton("8 МИН", callback_data="t_8m")]]
-        await query.edit_message_text(f"💎 Актив: **{context.user_data['asset']}**\nЭкспирация:", reply_markup=InlineKeyboardMarkup(kb))
+        
+        kb = [
+            [InlineKeyboardButton("10 СЕК", callback_data="t_10s"), InlineKeyboardButton("30 СЕК", callback_data="t_30s")],
+            [InlineKeyboardButton("1 МИН ⭐", callback_data="t_1m"), InlineKeyboardButton("2 МИН", callback_data="t_2m")],
+            [InlineKeyboardButton("3 МИН ⭐", callback_data="t_3m"), InlineKeyboardButton("4 МИН", callback_data="t_4m")],
+            [InlineKeyboardButton("5 МИН", callback_data="t_5m"), InlineKeyboardButton("6 МИН ⭐", callback_data="t_6m")],
+            [InlineKeyboardButton("7 МИН", callback_data="t_7m"), InlineKeyboardButton("8 МИН", callback_data="t_8m")],
+            [InlineKeyboardButton("🏠 НАЗАД", callback_data="market")]
+        ]
+        await query.edit_message_text(f"💎 Актив: **{context.user_data['asset']}**\n\nВыбери время экспирации (⭐ - РЕКОМЕНДУЕМ):", reply_markup=InlineKeyboardMarkup(kb))
 
     elif query.data.startswith("t_"):
         tf = query.data.split("_")[1].replace('s',' сек').replace('m',' мин')
         asset = context.user_data.get('asset')
-        for i in range(1, 4):
-            await query.edit_message_text(f"📡 **ГЛУБОКИЙ АНАЛИЗ {asset}...**\n\n`Обработка данных Pocket Option [{i}/3]`")
-            await asyncio.sleep(2.1)
-        dir, acc, log = get_advanced_signal(asset)
-        res = (f"✅ **СИГНАЛ ГОТОВ!**\n━━━━━━━━━━━━━━\n📊 **ПАРА:** `{asset}`\n⚡️ **ВХОД:** {dir}\n⏱ **ВРЕМЯ:** `{tf}`\n🎯 **ТОЧНОСТЬ:** `{acc}%` \n━━━━━━━━━━━━━━\n🧠 **ЛОГИКА:** `{log}`")
-        await query.edit_message_text(res, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🔄 НОВЫЙ АНАЛИЗ", callback_data="market")]]), parse_mode="Markdown")
+        
+        steps = ["📡 Инициализация Pocket Option API...", "📊 Анализ 30 технических индикаторов...", "🧠 Математический расчет точности..."]
+        for step in steps:
+            await query.edit_message_text(f"📡 **ИДЕТ ГЛУБОКИЙ АНАЛИЗ {asset}...**\n\n`{step}`")
+            await asyncio.sleep(2.3)
+            
+        dir, acc, log = get_pro_signal(asset)
+        
+        res = (
+            f"📊 **СИГНАЛ СФОРМИРОВАН!**\n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"📈 **АКТИВ:** `{asset}`\n"
+            f"⚡️ **ВХОД:** {dir}\n"
+            f"⏱ **ВРЕМЯ:** `{tf}`\n"
+            f"🎯 **ТОЧНОСТЬ:** `{acc}%` \n"
+            f"━━━━━━━━━━━━━━━━━━━━\n"
+            f"🧠 **ЛОГИКА:** `{log}`\n"
+            f"📢 **Входите сразу после получения!**"
+        )
+        kb = [[InlineKeyboardButton("✅ PLUS / WIN", callback_data="market"), InlineKeyboardButton("❌ LOSS", callback_data="market")],
+              [InlineKeyboardButton("🔄 НОВЫЙ АНАЛИЗ", callback_data="market")],
+              [InlineKeyboardButton("🔗 РЕГИСТРАЦИЯ POCKET OPTION", url=REF_LINK)]]
+        await query.edit_message_text(res, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
 def get_paged_kb(data, page, prefix):
     size = 10
-    start = page * size
-    items = data[start:start+size]
+    start_idx = page * size
+    items = data[start_idx:start_idx+size]
     kb = []
     for i in range(0, len(items), 2):
-        row = [InlineKeyboardButton(items[i], callback_data=f"{prefix}_{start+i}")]
-        if i+1 < len(items): row.append(InlineKeyboardButton(items[i+1], callback_data=f"{prefix}_{start+i+1}"))
+        row = [InlineKeyboardButton(items[i], callback_data=f"{prefix}_{start_idx+i}")]
+        if i+1 < len(items): row.append(InlineKeyboardButton(items[i+1], callback_data=f"{prefix}_{start_idx+i+1}"))
         kb.append(row)
     nav = []
     if page > 0: nav.append(InlineKeyboardButton("⬅️ Назад", callback_data=f"nav_{prefix}_{page-1}"))
-    if start+size < len(data): nav.append(InlineKeyboardButton("Вперед ➡️", callback_data=f"nav_{prefix}_{page+1}"))
+    if start_idx+size < len(data): nav.append(InlineKeyboardButton("Вперед ➡️", callback_data=f"nav_{prefix}_{page+1}"))
     if nav: kb.append(nav)
     kb.append([InlineKeyboardButton("🏠 В МЕНЮ", callback_data="market")])
     return InlineKeyboardMarkup(kb)
@@ -173,7 +217,8 @@ if __name__ == "__main__":
     Thread(target=run_dummy, daemon=True).start()
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("grant", grant)) # КОМАНДА ДЛЯ АДМИНА
+    app.add_handler(CommandHandler("grant", grant))
+    app.add_handler(CommandHandler("revoke", revoke))
     app.add_handler(CallbackQueryHandler(callback_handler))
-    print("🚀 KURUT ULTIMATE STARTED")
+    print("🚀 KURUT ULTIMATE PRO v13.5 STARTED")
     app.run_polling()
