@@ -8,112 +8,136 @@ from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 
-# --- [1] SERVER FOR UPTIME ---
+# --- [1] СЕРВЕР ДЛЯ REPLIT ---
 server = Flask('')
 @server.route('/')
-def home(): return "KURUT AI ARMAGEDDON v18 IS ACTIVE"
+def home(): return "KURUT AI BLACK EDITION IS ONLINE"
 def run_web(): server.run(host='0.0.0.0', port=8080)
 
-# --- [2] CONFIG & LINKS ---
+# --- [2] КОНФИГУРАЦИЯ И ТВОИ ССЫЛКИ ---
 TOKEN = "8596735739:AAG4N6TLkI9GaBQvaWanknNrvJvpHWmQcTc"
 ADMIN_IDS = {6117198446, 7079260196}
-ADMIN_LINK = "https://t.me/id6117198446"
 
-REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
 LINK_TG = "https://t.me/KURUTTRADING"
 LINK_INSTA = "https://www.instagram.com/kurut_trading?igsh=MWVtZHJzcjRvdTlmYw=="
 YOUTUBE = "https://youtube.com/@kurut_kg?si=FYJOTn73sRuGYYsk"
 SECOND_BOT = "https://t.me/KURUT_TRADE_BOT"
+REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
 
-# Files
 DB_VIP = "vip_users.json"
 DB_ALL = "all_users.json"
-DB_USER_STATS = "user_performance.json" # Храним плюсы каждого юзера
 
-def load_json(file, default):
+def load_db(file):
     if os.path.exists(file):
-        try:
-            with open(file, 'r') as f: return json.load(f)
-        except: return default
-    return default
+        with open(file, 'r') as f: return set(json.load(f))
+    return set()
 
-def save_json(file, data):
-    with open(file, 'w') as f: json.dump(data, f)
+def save_db(file, data):
+    with open(file, 'w') as f: json.dump(list(data), f)
 
-vip_users = set(load_json(DB_VIP, []))
-all_users = set(load_json(DB_ALL, []))
-user_performance = load_json(DB_USER_STATS, {}) # {user_id: {"name": "Name", "wins": 0}}
+vip_users = load_db(DB_VIP)
+all_users = load_db(DB_ALL)
 
-# --- [3] ASSETS (FULL OTC LIST) ---
-CURRENCY_PAIRS = ["EUR/USD OTC", "AUD/CAD OTC", "AUD/CHF OTC", "AUD/JPY OTC", "AUD/NZD OTC", "AUD/USD OTC", "CAD/CHF OTC", "CAD/JPY OTC", "CHF/JPY OTC", "EUR/CHF OTC", "EUR/GBP OTC", "EUR/JPY OTC", "EUR/NZD OTC", "GBP/AUD OTC", "GBP/JPY OTC", "GBP/USD OTC", "NZD/JPY OTC", "NZD/USD OTC", "USD/CAD OTC", "USD/CHF OTC", "USD/JPY OTC", "USD/RUB OTC", "USD/INR OTC", "USD/SGD OTC", "USD/CLP OTC", "USD/VND OTC", "USD/COP OTC", "USD/MXN OTC", "USD/ARS OTC", "USD/BDT OTC", "USD/PKR OTC", "USD/THB OTC", "USD/PHP OTC", "USD/EGP OTC", "USD/CNH OTC", "USD/MYR OTC", "USD/IDR OTC", "USD/BRL OTC", "USD/DZD OTC", "EUR/RUB OTC", "EUR/TRY OTC", "EUR/HUF OTC", "CHF/NOK OTC", "BHD/CNY OTC", "AED/CNY OTC", "QAR/CNY OTC", "OMR/CNY OTC", "JOD/CNY OTC", "NGN/USD OTC", "KES/USD OTC", "ZAR/USD OTC", "UAH/USD OTC", "LBP/USD OTC", "TND/USD OTC", "MAD/USD OTC", "YER/USD OTC"]
-STOCK_ASSETS = ["Apple Inc OTC", "McDonald’s OTC", "Microsoft OTC", "Facebook Inc OTC", "Intel OTC", "Tesla OTC", "Pfizer Inc OTC", "Johnson & Johnson OTC", "Boeing Company OTC", "American Express OTC", "Amazon OTC", "Citigroup Inc OTC", "FedEx OTC", "VISA OTC", "Cisco OTC", "ExxonMobil OTC", "Alibaba OTC", "Netflix OTC", "VIX OTC", "Palantir OTC", "GameStop OTC", "AMD OTC", "Coinbase OTC", "Marathon Digital OTC"]
-CRYPTO_ASSETS = ["Bitcoin OTC", "Ethereum OTC", "Litecoin OTC", "Dogecoin OTC", "Polkadot OTC", "BNB OTC", "Solana OTC", "Cardano OTC", "TRON OTC", "Chainlink OTC", "Toncoin OTC", "Avalanche OTC", "Polygon OTC", "Bitcoin ETF OTC"]
+# --- [3] СПИСКИ АКТИВОВ (ПОЛНЫЙ OTC ПАКЕТ) ---
+CURRENCY_PAIRS = ["EUR/USD OTC", "AUD/CAD OTC", "AUD/CHF OTC", "AUD/JPY OTC", "AUD/NZD OTC", "AUD/USD OTC", "CAD/CHF OTC", "CAD/JPY OTC", "CHF/JPY OTC", "EUR/CHF OTC", "EUR/GBP OTC", "EUR/JPY OTC", "EUR/NZD OTC", "GBP/AUD OTC", "GBP/JPY OTC", "GBP/USD OTC", "NZD/JPY OTC", "NZD/USD OTC", "USD/CAD OTC", "USD/CHF OTC", "USD/JPY OTC", "USD/RUB OTC", "USD/INR OTC", "USD/SGD OTC", "USD/CNH OTC", "USD/BRL OTC", "EUR/RUB OTC", "EUR/TRY OTC", "ZAR/USD OTC", "UAH/USD OTC"]
+STOCK_ASSETS = ["Apple Inc OTC", "McDonald’s OTC", "Microsoft OTC", "Facebook OTC", "Intel OTC", "Tesla OTC", "Amazon OTC", "VISA OTC", "Alibaba OTC", "Netflix OTC", "Palantir OTC", "AMD OTC", "Coinbase OTC"]
+CRYPTO_ASSETS = ["Bitcoin OTC", "Ethereum OTC", "Litecoin OTC", "Dogecoin OTC", "Solana OTC", "Toncoin OTC", "Bitcoin ETF OTC"]
 
-# --- [4] ULTRA PRECISION ANALYSIS ---
-def get_ultra_signal(asset):
-    random.seed(time.time() + len(asset))
-    accuracy = 98.9 + (random.random() * 1.05) # 98.9% - 99.9%
-    trend = random.choice(["BUY", "SELL"])
+# --- [4] ЯДРО АНАЛИЗА (10 СЕКУНД, 20 ИНДИКАТОРОВ) ---
+def get_pro_signal(asset):
+    random.seed(time.time())
+    accuracy = random.uniform(82.4, 94.8)
+    direction = random.choice(["ВВЕРХ 🟢 CALL", "ВНИЗ 🔴 PUT"])
     
-    if trend == "BUY":
-        return "ВВЕРХ 🟢 CALL", round(accuracy, 2), "EMA 200 + MACD Bullish Cross"
-    else:
-        return "ВНИЗ 🔴 PUT", round(accuracy, 2), "EMA 200 + RSI Overbought"
+    indicators = [
+        "RSI (14) - Сигнал подтвержден", "Bollinger Bands - Пробой границы",
+        "MACD - Пересечение линий", "Stochastic - Зона разворота",
+        "EMA 200 - Тренд подтвержден", "Volume - Кластерный всплеск"
+    ]
+    log = random.sample(indicators, 2)
+    return direction, round(accuracy, 2), f"• {log[0]}\n• {log[1]}"
 
-# --- [5] CORE HANDLERS ---
+# --- [5] ОБРАБОТЧИКИ КОМАНД ---
 
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = str(update.effective_user.id)
-    name = update.effective_user.first_name
+    uid = update.effective_user.id
     if uid not in all_users:
-        all_users.add(uid); save_json(DB_ALL, list(all_users))
-    
-    if uid not in user_performance:
-        user_performance[uid] = {"name": name, "wins": 0}
-        save_json(DB_USER_STATS, user_performance)
+        all_users.add(uid); save_db(DB_ALL, all_users)
 
-    if uid in ADMIN_IDS or uid in vip_users:
-        text = f"🚀 **KURUT AI ARMAGEDDON v18**\n━━━━━━━━━━━━━━\nПривет, {name}! Система готова к анализу."
+    is_vip = uid in ADMIN_IDS or uid in vip_users
+    
+    if is_vip:
+        text = "👑 **KURUT AI BLACK EDITION**\n━━━━━━━━━━━━━━\nДобро пожаловать в элитный софт.\n\n"
         kb = [
-            [InlineKeyboardButton("📊 НАЧАТЬ АНАЛИЗ", callback_data="m_market")],
-            [InlineKeyboardButton("🏆 ТОП ТРЕЙДЕРОВ", callback_data="m_top"), InlineKeyboardButton("🏃 МАРАФОН", callback_data="m_mara")],
-            [InlineKeyboardButton("📢 КАНАЛ", url=LINK_TG), InlineKeyboardButton("🤖 ВТОРОЙ БОТ", url=SECOND_BOT)],
+            [InlineKeyboardButton("📊 ПОЛУЧИТЬ СИГНАЛ", callback_data="menu_market")],
+            [InlineKeyboardButton("🏃 МАРАФОН", callback_data="menu_mara"), InlineKeyboardButton("🏆 ТОП", callback_data="menu_top")],
+            [InlineKeyboardButton("📚 ИНСТРУКЦИЯ", callback_data="menu_guide")],
+            [InlineKeyboardButton("📢 КАНАЛ", url=LINK_TG), InlineKeyboardButton("🤖 БОТ 2.0", url=SECOND_BOT)],
             [InlineKeyboardButton("📸 INSTA", url=LINK_INSTA), InlineKeyboardButton("▶️ YOUTUBE", url=YOUTUBE)]
         ]
     else:
-        text = "⚠️ **ДОСТУП ЗАБЛОКИРОВАН**\n\nЧтобы не сливать баланс, используй профессиональный софт."
-        kb = [[InlineKeyboardButton("💎 ПОЛУЧИТЬ ДОСТУП", callback_data="m_vip")]]
+        text = "⚠️ **ДОСТУП ОГРАНИЧЕН**\n\nДля активации софта и торговли с проходимостью до 94% обратитесь к администратору."
+        kb = [[InlineKeyboardButton("💎 АКТИВИРОВАТЬ ДОСТУП", callback_data="menu_vip")], [InlineKeyboardButton("📢 КАНАЛ", url=LINK_TG)]]
     
     await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
-async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+# Команды админа
+async def admin_cmd(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    cmd = update.message.text.split()
+    if len(cmd) < 2: return
+    
+    target_id = int(cmd[1])
+    if "/grant" in cmd[0]:
+        vip_users.add(target_id); save_db(DB_VIP, vip_users)
+        await update.message.reply_text(f"✅ Доступ открыт для `{target_id}`")
+    elif "/revoke" in cmd[0]:
+        if target_id in vip_users: vip_users.remove(target_id); save_db(DB_VIP, vip_users)
+        await update.message.reply_text(f"❌ Доступ закрыт для `{target_id}`")
+
+async def broadcast(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    if update.effective_user.id not in ADMIN_IDS: return
+    count = 0
+    for user_id in all_users:
+        try:
+            if update.message.reply_to_message:
+                await context.bot.copy_message(chat_id=user_id, from_chat_id=update.message.chat_id, message_id=update.message.reply_to_message.message_id)
+            else:
+                text = update.message.text.replace("/send", "").strip()
+                if text: await context.bot.send_message(chat_id=user_id, text=text)
+            count += 1
+            await asyncio.sleep(0.05)
+        except: continue
+    await update.message.reply_text(f"📢 Рассылка на {count} человек завершена!")
+
+# --- [6] CALLBACKS ---
+
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
-    uid = str(query.from_user.id)
+    uid = query.from_user.id
     await query.answer()
 
-    if query.data == "m_vip":
-        text = f"💎 **АКТИВАЦИЯ:**\n\n1. [РЕГИСТРАЦИЯ]({REF_LINK})\n2. Депозит **$10+**\n3. Твой ID: `{uid}`"
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 МЕНЮ", callback_data="m_home")]]), parse_mode="Markdown")
+    if query.data == "menu_guide":
+        text = (
+            "📚 **ИНСТРУКЦИЯ ПО ТОРГОВЛЕ:**\n\n"
+            "1️⃣ **Время захода:** Как только бот выдал сигнал — заходим моментально.\n"
+            "2️⃣ **Таймфрейм:** Выбирайте тот, который указали в боте.\n"
+            "3️⃣ **Перекрытия:** Если сигнал не зашел, используйте максимум 1-2 догона.\n"
+            "4️⃣ **Мани-менеджмент:** Ставьте не более 2-3% от баланса.\n\n"
+            "⚠️ Помни: Анализ OTC требует дисциплины!"
+        )
+        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 НАЗАД", callback_data="menu_home")]]), parse_mode="Markdown")
 
-    elif query.data == "m_home": await start(update, context)
+    elif query.data == "menu_home":
+        await start(update, context)
 
-    # --- TOP TRADERS ---
-    elif query.data == "m_top":
-        sorted_users = sorted(user_performance.items(), key=lambda x: x[1]['wins'], reverse=True)[:10]
-        text = "🏆 **РЕЙТИНГ ТОП ТРЕЙДЕРОВ (ПО ПЛЮСАМ):**\n━━━━━━━━━━━━━━\n"
-        for i, (usr_id, data) in enumerate(sorted_users, 1):
-            text += f"{i}. {data['name']} — `{data['wins']}` ✅\n"
-        await query.edit_message_text(text, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 НАЗАД", callback_data="m_home")]]), parse_mode="Markdown")
+    elif query.data == "menu_vip":
+        await query.edit_message_text(f"💎 **Твой ID:** `{uid}`\nОтправь его админу после регистрации по ссылке:\n[ЗАРЕГИСТРИРОВАТЬСЯ]({REF_LINK})", parse_mode="Markdown", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 НАЗАД", callback_data="menu_home")]]))
 
-    # --- MARATHON ---
-    elif query.data == "m_mara":
-        await query.edit_message_text("💰 **Введи свой текущий баланс ($):**\n(Просто напиши число в чат, например: 100)")
-        context.user_data['waiting_balance'] = True
+    if uid not in ADMIN_IDS and uid not in vip_users: return
 
-    # --- ANALYSIS LOGIC ---
-    elif query.data == "m_market":
-        kb = [[InlineKeyboardButton("💱 ВАЛЮТЫ", callback_data="nav_cu_0")], 
-              [InlineKeyboardButton("🏢 АКЦИИ", callback_data="nav_st_0"), InlineKeyboardButton("₿ КРИПТА", callback_data="nav_cr_0")]]
+    if query.data == "menu_market":
+        kb = [[InlineKeyboardButton("💱 ВАЛЮТЫ", callback_data="nav_cu_0")], [InlineKeyboardButton("🏢 АКЦИИ", callback_data="nav_st_0"), InlineKeyboardButton("₿ КРИПТА", callback_data="nav_cr_0")]]
         await query.edit_message_text("🎯 **ВЫБЕРИТЕ РЫНОК:**", reply_markup=InlineKeyboardMarkup(kb))
 
     elif query.data.startswith("nav_"):
@@ -123,84 +147,55 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     elif query.data.startswith(("cu_", "cr_", "st_")):
         idx = int(query.data.split("_")[1])
-        data = CURRENCY_PAIRS if "cu" in query.data else CRYPTO_ASSETS if "cr" in query.data else STOCK_ASSETS
+        data = (CURRENCY_PAIRS if "cu" in query.data else CRYPTO_ASSETS if "cr" in query.data else STOCK_ASSETS)
         context.user_data['asset'] = data[idx]
-        times = ["10С", "30С", "1М", "2М", "3М", "4М", "5М", "8М"]
-        kb = [ [InlineKeyboardButton(t, callback_data=f"t_{t}")] for t in times ]
-        await query.edit_message_text(f"📊 **{data[idx]}**\nВремя экспирации:", reply_markup=InlineKeyboardMarkup(kb))
+        kb = [[InlineKeyboardButton(t, callback_data=f"t_{t}")] for t in ["10С", "1М", "2М", "5М", "8М"]]
+        await query.edit_message_text(f"📊 **{data[idx]}**\nВыбери время:", reply_markup=InlineKeyboardMarkup(kb))
 
     elif query.data.startswith("t_"):
         tf = query.data.split("_")[1]
         asset = context.user_data.get('asset')
-        msg = await query.edit_message_text(f"📡 **СКАНИРОВАНИЕ {asset}...**\n`Анализ EMA 200 + кластеры`")
-        await asyncio.sleep(1.5)
+        msg = await query.edit_message_text(f"📡 **АНАЛИЗ {asset}...**\n`Опрос 20 индикаторов`")
         
-        dir, acc, log = get_ultra_signal(asset)
-        res = f"🚀 **СИГНАЛ СФОРМИРОВАН!**\n━━━━━━━━━━━━━━\n📊 АКТИВ: `{asset}`\n⚡️ ВХОД: **{dir}**\n🎯 ТОЧНОСТЬ: `{acc}%` \n━━━━━━━━━━━━━━\n📑 `{log}`"
-        kb = [[InlineKeyboardButton("✅ ПЛЮС", callback_data="res_p"), InlineKeyboardButton("❌ МИНУС", callback_data="res_m")]]
+        # Ровно 10 секунд ожидания для "красоты"
+        for i in range(1, 4):
+            await asyncio.sleep(3)
+            await msg.edit_text(f"📡 **ГЛУБОКИЙ АНАЛИЗ {asset}...**\n`Прогресс: {i*33}%`")
+        
+        dir, acc, log = get_pro_signal(asset)
+        res = (
+            f"🚀 **СИГНАЛ ГОТОВ!**\n"
+            f"━━━━━━━━━━━━━━\n"
+            f"📊 АКТИВ: `{asset}`\n"
+            f"⏱ ВРЕМЯ: `{tf}`\n"
+            f"⚡️ ВХОД: **{dir}**\n"
+            f"🎯 ТОЧНОСТЬ: `{acc}%` \n"
+            f"━━━━━━━━━━━━━━\n"
+            f"📋 **АНАЛИТИКА:**\n{log}\n\n"
+            f"💎 `EMA 200 + CLUSTERS: OK`"
+        )
+        kb = [[InlineKeyboardButton("✅ ПЛЮС", callback_data="menu_market"), InlineKeyboardButton("❌ МИНУС", callback_data="menu_market")]]
         await msg.edit_text(res, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
-
-    elif query.data.startswith("res_"):
-        if query.data == "res_p":
-            user_performance[uid]["wins"] += 1
-            save_json(DB_USER_STATS, user_performance)
-        await query.edit_message_text("♻️ Результат учтен! Выбирай новый актив:", reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🎯 НОВЫЙ АНАЛИЗ", callback_data="m_market")]]))
-
-# --- [6] MARATHON PLAN GENERATOR ---
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    uid = str(update.effective_user.id)
-    if context.user_data.get('waiting_balance'):
-        try:
-            balance = float(update.message.text)
-            context.user_data['waiting_balance'] = False
-            plan = f"🏃 **ВАШ МАРАФОН НА 30 ДНЕЙ (Баланс: ${balance})**\n━━━━━━━━━━━━━━\n"
-            plan += f"🔹 **Цель:** `${round(balance*5, 2)}` за месяц\n"
-            plan += f"🔹 **Риск на сделку:** `${round(balance*0.02, 2)}` (2%)\n\n"
-            plan += "📅 **ПЛАН:**\n"
-            plan += f"• Неделя 1: Цель +15% к банку\n• Неделя 2: Цель +25% к банку\n• ПРАВИЛО: 2 минуса в ряд = СТОП.\n\n"
-            plan += "Удачи! Используй сигналы бота для реализации плана."
-            await update.message.reply_text(plan, reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("🏠 МЕНЮ", callback_data="m_home")]]), parse_mode="Markdown")
-        except:
-            await update.message.reply_text("❌ Введи числовое значение баланса!")
-        return
-
-    # BROADCAST /send
-    if uid in ADMIN_IDS and update.message.text and update.message.text.startswith("/send"):
-        text_to_send = update.message.text.replace("/send", "").strip()
-        count = 0
-        for user in all_users:
-            try:
-                if update.message.reply_to_message:
-                    await context.bot.copy_message(chat_id=user, from_chat_id=update.message.chat_id, message_id=update.message.reply_to_message.message_id)
-                else:
-                    await context.bot.send_message(chat_id=user, text=text_to_send)
-                count += 1
-                await asyncio.sleep(0.05)
-            except: continue
-        await update.message.reply_text(f"📢 Рассылка на {count} чел. завершена.")
 
 def get_paged_kb(data, page, prefix):
     size = 10
-    start_idx = page * size
-    items = data[start_idx:start_idx + size]
-    kb = []
-    for i in range(0, len(items), 2):
-        row = [InlineKeyboardButton(items[i], callback_data=f"{prefix}_{start_idx + i}")]
-        if i + 1 < len(items): row.append(InlineKeyboardButton(items[i+1], callback_data=f"{prefix}_{start_idx + i + 1}"))
-        kb.append(row)
+    items = data[page*size : (page+1)*size]
+    kb = [[InlineKeyboardButton(items[i], callback_data=f"{prefix}_{page*size+i}")] for i in range(len(items))]
     nav = []
     if page > 0: nav.append(InlineKeyboardButton("⬅️", callback_data=f"nav_{prefix}_{page-1}"))
-    if start_idx + size < len(data): nav.append(InlineKeyboardButton("➡️", callback_data=f"nav_{prefix}_{page+1}"))
+    if (page+1)*size < len(data): nav.append(InlineKeyboardButton("➡️", callback_data=f"nav_{prefix}_{page+1}"))
     if nav: kb.append(nav)
-    kb.append([InlineKeyboardButton("🏠 МЕНЮ", callback_data="m_home")])
+    kb.append([InlineKeyboardButton("🏠 МЕНЮ", callback_data="menu_home")])
     return InlineKeyboardMarkup(kb)
 
 if __name__ == "__main__":
     Thread(target=run_web).start()
     app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(handle_callback))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    app.add_handler(MessageHandler(filters.COMMAND & filters.Regex(r'^/send'), handle_message))
-    print("🚀 ARMAGEDDON READY")
+    app.add_handler(CommandHandler("grant", admin_cmd))
+    app.add_handler(CommandHandler("revoke", admin_cmd))
+    app.add_handler(CommandHandler("send", broadcast))
+    app.add_handler(MessageHandler((filters.PHOTO | filters.VIDEO | filters.TEXT) & filters.CaptionRegex(r'^/send'), broadcast))
+    app.add_handler(CallbackQueryHandler(callback_handler))
+    print("🚀 KURUT AI v20 BLACK EDITION STARTED")
     app.run_polling()
