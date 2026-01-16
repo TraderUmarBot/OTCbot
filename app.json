@@ -1,0 +1,10 @@
+{
+  "name": "Kurut AI Bot",
+  "description": "OTC Signal Bot for Pocket Option",
+  "keywords": ["python", "telegram", "trading", "signals"],
+  "buildpacks": [
+    {
+      "url": "heroku/python"
+    }
+  ]
+}
