@@ -648,7 +648,77 @@ async def callback_handler(update: Update, context):
                     'plus': plus,
                     'minus': minus,
                     'profit': profit,
-                    'winrate': winrate
-                })
-        
-        top_users
+                    'winrate':
+                # ---------------- MESSAGE HANDLER ----------------
+async def message_handler(update: Update, context):
+    if context.user_data.get("wait_balance"):
+        try:
+            bal = float(update.message.text.replace(",", "."))
+            context.user_data["wait_balance"] = False
+            
+            plan, results = marathon_calc.generate_plan(bal)
+            await update.message.reply_text(plan, parse_mode="Markdown")
+        except:
+            await update.message.reply_text("❌ Введите число!")
+
+# ---------------- ADMIN COMMANDS ----------------
+async def admin_commands(update: Update, context):
+    uid = str(update.effective_user.id)
+    if not is_admin(uid):
+        return
+
+    parts = update.message.text.split()
+    cmd = parts[0]
+
+    if cmd == "/grant" and len(parts) > 1:
+        tid = parts[1]
+        vip_users.add(tid)
+        save_db(DB_VIP, list(vip_users))
+        log_admin("GRANT", tid, uid)
+        await update.message.reply_text(f"✅ Доступ выдан: {tid}")
+
+    elif cmd == "/revoke" and len(parts) > 1:
+        tid = parts[1]
+        vip_users.discard(tid)
+        save_db(DB_VIP, list(vip_users))
+        log_admin("REVOKE", tid, uid)
+        await update.message.reply_text(f"❌ Доступ снят: {tid}")
+
+    elif cmd == "/send":
+        count = 0
+        for user in all_users:
+            try:
+                if update.message.reply_to_message:
+                    await context.bot.copy_message(
+                        chat_id=user,
+                        from_chat_id=update.message.chat_id,
+                        message_id=update.message.reply_to_message.message_id
+                    )
+                else:
+                    msg = update.message.text.replace("/send", "").strip()
+                    await context.bot.send_message(chat_id=user, text=msg)
+                count += 1
+                await asyncio.sleep(0.05)
+            except:
+                continue
+        await update.message.reply_text(f"📢 Отправлено: {count} пользователей")
+
+# ---------------- RUN ----------------
+def main():
+    # Запускаем веб-сервер в отдельном потоке
+    Thread(target=run_web).start()
+    
+    # Создаем приложение бота
+    app = Application.builder().token(TOKEN).build()
+    
+    # Добавляем обработчики
+    app.add_handler(CommandHandler("start", start))
+    app.add_handler(CallbackQueryHandler(callback_handler))
+    app.add_handler(MessageHandler(filters.Regex(r"^/(grant|revoke|send)"), admin_commands))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
+    
+    print("🚀 KURUT AI INFINITY | COIP PRO ONLINE")
+    app.run_polling()
+
+if __name__ == "__main__":
+    main()
