@@ -643,12 +643,13 @@ async def callback_handler(update: Update, context):
                 profit = stats.get('profit', 0)
                 winrate = (plus / (plus + minus) * 100) if (plus + minus) > 0 else 0
                 top_users.append({
-                    'id': user_id,
-                    'name': stats.get('name', 'Аноним'),
-                    'plus': plus,
-                    'minus': minus,
-                    'profit': profit,
-                    'winrate':
+    'id': user_id,
+    'name': stats.get('name', 'Аноним'),
+    'plus': plus,
+    'minus': minus,
+    'profit': profit,
+    'winrate': winrate
+})
                 # ---------------- MESSAGE HANDLER ----------------
 async def message_handler(update: Update, context):
     if context.user_data.get("wait_balance"):
