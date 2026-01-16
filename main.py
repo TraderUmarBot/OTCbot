@@ -650,7 +650,17 @@ async def callback_handler(update: Update, context):
         msg = await q.edit_message_text(f"""
 🔍 **АНАЛИЗИРУЕМ {asset}...**
 
-signal_text = f"""
+📊 Загрузка рыночных данных...
+🎯 Расчет технических индикаторов...
+⚡ Определение наилучшего сигнала...
+⏱️ Анализ экспирации: {expiration}
+        """)
+        
+        await asyncio.sleep(2)
+        
+        direction, probability, reasons, indicators, recommended_exp = analyzer.analyze_asset(asset)
+        
+        signal_text = f"""
 🎯 **ТОЧНЫЙ СИГНАЛ | {asset}**
 
 🚦 **НАПРАВЛЕНИЕ:** {direction}
@@ -665,7 +675,6 @@ signal_text = f"""
 • 📊 Bollinger Bands: {((indicators['PRICE'] - indicators['BB_LOWER']) / (indicators['BB_UPPER'] - indicators['BB_LOWER']) * 100):.1f}%
 • ⚡ ATR (волатильность): {indicators['ATR']:.4f}
 • 💪 Тренд: {'ВОСХОДЯЩИЙ' if indicators['EMA_9'] > indicators['EMA_21'] else 'НИСХОДЯЩИЙ'}
-
 
 📋 **ОСНОВНЫЕ ПРИЧИНЫ СИГНАЛА:**
 """
@@ -682,4 +691,48 @@ signal_text = f"""
 
 💰 **УПРАВЛЕНИЕ РИСКАМИ:**
 1. Вход только при подтверждении сигнала
-2. Использовать рекомендуем
+2. Использовать рекомендуемую экспирацию
+3. Не увеличивать лот после убытков
+4. Фиксировать прибыль от 5%
+
+⚠️ **ВАЖНО:** Этот сигнал основан на техническом анализе. Торговля CFD сопряжена с рисками.
+        """
+        
+        kb = [
+            [
+                InlineKeyboardButton("✅ СИГНАЛ СРАБОТАЛ", callback_data="res_plus"),
+                InlineKeyboardButton("❌ СИГНАЛ НЕ СРАБОТАЛ", callback_data="res_minus")
+            ],
+            [InlineKeyboardButton("🔄 НОВЫЙ СИГНАЛ", callback_data="market")],
+            [InlineKeyboardButton("🔙 ГЛАВНОЕ МЕНЮ", callback_data="back_menu")]
+        ]
+        
+        await msg.edit_text(signal_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(kb))
+        
+        log_signal(asset, direction, probability, indicators, expiration, uid)
+
+    elif q.data == "marathon":
+        await safe_edit(q, "💰 **ВВЕДИТЕ ВАШ СТАРТОВЫЙ БАЛАНС ($):**\n\nПример: 100, 500, 1000")
+        context.user_data["wait_balance"] = True
+
+    elif q.data == "top":
+        # Сортируем трейдеров по профиту
+        top_users = []
+        for user_id, stats in trader_stats.items():
+            if isinstance(stats, dict):
+                plus = stats.get('plus', 0)
+                minus = stats.get('minus', 0)
+                profit = stats.get('profit', 0)
+                winrate = (plus / (plus + minus) * 100) if (plus + minus) > 0 else 0
+                top_users.append({
+                    'id': user_id,
+                    'name': stats.get('name', 'Аноним'),
+                    'plus': plus,
+                    'minus': minus,
+                    'profit': profit,
+                    'winrate': winrate
+                })
+        
+        top_users.sort(key=lambda x: x['profit'], reverse=True)
+        
+        text = "🏆 **ТОП-10 ТРЕЙДЕРОВ**\
