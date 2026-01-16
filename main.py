@@ -1,7 +1,8 @@
-# ==============================
-# KURUT AI INFINITY | PRO EDITION
+# =====================================
+# KURUT AI INFINITY | COIP PRO EDITION
 # OTC SIGNAL SYSTEM FOR POCKET OPTION
-# ==============================
+# FULL ADMIN / VIP / MARATHON / TOP / SEND
+# =====================================
 
 import asyncio
 import json
@@ -13,35 +14,37 @@ from flask import Flask
 from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
+from telegram.error import BadRequest
 
-# -----------------------------
-# SERVER
-# -----------------------------
+# ---------------- SERVER ----------------
 server = Flask('')
 
 @server.route('/')
 def home():
-    return "KURUT AI INFINITY | PRO ENGINE ACTIVE"
+    return "KURUT AI INFINITY | COIP PRO ACTIVE"
 
 def run_web():
     server.run(host='0.0.0.0', port=8080)
 
-# -----------------------------
-# CONFIG
-# -----------------------------
-TOKEN = "ТВОЙ_BOT_TOKEN"
+# ---------------- CONFIG ----------------
+TOKEN = "ВСТАВЬ_СВОЙ_BOT_TOKEN"
+
 ADMIN_IDS = {6117198446, 7079260196}
 ADMIN_USER = "@id6117198446"
+
 REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
+
+INSTAGRAM = "https://instagram.com/ТВОЙ_ИНСТА"
+TELEGRAM = "https://t.me/ТВОЙ_ТГ"
+YOUTUBE = "https://youtube.com/@ТВОЙ_YT"
+BLOG = "https://ТВОЙ_БЛОГ"
 
 DB_VIP = "vip_users.json"
 DB_ALL = "all_users.json"
 DB_STATS = "trader_stats.json"
 DB_LOGS = "admin_logs.json"
 
-# -----------------------------
-# STORAGE
-# -----------------------------
+# ---------------- STORAGE ----------------
 def load_db(file, default):
     if os.path.exists(file):
         try:
@@ -60,9 +63,7 @@ all_users = set(load_db(DB_ALL, []))
 trader_stats = load_db(DB_STATS, {})
 admin_logs = load_db(DB_LOGS, [])
 
-# -----------------------------
-# ASSETS
-# -----------------------------
+# ---------------- ASSETS ----------------
 OTC_PAIRS = [
     "EUR/USD OTC","AUD/CAD OTC","AUD/CHF OTC","AUD/JPY OTC","AUD/NZD OTC","AUD/USD OTC",
     "CAD/CHF OTC","CAD/JPY OTC","CHF/JPY OTC","EUR/CHF OTC","EUR/GBP OTC","EUR/JPY OTC",
@@ -83,104 +84,7 @@ STOCKS = [
 
 CRYPTO = ["Bitcoin (BTC)","Ethereum (ETH)","Solana (SOL)","Toncoin (TON)","Litecoin (LTC)","Dogecoin (DOGE)"]
 
-# -----------------------------
-# MARKET SIMULATION (замени API при желании)
-# -----------------------------
-def generate_candles(n=120):
-    price = 100
-    data = []
-    for _ in range(n):
-        open_p = price
-        close_p = open_p + np.random.randn() * 0.3
-        high = max(open_p, close_p) + abs(np.random.randn() * 0.2)
-        low = min(open_p, close_p) - abs(np.random.randn() * 0.2)
-        data.append({"open": open_p, "high": high, "low": low, "close": close_p})
-        price = close_p
-    return pd.DataFrame(data)
-
-# -----------------------------
-# INDICATORS
-# -----------------------------
-def ema(series, period):
-    return series.ewm(span=period).mean()
-
-def rsi(series, period=14):
-    delta = series.diff()
-    gain = delta.clip(lower=0).rolling(period).mean()
-    loss = -delta.clip(upper=0).rolling(period).mean()
-    rs = gain / loss
-    return 100 - (100 / (1 + rs))
-
-def macd(series):
-    fast = ema(series, 12)
-    slow = ema(series, 26)
-    return fast - slow
-
-def atr(df, period=14):
-    high_low = df['high'] - df['low']
-    high_close = abs(df['high'] - df['close'].shift())
-    low_close = abs(df['low'] - df['close'].shift())
-    ranges = pd.concat([high_low, high_close, low_close], axis=1)
-    return ranges.max(axis=1).rolling(period).mean()
-
-def adx(df, period=14):
-    return atr(df, period) * 2  # упрощённая версия
-
-# -----------------------------
-# AI ENGINE
-# -----------------------------
-def analyze_market():
-    df = generate_candles()
-    close = df["close"]
-
-    score = 0
-    reasons = []
-
-    ema20 = ema(close, 20).iloc[-1]
-    ema50 = ema(close, 50).iloc[-1]
-    ema200 = ema(close, 200).iloc[-1]
-    rsi_val = rsi(close).iloc[-1]
-    macd_val = macd(close).iloc[-1]
-    atr_val = atr(df).iloc[-1]
-    adx_val = adx(df).iloc[-1]
-
-    if ema20 > ema50 > ema200:
-        score += 2
-        reasons.append("Сильный восходящий тренд (EMA)")
-    elif ema20 < ema50 < ema200:
-        score -= 2
-        reasons.append("Сильный нисходящий тренд (EMA)")
-
-    if rsi_val < 30:
-        score += 1
-        reasons.append("RSI перепроданность")
-    elif rsi_val > 70:
-        score -= 1
-        reasons.append("RSI перекупленность")
-
-    if macd_val > 0:
-        score += 1
-        reasons.append("MACD подтверждает рост")
-    else:
-        score -= 1
-        reasons.append("MACD подтверждает падение")
-
-    if atr_val > close.mean() * 0.002:
-        score += 1
-        reasons.append("Хорошая волатильность")
-
-    if adx_val > 0.4:
-        score += 1
-        reasons.append("Сильное движение OTC")
-
-    probability = min(99, max(55, 50 + score * 7))
-    direction = "ВВЕРХ 🟢 CALL" if score >= 1 else "ВНИЗ 🔴 PUT"
-
-    return direction, probability, " | ".join(reasons[:3])
-
-# -----------------------------
-# ACCESS CONTROL
-# -----------------------------
+# ---------------- UTILS ----------------
 def is_admin(uid):
     return str(uid) in [str(a) for a in ADMIN_IDS]
 
@@ -196,24 +100,110 @@ def log_admin(action, target, admin):
     })
     save_db(DB_LOGS, admin_logs)
 
-# -----------------------------
-# UI
-# -----------------------------
+# ---------------- SAFE EDIT ----------------
+async def safe_edit(query, text, reply_markup=None, parse_mode=None):
+    try:
+        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
+    except BadRequest as e:
+        if "Message is not modified" in str(e):
+            pass
+        else:
+            raise
+
+# ---------------- MARKET DATA (SIM / API READY) ----------------
+def generate_candles(n=120):
+    price = 100
+    data = []
+    for _ in range(n):
+        o = price
+        c = o + np.random.randn() * 0.3
+        h = max(o, c) + abs(np.random.randn() * 0.2)
+        l = min(o, c) - abs(np.random.randn() * 0.2)
+        data.append({"open": o, "high": h, "low": l, "close": c})
+        price = c
+    return pd.DataFrame(data)
+
+# ---------------- INDICATORS ----------------
+def ema(series, period):
+    return series.ewm(span=period).mean()
+
+def rsi(series, period=14):
+    delta = series.diff()
+    gain = delta.clip(lower=0).rolling(period).mean()
+    loss = -delta.clip(upper=0).rolling(period).mean()
+    rs = gain / loss
+    return 100 - (100 / (1 + rs))
+
+def macd(series):
+    return ema(series, 12) - ema(series, 26)
+
+def atr(df, period=14):
+    hl = df["high"] - df["low"]
+    hc = abs(df["high"] - df["close"].shift())
+    lc = abs(df["low"] - df["close"].shift())
+    return pd.concat([hl, hc, lc], axis=1).max(axis=1).rolling(period).mean()
+
+# ---------------- AI ENGINE ----------------
+def analyze_market():
+    df = generate_candles()
+    close = df["close"]
+
+    score = 0
+    reasons = []
+
+    ema20 = ema(close, 20).iloc[-1]
+    ema50 = ema(close, 50).iloc[-1]
+    ema200 = ema(close, 200).iloc[-1]
+    rsi_v = rsi(close).iloc[-1]
+    macd_v = macd(close).iloc[-1]
+    atr_v = atr(df).iloc[-1]
+
+    if ema20 > ema50 > ema200:
+        score += 2
+        reasons.append("EMA тренд вверх")
+    elif ema20 < ema50 < ema200:
+        score -= 2
+        reasons.append("EMA тренд вниз")
+
+    if rsi_v < 30:
+        score += 1
+        reasons.append("RSI перепроданность")
+    elif rsi_v > 70:
+        score -= 1
+        reasons.append("RSI перекупленность")
+
+    if macd_v > 0:
+        score += 1
+        reasons.append("MACD подтверждает рост")
+    else:
+        score -= 1
+        reasons.append("MACD подтверждает падение")
+
+    if atr_v > close.mean() * 0.002:
+        score += 1
+        reasons.append("Хорошая волатильность OTC")
+
+    probability = min(99, max(55, 50 + score * 7))
+    direction = "ВВЕРХ 🟢 CALL" if score >= 1 else "ВНИЗ 🔴 PUT"
+
+    return direction, probability, " | ".join(reasons[:3])
+
+# ---------------- UI ----------------
 async def show_menu(update, context):
     text = "🚀 **KURUT AI INFINITY | PRO MENU**"
     kb = [
         [InlineKeyboardButton("📊 ПОЛУЧИТЬ СИГНАЛ", callback_data="market")],
+        [InlineKeyboardButton("🏃 МАРАФОН 30 ДНЕЙ", callback_data="marathon")],
         [InlineKeyboardButton("🏆 ТОП ТРЕЙДЕРОВ", callback_data="top")],
         [InlineKeyboardButton("📚 ИНСТРУКЦИЯ", callback_data="guide")]
     ]
+
     if update.callback_query:
-        await update.callback_query.edit_message_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
+        await safe_edit(update.callback_query, text, InlineKeyboardMarkup(kb), "Markdown")
     else:
         await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
-# -----------------------------
-# START
-# -----------------------------
+# ---------------- START ----------------
 async def start(update: Update, context):
     uid = str(update.effective_user.id)
     all_users.add(uid)
@@ -224,16 +214,19 @@ async def start(update: Update, context):
     else:
         text = (
             "👋 **Добро пожаловать в KURUT AI INFINITY**\n\n"
-            "Для доступа:\n"
-            f"1️⃣ Зарегистрируйся: [Pocket Option]({REF_LINK})\n"
+            "🔓 Для доступа:\n"
+            f"1️⃣ Регистрация: [Pocket Option]({REF_LINK})\n"
             "2️⃣ Пополни баланс от $15\n"
-            f"3️⃣ Отправь ID: `{uid}` админу {ADMIN_USER}"
+            f"3️⃣ Отправь ID: `{uid}` админу {ADMIN_USER}\n\n"
+            "🌐 **Наши соцсети:**\n"
+            f"📸 Instagram: {INSTAGRAM}\n"
+            f"💬 Telegram: {TELEGRAM}\n"
+            f"▶️ YouTube: {YOUTUBE}\n"
+            f"📝 Блог: {BLOG}"
         )
         await update.message.reply_text(text, parse_mode="Markdown", disable_web_page_preview=True)
 
-# -----------------------------
-# CALLBACKS
-# -----------------------------
+# ---------------- CALLBACKS ----------------
 async def callback_handler(update: Update, context):
     q = update.callback_query
     uid = str(q.from_user.id)
@@ -242,24 +235,26 @@ async def callback_handler(update: Update, context):
     if not is_vip(uid):
         return
 
-    if q.data == "market":
+    if q.data == "guide":
+        await safe_edit(q, "📚 Используй сигналы с риск-менеджментом\nРекомендуемый риск: 1–5% от депозита")
+
+    elif q.data == "market":
         kb = [
             [InlineKeyboardButton("💱 OTC", callback_data="cu_0")],
             [InlineKeyboardButton("🏢 АКЦИИ", callback_data="st_0")],
             [InlineKeyboardButton("₿ КРИПТО", callback_data="cr_0")]
         ]
-        await q.edit_message_text("Выбери рынок:", reply_markup=InlineKeyboardMarkup(kb))
+        await safe_edit(q, "Выбери рынок:", InlineKeyboardMarkup(kb))
 
     elif q.data.startswith(("cu_", "st_", "cr_")):
         pref, page = q.data.split("_")
         data = OTC_PAIRS if pref == "cu" else STOCKS if pref == "st" else CRYPTO
-        page = int(page)
-        await q.edit_message_text("Выбери актив:", reply_markup=get_paged_kb(data, page, pref))
+        context.user_data["assets"] = data
+        await safe_edit(q, "Выбери актив:", get_paged_kb(data, int(page), pref))
 
     elif q.data.startswith("asset_"):
         idx = int(q.data.split("_")[1])
         asset = context.user_data["assets"][idx]
-        context.user_data["asset"] = asset
 
         msg = await q.edit_message_text(f"📡 Анализируем {asset}...")
         await asyncio.sleep(3)
@@ -268,19 +263,59 @@ async def callback_handler(update: Update, context):
         res = (
             f"✨ **СИГНАЛ**\n\n"
             f"📊 Актив: `{asset}`\n"
-            f"🚦 Направление: **{direction}**\n"
+            f"🚦 Вход: **{direction}**\n"
             f"🎯 Вероятность: `{prob}%`\n\n"
-            f"📋 Причины:\n_{reason}_"
+            f"📋 Анализ:\n_{reason}_"
         )
 
-        kb = [[InlineKeyboardButton("✅ ПЛЮС", callback_data="res_plus"),
-               InlineKeyboardButton("❌ МИНУС", callback_data="res_minus")]]
-
+        kb = [[
+            InlineKeyboardButton("✅ ПЛЮС", callback_data="res_plus"),
+            InlineKeyboardButton("❌ МИНУС", callback_data="res_minus")
+        ]]
         await msg.edit_text(res, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
 
-# -----------------------------
-# PAGINATION
-# -----------------------------
+    elif q.data == "top":
+        top = sorted(trader_stats.items(), key=lambda x: x[1]["plus"], reverse=True)[:10]
+        text = "🏆 **ТОП ТРЕЙДЕРОВ**\n\n"
+        for i, (uid, d) in enumerate(top, 1):
+            text += f"{i}. {d['name']} | ✅ {d['plus']} | ❌ {d['minus']}\n"
+        await safe_edit(q, text, None, "Markdown")
+
+    elif q.data == "marathon":
+        await safe_edit(q, "💰 Введи стартовый баланс ($):")
+        context.user_data["wait_balance"] = True
+
+    elif q.data.startswith("res_"):
+        if uid not in trader_stats:
+            trader_stats[uid] = {"name": q.from_user.first_name, "plus": 0, "minus": 0}
+        if q.data == "res_plus":
+            trader_stats[uid]["plus"] += 1
+        else:
+            trader_stats[uid]["minus"] += 1
+
+        save_db(DB_STATS, trader_stats)
+        await safe_edit(q, "♻️ Результат сохранён")
+
+# ---------------- MARATHON INPUT ----------------
+async def message_handler(update: Update, context):
+    if context.user_data.get("wait_balance"):
+        try:
+            bal = float(update.message.text.replace(",", "."))
+            context.user_data["wait_balance"] = False
+
+            text = f"🏃 **МАРАФОН НА 30 ДНЕЙ | Старт ${bal}**\n\n"
+            curr = bal
+            for d in range(1, 31):
+                profit = round(curr * 0.15, 2)
+                curr = round(curr + profit, 2)
+                text += f"День {d}: ${curr} (+15%)\n"
+
+            text += f"\n🏆 **ИТОГ: ${curr}**"
+            await update.message.reply_text(text, parse_mode="Markdown")
+        except:
+            await update.message.reply_text("❌ Введи число!")
+
+# ---------------- PAGINATION ----------------
 def get_paged_kb(data, page, prefix):
     size = 8
     start = page * size
@@ -301,41 +336,57 @@ def get_paged_kb(data, page, prefix):
 
     return InlineKeyboardMarkup(kb)
 
-# -----------------------------
-# ADMIN COMMANDS
-# -----------------------------
+# ---------------- ADMIN ----------------
 async def admin_commands(update: Update, context):
     uid = str(update.effective_user.id)
     if not is_admin(uid):
         return
 
-    txt = update.message.text.split()
-    cmd = txt[0]
+    parts = update.message.text.split()
+    cmd = parts[0]
 
-    if cmd == "/grant" and len(txt) > 1:
-        tid = txt[1]
+    if cmd == "/grant" and len(parts) > 1:
+        tid = parts[1]
         vip_users.add(tid)
         save_db(DB_VIP, list(vip_users))
         log_admin("GRANT", tid, uid)
         await update.message.reply_text(f"✅ Доступ выдан: {tid}")
 
-    elif cmd == "/revoke" and len(txt) > 1:
-        tid = txt[1]
+    elif cmd == "/revoke" and len(parts) > 1:
+        tid = parts[1]
         vip_users.discard(tid)
         save_db(DB_VIP, list(vip_users))
         log_admin("REVOKE", tid, uid)
         await update.message.reply_text(f"❌ Доступ снят: {tid}")
 
-# -----------------------------
-# RUN
-# -----------------------------
+    elif cmd == "/send":
+        count = 0
+        for user in all_users:
+            try:
+                if update.message.reply_to_message:
+                    await context.bot.copy_message(
+                        chat_id=user,
+                        from_chat_id=update.message.chat_id,
+                        message_id=update.message.reply_to_message.message_id
+                    )
+                else:
+                    msg = update.message.text.replace("/send", "").strip()
+                    await context.bot.send_message(chat_id=user, text=msg)
+                count += 1
+                await asyncio.sleep(0.05)
+            except:
+                continue
+        await update.message.reply_text(f"📢 Отправлено: {count} пользователей")
+
+# ---------------- RUN ----------------
 if __name__ == "__main__":
     Thread(target=run_web).start()
-    app = Application.builder().token(TOKEN).build()
 
+    app = Application.builder().token(TOKEN).build()
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CallbackQueryHandler(callback_handler))
-    app.add_handler(MessageHandler(filters.Regex(r"^/(grant|revoke)"), admin_commands))
+    app.add_handler(MessageHandler(filters.Regex(r"^/(grant|revoke|send)"), admin_commands))
+    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
 
-    print("🚀 KURUT AI INFINITY | PRO ENGINE ONLINE")
+    print("🚀 KURUT AI INFINITY | COIP PRO ONLINE")
     app.run_polling()
