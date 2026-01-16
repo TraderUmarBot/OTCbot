@@ -650,17 +650,7 @@ async def callback_handler(update: Update, context):
         msg = await q.edit_message_text(f"""
 🔍 **АНАЛИЗИРУЕМ {asset}...**
 
-📊 Загрузка рыночных данных...
-🎯 Расчет технических индикаторов...
-⚡ Определение наилучшего сигнала...
-⏱️ Анализ экспирации: {expiration}
-        """)
-        
-        await asyncio.sleep(2)
-        
-        direction, probability, reasons, indicators, recommended_exp = analyzer.analyze_asset(asset)
-        
-        signal_text = f"""
+signal_text = f"""
 🎯 **ТОЧНЫЙ СИГНАЛ | {asset}**
 
 🚦 **НАПРАВЛЕНИЕ:** {direction}
@@ -675,6 +665,7 @@ async def callback_handler(update: Update, context):
 • 📊 Bollinger Bands: {((indicators['PRICE'] - indicators['BB_LOWER']) / (indicators['BB_UPPER'] - indicators['BB_LOWER']) * 100):.1f}%
 • ⚡ ATR (волатильность): {indicators['ATR']:.4f}
 • 💪 Тренд: {'ВОСХОДЯЩИЙ' if indicators['EMA_9'] > indicators['EMA_21'] else 'НИСХОДЯЩИЙ'}
+
 
 📋 **ОСНОВНЫЕ ПРИЧИНЫ СИГНАЛА:**
 """
