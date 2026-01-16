@@ -1,7 +1,6 @@
 # =====================================
 # KURUT AI INFINITY | COIP PRO EDITION
 # OTC SIGNAL SYSTEM FOR POCKET OPTION
-# OPTIMIZED FOR DOCKER DEPLOYMENT
 # =====================================
 
 import asyncio
@@ -283,67 +282,67 @@ class MarketAnalyzer:
         # Анализ EMA
         if ema9 > ema21 > ema50:
             score += 3
-            reasons.append("✅ Сильный восходящий тренд (EMA 9>21>50)")
+            reasons.append("Сильный восходящий тренд (EMA 9>21>50)")
         elif ema9 < ema21 < ema50:
             score -= 3
-            reasons.append("❌ Сильный нисходящий тренд (EMA 9<21<50)")
+            reasons.append("Сильный нисходящий тренд (EMA 9<21<50)")
         
         # Анализ RSI
         if rsi < 30:
             score += 2
-            reasons.append("🎯 RSI в зоне перепроданности (<30)")
+            reasons.append("RSI в зоне перепроданности (<30)")
         elif rsi > 70:
             score -= 2
-            reasons.append("⚠️ RSI в зоне перекупленности (>70)")
+            reasons.append("RSI в зоне перекупленности (>70)")
         elif 40 < rsi < 60:
             score += 1
-            reasons.append("⚖️ RSI в нейтральной зоне")
+            reasons.append("RSI в нейтральной зоне")
         
         # Анализ MACD
         if macd > 0:
             score += 2
-            reasons.append("📈 MACD показывает бычий тренд")
+            reasons.append("MACD показывает бычий тренд")
         else:
             score -= 1
-            reasons.append("📉 MACD показывает медвежий тренд")
+            reasons.append("MACD показывает медвежий тренд")
         
         # Анализ Bollinger Bands
         bb_percent = ((prices[-1] - bb_lower) / (bb_upper - bb_lower)) * 100
         if bb_percent < 20:
             score += 2
-            reasons.append(f"📊 Цена у нижней границы BB ({bb_percent:.1f}%)")
+            reasons.append(f"Цена у нижней границы BB ({bb_percent:.1f}%)")
         elif bb_percent > 80:
             score -= 2
-            reasons.append(f"📊 Цена у верхней границы BB ({bb_percent:.1f}%)")
+            reasons.append(f"Цена у верхней границы BB ({bb_percent:.1f}%)")
         
         # Анализ Stochastic
         if stoch_k < 20 and stoch_d < 20:
             score += 1
-            reasons.append("📈 Stochastic в зоне перепроданности")
+            reasons.append("Stochastic в зоне перепроданности")
         elif stoch_k > 80 and stoch_d > 80:
             score -= 1
-            reasons.append("📉 Stochastic в зоне перекупленности")
+            reasons.append("Stochastic в зоне перекупленности")
         
         # Анализ волатильности
         if atr > prices[-1] * 0.002:
             score += 1
-            reasons.append(f"⚡ Хорошая волатильность (ATR: {atr:.4f})")
+            reasons.append(f"Хорошая волатильность (ATR: {atr:.4f})")
         
         # Определение направления
         if score >= 4:
-            direction = "ВВЕРХ 🟢 CALL"
+            direction = "ВВЕРХ CALL"
             probability = min(95, 75 + score * 3)
         elif score <= -4:
-            direction = "ВНИЗ 🔴 PUT"
+            direction = "ВНИЗ PUT"
             probability = min(95, 75 + abs(score) * 3)
         elif score >= 1:
-            direction = "ВВЕРХ 🟢 CALL"
+            direction = "ВВЕРХ CALL"
             probability = 65 + score * 2
         elif score <= -1:
-            direction = "ВНИЗ 🔴 PUT"
+            direction = "ВНИЗ PUT"
             probability = 65 + abs(score) * 2
         else:
-            direction = "НЕЙТРАЛЬНО ⚪ WAIT"
+            direction = "НЕЙТРАЛЬНО WAIT"
             probability = 50
         
         # Рекомендация экспирации
@@ -390,57 +389,57 @@ class MarathonCalculator:
         total_profit = results[-1]['total_profit']
         
         plan = f"""
-🏃 **МАРАФОН НА 30 ДНЕЙ | ПЛАН ТОРГОВЛИ**
+МАРАФОН НА 30 ДНЕЙ | ПЛАН ТОРГОВЛИ
 
-💰 **Стартовый баланс:** ${start_balance:,.2f}
-🎯 **Ежедневная цель:** +{self.daily_profit}%
-🏁 **Финальная цель:** ${final_balance:,.2f}
-📈 **Общая прибыль:** ${total_profit:,.2f}
+Стартовый баланс: ${start_balance:,.2f}
+Ежедневная цель: +{self.daily_profit}%
+Финальная цель: ${final_balance:,.2f}
+Общая прибыль: ${total_profit:,.2f}
 
-📊 **ЕЖЕДНЕВНЫЙ ПЛАН:**
+ЕЖЕДНЕВНЫЙ ПЛАН:
 
 """
         
         # Добавляем первые 10 дней подробно
         for i in range(min(10, len(results))):
             day_data = results[i]
-            plan += f"**День {day_data['day']}:** ${day_data['balance']:,.2f} (+${day_data['profit']:,.2f})\n"
+            plan += f"День {day_data['day']}: ${day_data['balance']:,.2f} (+${day_data['profit']:,.2f})\n"
         
         if len(results) > 10:
             plan += f"...\n"
-            plan += f"**День 30:** ${results[-1]['balance']:,.2f} (+${results[-1]['profit']:,.2f})\n"
+            plan += f"День 30: ${results[-1]['balance']:,.2f} (+${results[-1]['profit']:,.2f})\n"
         
         plan += f"""
-🎯 **СТРАТЕГИЯ:**
+СТРАТЕГИЯ:
 
-1. **Управление рисками:**
+1. Управление рисками:
    • Размер сделки: 2-3% от баланса
    • Максимум 5 сделок в день
    • Стоп-лосс: 2 убыточные сделки подряд
 
-2. **Время торговли:**
+2. Время торговли:
    • Лучшее время: 10:00-14:00 МСК
    • Избегать новостей
    • Перерывы каждые 2 часа
 
-3. **Психология:**
+3. Психология:
    • Не гнаться за убытками
    • Фиксировать прибыль от 5%
    • Дневник трейдера
 
-4. **Сигналы:**
+4. Сигналы:
    • Использовать только VIP сигналы
    • Ждать подтверждения 2-3 индикаторов
    • Не торговать против тренда
 
-⚡ **РЕКОМЕНДАЦИИ:**
+РЕКОМЕНДАЦИИ:
 • Начинать с демо-счета
 • Первая неделя: отработка стратегии
 • Вторая неделя: увеличение лота на 25%
 • Третья неделя: стабильная прибыль
 • Четвертая неделя: закрепление результата
 
-⚠️ **ВАЖНО:** Торговля CFD связана с рисками. Не рискуйте больше, чем можете позволить себе потерять.
+ВАЖНО: Торговля CFD связана с рисками. Не рискуйте больше, чем можете позволить себе потерять.
 """
         
         return plan, results
@@ -451,22 +450,22 @@ marathon_calc = MarathonCalculator()
 async def show_menu(update, context):
     uid = str(update.effective_user.id)
     text = f"""
-🚀 **KURUT AI INFINITY | PRO MENU**
+KURUT AI INFINITY | PRO MENU
 
-👤 **Пользователь:** {update.effective_user.first_name}
-🎯 **Статус:** {'VIP ✅' if is_vip(uid) else 'Ожидание доступа'}
-📊 **Винрейт:** {calculate_win_rate(uid):.1f}%
+Пользователь: {update.effective_user.first_name}
+Статус: {'VIP' if is_vip(uid) else 'Ожидание доступа'}
+Винрейт: {calculate_win_rate(uid):.1f}%
 
-✨ **Доступные функции:**
+Доступные функции:
 """
     kb = [
-        [InlineKeyboardButton("🎯 ПОЛУЧИТЬ СИГНАЛ", callback_data="market")],
-        [InlineKeyboardButton("🏃 МАРАФОН 30 ДНЕЙ", callback_data="marathon")],
-        [InlineKeyboardButton("🏆 ТОП ТРЕЙДЕРОВ", callback_data="top")],
-        [InlineKeyboardButton("📊 МОЯ СТАТИСТИКА", callback_data="my_stats")],
-        [InlineKeyboardButton("📚 ИНСТРУКЦИЯ", callback_data="guide")],
-        [InlineKeyboardButton("✍️ НАПИСАТЬ АДМИНУ", url=ADMIN_LINK)],
-        [InlineKeyboardButton("🔄 ОБНОВИТЬ", callback_data="refresh")]
+        [InlineKeyboardButton("ПОЛУЧИТЬ СИГНАЛ", callback_data="market")],
+        [InlineKeyboardButton("МАРАФОН 30 ДНЕЙ", callback_data="marathon")],
+        [InlineKeyboardButton("ТОП ТРЕЙДЕРОВ", callback_data="top")],
+        [InlineKeyboardButton("МОЯ СТАТИСТИКА", callback_data="my_stats")],
+        [InlineKeyboardButton("ИНСТРУКЦИЯ", callback_data="guide")],
+        [InlineKeyboardButton("НАПИСАТЬ АДМИНУ", url=ADMIN_LINK)],
+        [InlineKeyboardButton("ОБНОВИТЬ", callback_data="refresh")]
     ]
 
     if update.callback_query:
@@ -494,37 +493,37 @@ async def start(update: Update, context):
         await show_menu(update, context)
     else:
         text = f"""
-👋 **Добро пожаловать в KURUT AI INFINITY PRO**
+Добро пожаловать в KURUT AI INFINITY PRO
 
-🎯 **Точные сигналы для OTC рынка Pocket Option**
-⚡ **Точность:** 75-95%
-⏱️ **Экспирации:** 10s, 30s, 1m, 2m, 3m, 5m, 8m
+Точные сигналы для OTC рынка Pocket Option
+Точность: 75-95%
+Экспирации: 10s, 30s, 1m, 2m, 3m, 5m, 8m
 
-🔓 **ДЛЯ ПОЛУЧЕНИЯ ДОСТУПА:**
+ДЛЯ ПОЛУЧЕНИЯ ДОСТУПА:
 
-1️⃣ **Регистрация:** [Pocket Option]({REF_LINK})
-2️⃣ **Пополни баланс** от $50
-3️⃣ **Отправь ID:** `{uid}`
-4️⃣ **Админу:** {ADMIN_USER}
+1 Регистрация: [Pocket Option]({REF_LINK})
+2 Пополни баланс от $50
+3 Отправь ID: `{uid}`
+4 Админу: {ADMIN_USER}
 
-✨ **ПРЕИМУЩЕСТВА VIP:**
+ПРЕИМУЩЕСТВА VIP:
 • Точные сигналы с анализом
 • Поддержка 24/7
 • Обучение и стратегии
 • Личный марафон
 
-📊 **СТАТИСТИКА:**
-✅ Успешных сигналов: 82%
-⚡ Средняя экспирация: 2-3 минуты
-🎯 Рекомендуемый риск: 2%
+СТАТИСТИКА:
+Успешных сигналов: 82%
+Средняя экспирация: 2-3 минуты
+Рекомендуемый риск: 2%
 
-✍️ **НАПИСАТЬ АДМИНУ:** [ТЫК]({ADMIN_LINK})
+НАПИСАТЬ АДМИНУ: [ТЫК]({ADMIN_LINK})
 
-⚠️ **ВАЖНО:** Торговля CFD связана с рисками. Не рискуйте больше, чем можете позволить себе потерять.
+ВАЖНО: Торговля CFD связана с рисками. Не рискуйте больше, чем можете позволить себе потерять.
         """
         kb = [
-            [InlineKeyboardButton("✍️ НАПИСАТЬ АДМИНУ", url=ADMIN_LINK)],
-            [InlineKeyboardButton("🔄 ОБНОВИТЬ СТАТУС", callback_data="check_access")]
+            [InlineKeyboardButton("НАПИСАТЬ АДМИНУ", url=ADMIN_LINK)],
+            [InlineKeyboardButton("ОБНОВИТЬ СТАТУС", callback_data="check_access")]
         ]
         await update.message.reply_text(text, parse_mode="Markdown", 
                                       disable_web_page_preview=True,
@@ -549,7 +548,7 @@ def get_paged_kb(data, page, prefix):
     if nav:
         kb.append(nav)
     
-    kb.append([InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")])
+    kb.append([InlineKeyboardButton("НАЗАД", callback_data="back_menu")])
 
     return InlineKeyboardMarkup(kb)
 
@@ -565,47 +564,47 @@ async def callback_handler(update: Update, context):
         
     if q.data == "check_access":
         if is_vip(uid):
-            await q.edit_message_text("✅ Ваш VIP доступ активирован!", parse_mode="Markdown")
+            await q.edit_message_text("VIP доступ активирован!", parse_mode="Markdown")
             await asyncio.sleep(1)
             await show_menu(update, context)
         else:
-            await q.edit_message_text("❌ VIP доступ еще не активирован. Отправьте ваш ID админу.", parse_mode="Markdown")
+            await q.edit_message_text("VIP доступ еще не активирован. Отправьте ваш ID админу.", parse_mode="Markdown")
         return
 
     if not is_vip(uid):
-        await q.edit_message_text("❌ У вас нет доступа к сигналам. Используйте /start для получения доступа.")
+        await q.edit_message_text("У вас нет доступа к сигналам. Используйте /start для получения доступа.")
         return
 
     if q.data == "guide":
         guide_text = """
-📚 **ПОЛНАЯ ИНСТРУКЦИЯ К БОТУ**
+ПОЛНАЯ ИНСТРУКЦИЯ К БОТУ
 
-🎯 **КАК ПОЛЬЗОВАТЬСЯ СИГНАЛАМИ:**
+КАК ПОЛЬЗОВАТЬСЯ СИГНАЛАМИ:
 1. Нажмите "ПОЛУЧИТЬ СИГНАЛ"
 2. Выберите рынок (OTC/Акции/Крипто)
 3. Выберите актив для анализа
 4. Выберите экспирацию (время)
 5. Получите точный сигнал с анализом
 
-⚡ **ВЫБОР ЭКСПИРАЦИИ:**
+ВЫБОР ЭКСПИРАЦИИ:
 • 10-30 секунд - для опытных, высокая волатильность
 • 1-3 минуты - оптимальный вариант, стабильная прибыль
 • 5-8 минут - для консервативных стратегий
 
-📊 **РИСК-МЕНЕДЖМЕНТ:**
+РИСК-МЕНЕДЖМЕНТ:
 • Размер сделки: 1-3% от депозита
 • Стоп-лосс: 2-3 убыточные сделки подряд = перерыв
 • Тейк-профит: 15-25% в день = остановка
 • Максимум: 5 сделок в день
 
-🎯 **СТРАТЕГИЯ УСПЕХА:**
+СТРАТЕГИЯ УСПЕХА:
 1. Торгуйте только в лучшее время (10:00-14:00 МСК)
 2. Используйте демо-счет для тренировки
 3. Анализируйте каждый сигнал перед входом
 4. Ведите дневник трейдера
 5. Не торгуйте на эмоциях
 
-📈 **ТЕХНИЧЕСКИЙ АНАЛИЗ БОТА:**
+ТЕХНИЧЕСКИЙ АНАЛИЗ БОТА:
 Бот анализирует 10+ индикаторов:
 • EMA 9, 21, 50 - определение тренда
 • RSI 14 - перекупленность/перепроданность
@@ -614,43 +613,43 @@ async def callback_handler(update: Update, context):
 • Stochastic - моментум рынка
 • ATR - средний истинный диапазон
 
-⚠️ **ВАЖНЫЕ ПРАВИЛА:**
+ВАЖНЫЕ ПРАВИЛА:
 1. Ни один сигнал не дает 100% гарантии
 2. Всегда используйте стоп-лосс
 3. Не увеличивайте лот после убытков
 4. Делайте перерывы в торговле
 5. Обучайтесь и совершенствуйтесь
 
-💰 **МАРАФОН 30 ДНЕЙ:**
+МАРАФОН 30 ДНЕЙ:
 Позволяет системно увеличивать депозит на 15% ежедневно.
 Подробный план с рекомендациями на каждый день.
 
-🏆 **ТОП ТРЕЙДЕРОВ:**
+ТОП ТРЕЙДЕРОВ:
 Мотивирует к совершенствованию.
 Показывает статистику лучших пользователей.
 
-✍️ **ПОДДЕРЖКА:**
+ПОДДЕРЖКА:
 По всем вопросам: {ADMIN_USER}
         """.format(ADMIN_USER=ADMIN_USER)
         
-        kb = [[InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")]]
+        kb = [[InlineKeyboardButton("НАЗАД", callback_data="back_menu")]]
         await safe_edit(q, guide_text, InlineKeyboardMarkup(kb), "Markdown")
 
     elif q.data == "market":
         kb = [
-            [InlineKeyboardButton("💱 OTC РЫНОК", callback_data="cu_0")],
-            [InlineKeyboardButton("🏢 АКЦИИ", callback_data="st_0")],
-            [InlineKeyboardButton("₿ КРИПТО", callback_data="cr_0")],
-            [InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")]
+            [InlineKeyboardButton("OTC РЫНОК", callback_data="cu_0")],
+            [InlineKeyboardButton("АКЦИИ", callback_data="st_0")],
+            [InlineKeyboardButton("КРИПТО", callback_data="cr_0")],
+            [InlineKeyboardButton("НАЗАД", callback_data="back_menu")]
         ]
-        await safe_edit(q, "🎯 **ВЫБЕРИ РЫНОК ДЛЯ АНАЛИЗА:**", InlineKeyboardMarkup(kb), "Markdown")
+        await safe_edit(q, "ВЫБЕРИ РЫНОК ДЛЯ АНАЛИЗА:", InlineKeyboardMarkup(kb), "Markdown")
 
     elif q.data.startswith(("cu_", "st_", "cr_")):
         pref, page = q.data.split("_")
         data = OTC_PAIRS if pref == "cu" else STOCKS if pref == "st" else CRYPTO
         context.user_data["assets"] = data
         context.user_data["market_type"] = pref
-        await safe_edit(q, "📊 **ВЫБЕРИ АКТИВ ДЛЯ АНАЛИЗА:**", get_paged_kb(data, int(page), pref))
+        await safe_edit(q, "ВЫБЕРИ АКТИВ ДЛЯ АНАЛИЗА:", get_paged_kb(data, int(page), pref))
 
     elif q.data.startswith("asset_"):
         idx = int(q.data.split("_")[1])
@@ -661,51 +660,78 @@ async def callback_handler(update: Update, context):
         
         kb = []
         for exp in EXPIRATIONS:
-            kb.append([InlineKeyboardButton(f"⏱️ {exp}", callback_data=f"exp_{exp}")])
-        kb.append([InlineKeyboardButton("🔙 НАЗАД", callback_data=f"{context.user_data['market_type']}_0")])
+            kb.append([InlineKeyboardButton(f"{exp}", callback_data=f"exp_{exp}")])
+        kb.append([InlineKeyboardButton("НАЗАД", callback_data=f"{context.user_data['market_type']}_0")])
         
-        await safe_edit(q, f"📊 **АКТИВ:** {asset}\n\n⏱️ **ВЫБЕРИТЕ ЭКСПИРАЦИЮ:**", InlineKeyboardMarkup(kb), "Markdown")
+        await safe_edit(q, f"АКТИВ: {asset}\n\nВЫБЕРИТЕ ЭКСПИРАЦИЮ:", InlineKeyboardMarkup(kb), "Markdown")
 
     elif q.data.startswith("exp_"):
         expiration = q.data.split("_")[1]
         asset = context.user_data.get("selected_asset", "Неизвестный актив")
         
-        msg = await q.edit_message_text(f"🔍 **АНАЛИЗИРУЕМ {asset}...**\n\n📊 Загрузка рыночных данных...\n🎯 Расчет технических индикаторов...\n⚡ Определение наилучшего сигнала...\n⏱️ Анализ экспирации: {expiration}")
+        msg = await q.edit_message_text(f"АНАЛИЗИРУЕМ {asset}...\n\nЗагрузка рыночных данных...\nРасчет технических индикаторов...\nОпределение наилучшего сигнала...\nАнализ экспирации: {expiration}")
         
         await asyncio.sleep(2)
         
         direction, probability, reasons, indicators, recommended_exp = analyzer.analyze_asset(asset)
         
-        signal_text = f"🎯 **ТОЧНЫЙ СИГНАЛ | {asset}**\n\n"
-        signal_text += f"🚦 **НАПРАВЛЕНИЕ:** {direction}\n"
-        signal_text += f"🎯 **ВЕРОЯТНОСТЬ:** {probability}%\n"
-        signal_text += f"⏱️ **ВАША ЭКСПИРАЦИЯ:** {expiration}\n"
-        signal_text += f"📊 **РЕКОМЕНДУЕМАЯ ЭКСПИРАЦИЯ:** {recommended_exp}\n\n"
-        signal_text += f"📈 **ТЕХНИЧЕСКИЙ АНАЛИЗ:**\n"
-        signal_text += f"• 📊 RSI: {indicators['RSI']:.1f} {'(ПЕРЕПРОДАН)' if indicators['RSI'] < 30 else '(ПЕРЕКУПЛЕН)' if indicators['RSI'] > 70 else '(НЕЙТРАЛЬНО)'}\n"
-        signal_text += f"• 📈 MACD: {indicators['MACD']:.4f} {'(БЫЧИЙ)' if indicators['MACD'] > 0 else '(МЕДВЕЖИЙ)'}\n"
-        signal_text += f"• 📉 Stochastic: K={indicators['STOCH_K']:.1f}, D={indicators['STOCH_D']:.1f}\n"
+        signal_text = f"ТОЧНЫЙ СИГНАЛ | {asset}\n\n"
+        signal_text += f"НАПРАВЛЕНИЕ: {direction}\n"
+        signal_text += f"ВЕРОЯТНОСТЬ: {probability}%\n"
+        signal_text += f"ВАША ЭКСПИРАЦИЯ: {expiration}\n"
+        signal_text += f"РЕКОМЕНДУЕМАЯ ЭКСПИРАЦИЯ: {recommended_exp}\n\n"
+        signal_text += f"ТЕХНИЧЕСКИЙ АНАЛИЗ:\n"
+        signal_text += f"• RSI: {indicators['RSI']:.1f} {'(ПЕРЕПРОДАН)' if indicators['RSI'] < 30 else '(ПЕРЕКУПЛЕН)' if indicators['RSI'] > 70 else '(НЕЙТРАЛЬНО)'}\n"
+        signal_text += f"• MACD: {indicators['MACD']:.4f} {'(БЫЧИЙ)' if indicators['MACD'] > 0 else '(МЕДВЕЖИЙ)'}\n"
+        signal_text += f"• Stochastic: K={indicators['STOCH_K']:.1f}, D={indicators['STOCH_D']:.1f}\n"
         bb_percent = ((indicators['PRICE'] - indicators['BB_LOWER']) / (indicators['BB_UPPER'] - indicators['BB_LOWER']) * 100)
-        signal_text += f"• 📊 Bollinger Bands: {bb_percent:.1f}%\n"
-        signal_text += f"• ⚡ ATR (волатильность): {indicators['ATR']:.4f}\n"
-        signal_text += f"• 💪 Тренд: {'ВОСХОДЯЩИЙ' if indicators['EMA_9'] > indicators['EMA_21'] else 'НИСХОДЯЩИЙ'}\n\n"
-        signal_text += f"📋 **ОСНОВНЫЕ ПРИЧИНЫ СИГНАЛА:**\n"
+        signal_text += f"• Bollinger Bands: {bb_percent:.1f}%\n"
+        signal_text += f"• ATR (волатильность): {indicators['ATR']:.4f}\n"
+        signal_text += f"• Тренд: {'ВОСХОДЯЩИЙ' if indicators['EMA_9'] > indicators['EMA_21'] else 'НИСХОДЯЩИЙ'}\n\n"
+        signal_text += f"ОСНОВНЫЕ ПРИЧИНЫ СИГНАЛА:\n"
         
         for i, reason in enumerate(reasons[:5], 1):
             signal_text += f"{i}. {reason}\n"
         
-        signal_text += f"\n🎯 **РЕКОМЕНДАЦИИ ПО СДЕЛКЕ:**\n"
+        signal_text += f"\nРЕКОМЕНДАЦИИ ПО СДЕЛКЕ:\n"
         signal_text += f"• Размер сделки: {'2-3%' if probability > 85 else '1-2%' if probability > 75 else '0.5-1%'}\n"
         signal_text += f"• Стоп-лосс: {'Не требуется' if probability > 90 else '1-2% от депозита'}\n"
         signal_text += f"• Тейк-профит: {'15-20%' if expiration in ['10s', '30s'] else '10-15%' if expiration in ['1m', '2m'] else '8-12%'}\n\n"
-        signal_text += f"💰 **УПРАВЛЕНИЕ РИСКАМИ:**\n"
+        signal_text += f"УПРАВЛЕНИЕ РИСКАМИ:\n"
         signal_text += f"1. Вход только при подтверждении сигнала\n"
         signal_text += f"2. Использовать рекомендуемую экспирацию\n"
         signal_text += f"3. Не увеличивать лот после убытков\n"
         signal_text += f"4. Фиксировать прибыль от 5%\n\n"
-        signal_text += f"⚠️ **ВАЖНО:** Этот сигнал основан на техническом анализе. Торговля CFD сопряжена с рисками."
+        signal_text += f"ВАЖНО: Этот сигнал основан на техническом анализе. Торговля CFD сопряжена с рисками."
         
         kb = [
             [
-                InlineKeyboardButton("✅ СИГНАЛ СРАБОТАЛ", callback_data="res_plus"),
-                Inline
+                InlineKeyboardButton("СИГНАЛ СРАБОТАЛ", callback_data="res_plus"),
+                InlineKeyboardButton("СИГНАЛ НЕ СРАБОТАЛ", callback_data="res_minus")
+            ],
+            [InlineKeyboardButton("НОВЫЙ СИГНАЛ", callback_data="market")],
+            [InlineKeyboardButton("ГЛАВНОЕ МЕНЮ", callback_data="back_menu")]
+        ]
+        
+        await msg.edit_text(signal_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(kb))
+        
+        log_signal(asset, direction, probability, indicators, expiration, uid)
+
+    elif q.data == "marathon":
+        await safe_edit(q, "ВВЕДИТЕ ВАШ СТАРТОВЫЙ БАЛАНС ($):\n\nПример: 100, 500, 1000")
+        context.user_data["wait_balance"] = True
+
+    elif q.data == "top":
+        top_users = []
+        for user_id, stats in trader_stats.items():
+            if isinstance(stats, dict):
+                plus = stats.get('plus', 0)
+                minus = stats.get('minus', 0)
+                profit = stats.get('profit', 0)
+                winrate = (plus / (plus + minus) * 100) if (plus + minus) > 0 else 0
+                top_users.append({
+                    'id': user_id,
+                    'name': stats.get('name', 'Аноним'),
+                    'plus': plus,
+                    'minus': minus,
+                    'profit': profit,
