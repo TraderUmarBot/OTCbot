@@ -530,6 +530,29 @@ async def start(update: Update, context):
                                       disable_web_page_preview=True,
                                       reply_markup=InlineKeyboardMarkup(kb))
 
+# ---------------- PAGINATION ----------------
+def get_paged_kb(data, page, prefix):
+    size = 8
+    start = page * size
+    chunk = data[start:start + size]
+
+    kb = []
+    for i, item in enumerate(chunk):
+        kb.append([InlineKeyboardButton(item, callback_data=f"asset_{start+i}")])
+
+    nav = []
+    if page > 0:
+        nav.append(InlineKeyboardButton("⬅️", callback_data=f"{prefix}_{page-1}"))
+    if start + size < len(data):
+        nav.append(InlineKeyboardButton("➡️", callback_data=f"{prefix}_{page+1}"))
+
+    if nav:
+        kb.append(nav)
+    
+    kb.append([InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")])
+
+    return InlineKeyboardMarkup(kb)
+
 # ---------------- CALLBACKS ----------------
 async def callback_handler(update: Update, context):
     q = update.callback_query
@@ -647,92 +670,42 @@ async def callback_handler(update: Update, context):
         expiration = q.data.split("_")[1]
         asset = context.user_data.get("selected_asset", "Неизвестный актив")
         
-        msg = await q.edit_message_text(f"""
-🔍 **АНАЛИЗИРУЕМ {asset}...**
-
-📊 Загрузка рыночных данных...
-🎯 Расчет технических индикаторов...
-⚡ Определение наилучшего сигнала...
-⏱️ Анализ экспирации: {expiration}
-        """)
+        msg = await q.edit_message_text(f"🔍 **АНАЛИЗИРУЕМ {asset}...**\n\n📊 Загрузка рыночных данных...\n🎯 Расчет технических индикаторов...\n⚡ Определение наилучшего сигнала...\n⏱️ Анализ экспирации: {expiration}")
         
         await asyncio.sleep(2)
         
         direction, probability, reasons, indicators, recommended_exp = analyzer.analyze_asset(asset)
         
-        signal_text = f"""
-🎯 **ТОЧНЫЙ СИГНАЛ | {asset}**
-
-🚦 **НАПРАВЛЕНИЕ:** {direction}
-🎯 **ВЕРОЯТНОСТЬ:** {probability}%
-⏱️ **ВАША ЭКСПИРАЦИЯ:** {expiration}
-📊 **РЕКОМЕНДУЕМАЯ ЭКСПИРАЦИЯ:** {recommended_exp}
-
-📈 **ТЕХНИЧЕСКИЙ АНАЛИЗ:**
-• 📊 RSI: {indicators['RSI']:.1f} {'(ПЕРЕПРОДАН)' if indicators['RSI'] < 30 else '(ПЕРЕКУПЛЕН)' if indicators['RSI'] > 70 else '(НЕЙТРАЛЬНО)'}
-• 📈 MACD: {indicators['MACD']:.4f} {'(БЫЧИЙ)' if indicators['MACD'] > 0 else '(МЕДВЕЖИЙ)'}
-• 📉 Stochastic: K={indicators['STOCH_K']:.1f}, D={indicators['STOCH_D']:.1f}
-• 📊 Bollinger Bands: {((indicators['PRICE'] - indicators['BB_LOWER']) / (indicators['BB_UPPER'] - indicators['BB_LOWER']) * 100):.1f}%
-• ⚡ ATR (волатильность): {indicators['ATR']:.4f}
-• 💪 Тренд: {'ВОСХОДЯЩИЙ' if indicators['EMA_9'] > indicators['EMA_21'] else 'НИСХОДЯЩИЙ'}
-
-📋 **ОСНОВНЫЕ ПРИЧИНЫ СИГНАЛА:**
-"""
+        signal_text = f"🎯 **ТОЧНЫЙ СИГНАЛ | {asset}**\n\n"
+        signal_text += f"🚦 **НАПРАВЛЕНИЕ:** {direction}\n"
+        signal_text += f"🎯 **ВЕРОЯТНОСТЬ:** {probability}%\n"
+        signal_text += f"⏱️ **ВАША ЭКСПИРАЦИЯ:** {expiration}\n"
+        signal_text += f"📊 **РЕКОМЕНДУЕМАЯ ЭКСПИРАЦИЯ:** {recommended_exp}\n\n"
+        signal_text += f"📈 **ТЕХНИЧЕСКИЙ АНАЛИЗ:**\n"
+        signal_text += f"• 📊 RSI: {indicators['RSI']:.1f} {'(ПЕРЕПРОДАН)' if indicators['RSI'] < 30 else '(ПЕРЕКУПЛЕН)' if indicators['RSI'] > 70 else '(НЕЙТРАЛЬНО)'}\n"
+        signal_text += f"• 📈 MACD: {indicators['MACD']:.4f} {'(БЫЧИЙ)' if indicators['MACD'] > 0 else '(МЕДВЕЖИЙ)'}\n"
+        signal_text += f"• 📉 Stochastic: K={indicators['STOCH_K']:.1f}, D={indicators['STOCH_D']:.1f}\n"
+        bb_percent = ((indicators['PRICE'] - indicators['BB_LOWER']) / (indicators['BB_UPPER'] - indicators['BB_LOWER']) * 100)
+        signal_text += f"• 📊 Bollinger Bands: {bb_percent:.1f}%\n"
+        signal_text += f"• ⚡ ATR (волатильность): {indicators['ATR']:.4f}\n"
+        signal_text += f"• 💪 Тренд: {'ВОСХОДЯЩИЙ' if indicators['EMA_9'] > indicators['EMA_21'] else 'НИСХОДЯЩИЙ'}\n\n"
+        signal_text += f"📋 **ОСНОВНЫЕ ПРИЧИНЫ СИГНАЛА:**\n"
         
         for i, reason in enumerate(reasons[:5], 1):
             signal_text += f"{i}. {reason}\n"
         
-        signal_text += f"""
-        
-🎯 **РЕКОМЕНДАЦИИ ПО СДЕЛКЕ:**
-• Размер сделки: {'2-3%' if probability > 85 else '1-2%' if probability > 75 else '0.5-1%'}
-• Стоп-лосс: {'Не требуется' if probability > 90 else '1-2% от депозита'}
-• Тейк-профит: {'15-20%' if expiration in ['10s', '30s'] else '10-15%' if expiration in ['1m', '2m'] else '8-12%'}
-
-💰 **УПРАВЛЕНИЕ РИСКАМИ:**
-1. Вход только при подтверждении сигнала
-2. Использовать рекомендуемую экспирацию
-3. Не увеличивать лот после убытков
-4. Фиксировать прибыль от 5%
-
-⚠️ **ВАЖНО:** Этот сигнал основан на техническом анализе. Торговля CFD сопряжена с рисками.
-        """
+        signal_text += f"\n🎯 **РЕКОМЕНДАЦИИ ПО СДЕЛКЕ:**\n"
+        signal_text += f"• Размер сделки: {'2-3%' if probability > 85 else '1-2%' if probability > 75 else '0.5-1%'}\n"
+        signal_text += f"• Стоп-лосс: {'Не требуется' if probability > 90 else '1-2% от депозита'}\n"
+        signal_text += f"• Тейк-профит: {'15-20%' if expiration in ['10s', '30s'] else '10-15%' if expiration in ['1m', '2m'] else '8-12%'}\n\n"
+        signal_text += f"💰 **УПРАВЛЕНИЕ РИСКАМИ:**\n"
+        signal_text += f"1. Вход только при подтверждении сигнала\n"
+        signal_text += f"2. Использовать рекомендуемую экспирацию\n"
+        signal_text += f"3. Не увеличивать лот после убытков\n"
+        signal_text += f"4. Фиксировать прибыль от 5%\n\n"
+        signal_text += f"⚠️ **ВАЖНО:** Этот сигнал основан на техническом анализе. Торговля CFD сопряжена с рисками."
         
         kb = [
             [
                 InlineKeyboardButton("✅ СИГНАЛ СРАБОТАЛ", callback_data="res_plus"),
-                InlineKeyboardButton("❌ СИГНАЛ НЕ СРАБОТАЛ", callback_data="res_minus")
-            ],
-            [InlineKeyboardButton("🔄 НОВЫЙ СИГНАЛ", callback_data="market")],
-            [InlineKeyboardButton("🔙 ГЛАВНОЕ МЕНЮ", callback_data="back_menu")]
-        ]
-        
-        await msg.edit_text(signal_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(kb))
-        
-        log_signal(asset, direction, probability, indicators, expiration, uid)
-
-    elif q.data == "marathon":
-        await safe_edit(q, "💰 **ВВЕДИТЕ ВАШ СТАРТОВЫЙ БАЛАНС ($):**\n\nПример: 100, 500, 1000")
-        context.user_data["wait_balance"] = True
-
-    elif q.data == "top":
-        # Сортируем трейдеров по профиту
-        top_users = []
-        for user_id, stats in trader_stats.items():
-            if isinstance(stats, dict):
-                plus = stats.get('plus', 0)
-                minus = stats.get('minus', 0)
-                profit = stats.get('profit', 0)
-                winrate = (plus / (plus + minus) * 100) if (plus + minus) > 0 else 0
-                top_users.append({
-                    'id': user_id,
-                    'name': stats.get('name', 'Аноним'),
-                    'plus': plus,
-                    'minus': minus,
-                    'profit': profit,
-                    'winrate': winrate
-                })
-        
-        top_users.sort(key=lambda x: x['profit'], reverse=True)
-        
-        text = "🏆 **ТОП-10 ТРЕЙДЕРОВ**\
+                Inline
