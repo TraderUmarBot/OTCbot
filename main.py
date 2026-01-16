@@ -1,7 +1,7 @@
 # =====================================
 # KURUT AI INFINITY | COIP PRO EDITION
 # OTC SIGNAL SYSTEM FOR POCKET OPTION
-# OPTIMIZED FOR KOYEB DEPLOYMENT
+# OPTIMIZED FOR DOCKER DEPLOYMENT
 # =====================================
 
 import asyncio
@@ -449,12 +449,13 @@ marathon_calc = MarathonCalculator()
 
 # ---------------- UI ----------------
 async def show_menu(update, context):
+    uid = str(update.effective_user.id)
     text = f"""
 🚀 **KURUT AI INFINITY | PRO MENU**
 
 👤 **Пользователь:** {update.effective_user.first_name}
-🎯 **Статус:** {'VIP ✅' if is_vip(str(update.effective_user.id)) else 'Ожидание доступа'}
-📊 **Винрейт:** {calculate_win_rate(str(update.effective_user.id)):.1f}%
+🎯 **Статус:** {'VIP ✅' if is_vip(uid) else 'Ожидание доступа'}
+📊 **Винрейт:** {calculate_win_rate(uid):.1f}%
 
 ✨ **Доступные функции:**
 """
@@ -690,48 +691,4 @@ async def callback_handler(update: Update, context):
 
 💰 **УПРАВЛЕНИЕ РИСКАМИ:**
 1. Вход только при подтверждении сигнала
-2. Использовать рекомендуемую экспирацию
-3. Не увеличивать лот после убытков
-4. Фиксировать прибыль от 5%
-
-⚠️ **ВАЖНО:** Этот сигнал основан на техническом анализе. Торговля CFD сопряжена с рисками.
-        """
-        
-        kb = [
-            [
-                InlineKeyboardButton("✅ СИГНАЛ СРАБОТАЛ", callback_data="res_plus"),
-                InlineKeyboardButton("❌ СИГНАЛ НЕ СРАБОТАЛ", callback_data="res_minus")
-            ],
-            [InlineKeyboardButton("🔄 НОВЫЙ СИГНАЛ", callback_data="market")],
-            [InlineKeyboardButton("🔙 ГЛАВНОЕ МЕНЮ", callback_data="back_menu")]
-        ]
-        
-        await msg.edit_text(signal_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(kb))
-        
-        log_signal(asset, direction, probability, indicators, expiration, uid)
-
-    elif q.data == "marathon":
-        await safe_edit(q, "💰 **ВВЕДИТЕ ВАШ СТАРТОВЫЙ БАЛАНС ($):**\n\nПример: 100, 500, 1000")
-        context.user_data["wait_balance"] = True
-
-    elif q.data == "top":
-        # Сортируем трейдеров по профиту
-        top_users = []
-        for user_id, stats in trader_stats.items():
-            if isinstance(stats, dict):
-                plus = stats.get('plus', 0)
-                minus = stats.get('minus', 0)
-                profit = stats.get('profit', 0)
-                winrate = (plus / (plus + minus) * 100) if (plus + minus) > 0 else 0
-                top_users.append({
-                    'id': user_id,
-                    'name': stats.get('name', 'Аноним'),
-                    'plus': plus,
-                    'minus': minus,
-                    'profit': profit,
-                    'winrate': winrate
-                })
-        
-        top_users.sort(key=lambda x: x['profit'], reverse=True)
-        
-        text = "🏆 **ТОП-10 Т
+2. Использовать рекомендуем
