@@ -27,7 +27,7 @@ def run_web():
     server.run(host='0.0.0.0', port=8080)
 
 # ---------------- CONFIG ----------------
-TOKEN = os.environ.get("TOKEN")
+TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
 
 ADMIN_IDS = {6117198446, 7079260196}
 ADMIN_USER = "@id6117198446"
