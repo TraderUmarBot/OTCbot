@@ -28,7 +28,7 @@ def run_web():
     server.run(host='0.0.0.0', port=8080)
 
 # ---------------- CONFIG ----------------
-TOKEN = os.environ.get("TOKEN", "ВСТАВЬ_СВОЙ_BOT_TOKEN")
+TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
 
 ADMIN_IDS = {6117198446, 7079260196}
 ADMIN_USER = "@Kuruttrader"
@@ -39,8 +39,8 @@ REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affilia
 REGISTER_TEXT = f"""
 🎯 **РЕГИСТРАЦИЯ НА POCKET OPTION**
 
-✅ **Если у тебя ЕСТЬ аккаунт:**
-1. Зайди в свой аккаунт
+✅ **Если у тебя ЕСТЬ аккаунт удали его и создай новый:**
+1. Зайди в свой новый аккаунт
 2. Пополни баланс от $20
 3. Отправь ID админу {ADMIN_USER}
 
