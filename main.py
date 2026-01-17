@@ -755,7 +755,15 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 {EmojiDecor.STAR_DIVIDER}
 
-👥 <b>П
+👥 <b>ПОЛЬЗОВАТЕЛИ:</b> {total_users}
+👑 <b>VIP:</b> {total_vip}
+📊 <b>ВСЕ СИГНАЛЫ:</b> {total_signals}
+🎯 <b>СРЕДНЯЯ ВЕРОЯТНОСТЬ:</b> {avg_prob:.1f}%
+
+{EmojiDecor.DIVIDER}
+"""
+    
+    await update.message.reply_text(text, parse_mode='HTML')
 
     if __name__ == "__main__":
     from threading import Thread
