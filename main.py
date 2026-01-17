@@ -745,7 +745,7 @@ if __name__ == "__main__":
     from threading import Thread
     from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
-    TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
+    TOKEN = os.environ.get("TOKEN", "8578509228:AAHNy5zNB0pLNA96c-671Y7zVyUitj5ecRc")
 
     # --- 1️⃣ Запуск веб-сервера Flask в отдельном потоке ---
     def run_web():
