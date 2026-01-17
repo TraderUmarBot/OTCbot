@@ -1,6 +1,7 @@
 # =====================================
 # KURUT AI INFINITY | COIP PRO EDITION
 # OTC SIGNAL SYSTEM FOR POCKET OPTION
+# ULTIMATE EDITION WITH 15+ INDICATORS
 # =====================================
 
 import asyncio
@@ -27,13 +28,37 @@ def run_web():
     server.run(host='0.0.0.0', port=8080)
 
 # ---------------- CONFIG ----------------
-TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
+TOKEN = os.environ.get("TOKEN", "ВСТАВЬ_СВОЙ_BOT_TOKEN")
 
 ADMIN_IDS = {6117198446, 7079260196}
 ADMIN_USER = "@Kuruttrader"
 ADMIN_LINK = "https://t.me/Kuruttrader"
 
 REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
+
+REGISTER_TEXT = f"""
+🎯 **РЕГИСТРАЦИЯ НА POCKET OPTION**
+
+✅ **Если у тебя ЕСТЬ аккаунт:**
+1. Зайди в свой аккаунт
+2. Пополни баланс от $20
+3. Отправь ID админу {ADMIN_USER}
+
+✅ **Если у тебя НЕТ аккаунта:**
+1. Нажми на кнопку "📝 РЕГИСТРАЦИЯ"
+2. Зарегистрируйся по ссылке
+3. Пополни баланс от $20
+4. Отправь ID админу {ADMIN_USER}
+
+💰 **Минимальный депозит:** $20
+🎁 **Бонус при регистрации:** +50% к первому депозиту
+⚡ **Вывод средств:** от 15 минут до 24 часов
+
+📊 **ПОСЛЕ РЕГИСТРАЦИИ:**
+1. Скопируй свой ID из бота (/start)
+2. Напиши админу {ADMIN_USER}
+3. Получи VIP доступ к сигналам
+"""
 
 INSTAGRAM = "https://instagram.com/ТВОЙ_ИНСТА"
 TELEGRAM = "https://t.me/ТВОЙ_ТГ"
@@ -129,11 +154,18 @@ def calculate_win_rate(user_id):
             return (stats.get('plus', 0) / total) * 100
     return 0
 
-# ---------------- ADVANCED MARKET ANALYSIS ----------------
+def calculate_total_profit(user_id):
+    if user_id in trader_stats:
+        stats = trader_stats[user_id]
+        return stats.get('profit', 0)
+    return 0
+
+# ---------------- ADVANCED MARKET ANALYSIS (15+ INDICATORS) ----------------
 class MarketAnalyzer:
     def __init__(self):
         self.patterns = {}
         
+    # 1. EMA (Exponential Moving Average)
     def calculate_ema(self, prices, period):
         if len(prices) < period:
             return sum(prices) / len(prices)
@@ -143,6 +175,7 @@ class MarketAnalyzer:
             ema = (price - ema) * multiplier + ema
         return ema
     
+    # 2. RSI (Relative Strength Index)
     def calculate_rsi(self, prices, period=14):
         if len(prices) < period + 1:
             return 50
@@ -162,14 +195,20 @@ class MarketAnalyzer:
         rsi = 100 - (100 / (1 + rs))
         return rsi
     
+    # 3. MACD (Moving Average Convergence Divergence)
     def calculate_macd(self, prices):
         if len(prices) < 26:
-            return 0
+            return 0, 0, 0
         
         ema12 = self.calculate_ema(prices[-26:], 12)
         ema26 = self.calculate_ema(prices[-26:], 26)
-        return ema12 - ema26
+        macd_line = ema12 - ema26
+        signal_line = self.calculate_ema([ema12 - ema26], 9)
+        histogram = macd_line - signal_line
+        
+        return macd_line, signal_line, histogram
     
+    # 4. Bollinger Bands
     def calculate_bollinger_bands(self, prices, period=20):
         if len(prices) < period:
             sma = sum(prices) / len(prices)
@@ -183,6 +222,7 @@ class MarketAnalyzer:
         lower = sma - (std * 2)
         return upper, sma, lower
     
+    # 5. Stochastic Oscillator
     def calculate_stochastic(self, high_prices, low_prices, close_prices, period=14):
         if len(close_prices) < period:
             return 50, 50
@@ -204,6 +244,7 @@ class MarketAnalyzer:
         
         return k, d
     
+    # 6. ATR (Average True Range)
     def calculate_atr(self, high_prices, low_prices, close_prices, period=14):
         if len(close_prices) < 2:
             return 0
@@ -218,6 +259,183 @@ class MarketAnalyzer:
         
         return sum(tr_values) / len(tr_values) if tr_values else 0
     
+    # 7. CCI (Commodity Channel Index)
+    def calculate_cci(self, high_prices, low_prices, close_prices, period=20):
+        if len(close_prices) < period:
+            return 0
+        
+        typical_prices = [(h + l + c) / 3 for h, l, c in zip(high_prices[-period:], low_prices[-period:], close_prices[-period:])]
+        sma = sum(typical_prices) / period
+        mean_deviation = sum(abs(tp - sma) for tp in typical_prices) / period
+        
+        if mean_deviation == 0:
+            return 0
+        
+        cci = (typical_prices[-1] - sma) / (0.015 * mean_deviation)
+        return cci
+    
+    # 8. Williams %R
+    def calculate_williams_r(self, high_prices, low_prices, close_prices, period=14):
+        if len(close_prices) < period:
+            return -50
+        
+        highest_high = max(high_prices[-period:])
+        lowest_low = min(low_prices[-period:])
+        current_close = close_prices[-1]
+        
+        if highest_high == lowest_low:
+            return -50
+        
+        williams_r = -100 * ((highest_high - current_close) / (highest_high - lowest_low))
+        return williams_r
+    
+    # 9. MFI (Money Flow Index)
+    def calculate_mfi(self, high_prices, low_prices, close_prices, volumes, period=14):
+        if len(close_prices) < period or len(volumes) < period:
+            return 50
+        
+        typical_prices = [(h + l + c) / 3 for h, l, c in zip(high_prices[-period:], low_prices[-period:], close_prices[-period:])]
+        money_flows = [tp * v for tp, v in zip(typical_prices, volumes[-period:])]
+        
+        positive_flow = 0
+        negative_flow = 0
+        
+        for i in range(1, len(typical_prices)):
+            if typical_prices[i] > typical_prices[i-1]:
+                positive_flow += money_flows[i]
+            elif typical_prices[i] < typical_prices[i-1]:
+                negative_flow += money_flows[i]
+        
+        if negative_flow == 0:
+            return 100
+        
+        money_ratio = positive_flow / negative_flow
+        mfi = 100 - (100 / (1 + money_ratio))
+        return mfi
+    
+    # 10. ADX (Average Directional Index)
+    def calculate_adx(self, high_prices, low_prices, close_prices, period=14):
+        if len(close_prices) < period * 2:
+            return 25
+        
+        # Simplified ADX calculation
+        plus_dm = []
+        minus_dm = []
+        
+        for i in range(1, len(high_prices)):
+            up_move = high_prices[i] - high_prices[i-1]
+            down_move = low_prices[i-1] - low_prices[i]
+            
+            if up_move > down_move and up_move > 0:
+                plus_dm.append(up_move)
+                minus_dm.append(0)
+            elif down_move > up_move and down_move > 0:
+                plus_dm.append(0)
+                minus_dm.append(down_move)
+            else:
+                plus_dm.append(0)
+                minus_dm.append(0)
+        
+        tr_values = []
+        for i in range(1, len(close_prices)):
+            hl = high_prices[i] - low_prices[i]
+            hc = abs(high_prices[i] - close_prices[i-1])
+            lc = abs(low_prices[i] - close_prices[i-1])
+            tr_values.append(max(hl, hc, lc))
+        
+        if len(tr_values) < period or len(plus_dm) < period or len(minus_dm) < period:
+            return 25
+        
+        avg_tr = sum(tr_values[-period:]) / period
+        avg_plus_dm = sum(plus_dm[-period:]) / period
+        avg_minus_dm = sum(minus_dm[-period:]) / period
+        
+        if avg_tr == 0:
+            return 25
+        
+        plus_di = 100 * (avg_plus_dm / avg_tr)
+        minus_di = 100 * (avg_minus_dm / avg_tr)
+        dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di) if (plus_di + minus_di) > 0 else 0
+        
+        return dx
+    
+    # 11. Parabolic SAR (Simplified)
+    def calculate_parabolic_sar(self, high_prices, low_prices):
+        if len(high_prices) < 3:
+            return high_prices[-1] if len(high_prices) > 0 else 0
+        
+        # Simplified SAR calculation
+        trend = "UP" if high_prices[-1] > high_prices[-2] and low_prices[-1] > low_prices[-2] else "DOWN"
+        
+        if trend == "UP":
+            sar = min(low_prices[-3:])
+        else:
+            sar = max(high_prices[-3:])
+        
+        return sar, trend
+    
+    # 12. OBV (On-Balance Volume)
+    def calculate_obv(self, close_prices, volumes):
+        if len(close_prices) < 2 or len(volumes) < 2:
+            return 0
+        
+        obv = 0
+        for i in range(1, len(close_prices)):
+            if close_prices[i] > close_prices[i-1]:
+                obv += volumes[i]
+            elif close_prices[i] < close_prices[i-1]:
+                obv -= volumes[i]
+        
+        return obv
+    
+    # 13. Ichimoku Cloud (Simplified)
+    def calculate_ichimoku(self, high_prices, low_prices):
+        if len(high_prices) < 52 or len(low_prices) < 52:
+            return 0, 0, 0, 0, 0
+        
+        # Tenkan-sen (Conversion Line)
+        tenkan = (max(high_prices[-9:]) + min(low_prices[-9:])) / 2
+        
+        # Kijun-sen (Base Line)
+        kijun = (max(high_prices[-26:]) + min(low_prices[-26:])) / 2
+        
+        # Senkou Span A (Leading Span A)
+        senkou_a = (tenkan + kijun) / 2
+        
+        # Senkou Span B (Leading Span B)
+        senkou_b = (max(high_prices[-52:]) + min(low_prices[-52:])) / 2
+        
+        # Chikou Span (Lagging Span)
+        chikou = (high_prices[-26] + low_prices[-26]) / 2 if len(high_prices) >= 26 else 0
+        
+        return tenkan, kijun, senkou_a, senkou_b, chikou
+    
+    # 14. Volume Weighted Average Price
+    def calculate_vwap(self, high_prices, low_prices, close_prices, volumes):
+        if len(close_prices) == 0 or len(volumes) == 0:
+            return 0
+        
+        typical_prices = [(h + l + c) / 3 for h, l, c in zip(high_prices, low_prices, close_prices)]
+        cumulative_tp_v = sum(tp * v for tp, v in zip(typical_prices, volumes))
+        cumulative_volume = sum(volumes)
+        
+        if cumulative_volume == 0:
+            return 0
+        
+        return cumulative_tp_v / cumulative_volume
+    
+    # 15. Standard Deviation
+    def calculate_std(self, prices, period=20):
+        if len(prices) < period:
+            recent = prices
+        else:
+            recent = prices[-period:]
+        
+        mean = sum(recent) / len(recent)
+        variance = sum((x - mean) ** 2 for x in recent) / len(recent)
+        return math.sqrt(variance)
+    
+    # Генерация реалистичных данных
     def generate_price_data(self, asset):
         seed = sum(ord(c) for c in asset) + int(time.time() % 1000)
         random.seed(seed)
@@ -228,6 +446,7 @@ class MarketAnalyzer:
         prices = [base_price]
         highs = [base_price * (1 + random.uniform(0, 0.002))]
         lows = [base_price * (1 - random.uniform(0, 0.002))]
+        volumes = [random.randint(1000, 10000) for _ in range(200)]
         
         for _ in range(199):
             change = random.normalvariate(0, volatility)
@@ -236,106 +455,240 @@ class MarketAnalyzer:
             highs.append(new_price * (1 + random.uniform(0, 0.002)))
             lows.append(new_price * (1 - random.uniform(0, 0.002)))
         
-        return prices, highs, lows
+        return prices, highs, lows, volumes
     
+    # Продвинутый анализ с 15+ индикаторами
     def analyze_asset(self, asset):
-        prices, highs, lows = self.generate_price_data(asset)
+        prices, highs, lows, volumes = self.generate_price_data(asset)
         
-        ema9 = self.calculate_ema(prices[-20:], 9)
-        ema21 = self.calculate_ema(prices[-30:], 21)
-        ema50 = self.calculate_ema(prices[-60:], 50)
-        rsi = self.calculate_rsi(prices)
-        macd = self.calculate_macd(prices)
+        # Рассчитываем ВСЕ индикаторы
+        indicators = {}
+        
+        # Трендовые индикаторы
+        indicators['EMA_9'] = self.calculate_ema(prices[-20:], 9)
+        indicators['EMA_21'] = self.calculate_ema(prices[-30:], 21)
+        indicators['EMA_50'] = self.calculate_ema(prices[-60:], 50)
+        indicators['EMA_200'] = self.calculate_ema(prices[-250:], 200) if len(prices) >= 250 else indicators['EMA_50']
+        
+        # MACD комплексный
+        macd_line, signal_line, histogram = self.calculate_macd(prices)
+        indicators['MACD_LINE'] = macd_line
+        indicators['MACD_SIGNAL'] = signal_line
+        indicators['MACD_HIST'] = histogram
+        
+        # RSI
+        indicators['RSI'] = self.calculate_rsi(prices)
+        
+        # Bollinger Bands
         bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(prices)
+        indicators['BB_UPPER'] = bb_upper
+        indicators['BB_MIDDLE'] = bb_middle
+        indicators['BB_LOWER'] = bb_lower
+        
+        # Stochastic
         stoch_k, stoch_d = self.calculate_stochastic(highs, lows, prices)
-        atr = self.calculate_atr(highs, lows, prices)
+        indicators['STOCH_K'] = stoch_k
+        indicators['STOCH_D'] = stoch_d
         
-        indicators = {
-            'EMA_9': ema9,
-            'EMA_21': ema21,
-            'EMA_50': ema50,
-            'RSI': rsi,
-            'MACD': macd,
-            'BB_UPPER': bb_upper,
-            'BB_MIDDLE': bb_middle,
-            'BB_LOWER': bb_lower,
-            'STOCH_K': stoch_k,
-            'STOCH_D': stoch_d,
-            'ATR': atr,
-            'PRICE': prices[-1]
-        }
+        # ATR
+        indicators['ATR'] = self.calculate_atr(highs, lows, prices)
         
+        # CCI
+        indicators['CCI'] = self.calculate_cci(highs, lows, prices)
+        
+        # Williams %R
+        indicators['WILLIAMS_R'] = self.calculate_williams_r(highs, lows, prices)
+        
+        # MFI
+        indicators['MFI'] = self.calculate_mfi(highs, lows, prices, volumes)
+        
+        # ADX
+        indicators['ADX'] = self.calculate_adx(highs, lows, prices)
+        
+        # Parabolic SAR
+        sar_value, sar_trend = self.calculate_parabolic_sar(highs, lows)
+        indicators['SAR'] = sar_value
+        indicators['SAR_TREND'] = sar_trend
+        
+        # OBV
+        indicators['OBV'] = self.calculate_obv(prices, volumes)
+        
+        # Ichimoku
+        tenkan, kijun, senkou_a, senkou_b, chikou = self.calculate_ichimoku(highs, lows)
+        indicators['ICHIMOKU_TENKAN'] = tenkan
+        indicators['ICHIMOKU_KIJUN'] = kijun
+        indicators['ICHIMOKU_SENKOU_A'] = senkou_a
+        indicators['ICHIMOKU_SENKOU_B'] = senkou_b
+        indicators['ICHIMOKU_CHIKOU'] = chikou
+        
+        # VWAP
+        indicators['VWAP'] = self.calculate_vwap(highs, lows, prices, volumes)
+        
+        # Standard Deviation
+        indicators['STD'] = self.calculate_std(prices)
+        
+        # Текущая цена
+        indicators['PRICE'] = prices[-1]
+        
+        # Математический анализ вероятности
         score = 0
         reasons = []
         
-        if ema9 > ema21 > ema50:
-            score += 3
-            reasons.append("Сильный восходящий тренд (EMA 9>21>50)")
-        elif ema9 < ema21 < ema50:
-            score -= 3
-            reasons.append("Сильный нисходящий тренд (EMA 9<21<50)")
+        # Анализ тренда (4 индикатора)
+        trend_score = 0
+        if indicators['EMA_9'] > indicators['EMA_21'] > indicators['EMA_50']:
+            trend_score += 3
+            reasons.append("📈 Сильный восходящий тренд (EMA 9>21>50)")
+        elif indicators['EMA_9'] < indicators['EMA_21'] < indicators['EMA_50']:
+            trend_score -= 3
+            reasons.append("📉 Сильный нисходящий тренд (EMA 9<21<50)")
         
-        if rsi < 30:
-            score += 2
-            reasons.append("RSI в зоне перепроданности (<30)")
-        elif rsi > 70:
-            score -= 2
-            reasons.append("RSI в зоне перекупленности (>70)")
-        elif 40 < rsi < 60:
-            score += 1
-            reasons.append("RSI в нейтральной зоне")
+        if macd_line > signal_line and histogram > 0:
+            trend_score += 2
+            reasons.append("✅ MACD бычий пересечение + гистограмма")
+        elif macd_line < signal_line and histogram < 0:
+            trend_score -= 2
+            reasons.append("❌ MACD медвежий пересечение - гистограмма")
         
-        if macd > 0:
-            score += 2
-            reasons.append("MACD показывает бычий тренд")
-        else:
-            score -= 1
-            reasons.append("MACD показывает медвежий тренд")
+        score += trend_score
         
-        bb_percent = ((prices[-1] - bb_lower) / (bb_upper - bb_lower)) * 100
+        # Анализ импульса (4 индикатора)
+        momentum_score = 0
+        if indicators['RSI'] < 30:
+            momentum_score += 2
+            reasons.append("🎯 RSI в зоне перепроданности (<30)")
+        elif indicators['RSI'] > 70:
+            momentum_score -= 2
+            reasons.append("⚠️ RSI в зоне перекупленности (>70)")
+        
+        if indicators['STOCH_K'] < 20 and indicators['STOCH_D'] < 20:
+            momentum_score += 1
+            reasons.append("📊 Stochastic перепродан")
+        elif indicators['STOCH_K'] > 80 and indicators['STOCH_D'] > 80:
+            momentum_score -= 1
+            reasons.append("📊 Stochastic перекуплен")
+        
+        if indicators['CCI'] < -100:
+            momentum_score += 1
+            reasons.append(f"📈 CCI перепродан ({indicators['CCI']:.1f})")
+        elif indicators['CCI'] > 100:
+            momentum_score -= 1
+            reasons.append(f"📉 CCI перекуплен ({indicators['CCI']:.1f})")
+        
+        if indicators['WILLIAMS_R'] < -80:
+            momentum_score += 1
+            reasons.append(f"🎯 Williams %R перепродан ({indicators['WILLIAMS_R']:.1f})")
+        elif indicators['WILLIAMS_R'] > -20:
+            momentum_score -= 1
+            reasons.append(f"⚠️ Williams %R перекуплен ({indicators['WILLIAMS_R']:.1f})")
+        
+        score += momentum_score
+        
+        # Анализ волатильности и объема (4 индикатора)
+        volatility_score = 0
+        bb_percent = ((indicators['PRICE'] - bb_lower) / (bb_upper - bb_lower)) * 100
+        
         if bb_percent < 20:
-            score += 2
-            reasons.append(f"Цена у нижней границы BB ({bb_percent:.1f}%)")
+            volatility_score += 2
+            reasons.append(f"📊 Цена у нижней границы BB ({bb_percent:.1f}%)")
         elif bb_percent > 80:
-            score -= 2
-            reasons.append(f"Цена у верхней границы BB ({bb_percent:.1f}%)")
+            volatility_score -= 2
+            reasons.append(f"📊 Цена у верхней границы BB ({bb_percent:.1f}%)")
         
-        if stoch_k < 20 and stoch_d < 20:
-            score += 1
-            reasons.append("Stochastic в зоне перепроданности")
-        elif stoch_k > 80 and stoch_d > 80:
-            score -= 1
-            reasons.append("Stochastic в зоне перекупленности")
+        if indicators['ATR'] > indicators['PRICE'] * 0.002:
+            volatility_score += 1
+            reasons.append(f"⚡ Хорошая волатильность (ATR: {indicators['ATR']:.4f})")
         
-        if atr > prices[-1] * 0.002:
-            score += 1
-            reasons.append(f"Хорошая волатильность (ATR: {atr:.4f})")
+        if indicators['MFI'] < 30:
+            volatility_score += 1
+            reasons.append(f"💰 MFI показывает накопление ({indicators['MFI']:.1f})")
+        elif indicators['MFI'] > 70:
+            volatility_score -= 1
+            reasons.append(f"💸 MFI показывает распределение ({indicators['MFI']:.1f})")
         
-        if score >= 4:
-            direction = "ВВЕРХ 🟢 CALL"
-            probability = min(95, 75 + score * 3)
-        elif score <= -4:
-            direction = "ВНИЗ 🔴 PUT"
-            probability = min(95, 75 + abs(score) * 3)
-        elif score >= 1:
-            direction = "ВВЕРХ 🟢 CALL"
-            probability = 65 + score * 2
-        elif score <= -1:
-            direction = "ВНИЗ 🔴 PUT"
-            probability = 65 + abs(score) * 2
+        if indicators['ADX'] > 25:
+            volatility_score += 1
+            reasons.append(f"💪 Сильный тренд (ADX: {indicators['ADX']:.1f})")
+        
+        score += volatility_score
+        
+        # Анализ Ichimoku (2 индикатора)
+        ichimoku_score = 0
+        if indicators['PRICE'] > max(indicators['ICHIMOKU_SENKOU_A'], indicators['ICHIMOKU_SENKOU_B']):
+            ichimoku_score += 2
+            reasons.append("☁️ Цена выше облака Ишимоку")
+        elif indicators['PRICE'] < min(indicators['ICHIMOKU_SENKOU_A'], indicators['ICHIMOKU_SENKOU_B']):
+            ichimoku_score -= 2
+            reasons.append("☁️ Цена ниже облака Ишимоку")
+        
+        if indicators['ICHIMOKU_TENKAN'] > indicators['ICHIMOKU_KIJUN']:
+            ichimoku_score += 1
+            reasons.append("↗️ Тенкан-сен выше Киджун-сен")
         else:
-            direction = "НЕЙТРАЛЬНО ⚪ WAIT"
+            ichimoku_score -= 1
+            reasons.append("↘️ Тенкан-сен ниже Киджун-сен")
+        
+        score += ichimoku_score
+        
+        # Математическая вероятность на основе всех индикаторов
+        total_indicators = 15  # Всего анализируемых индикаторов
+        positive_signals = sum([
+            1 if indicators['EMA_9'] > indicators['EMA_21'] else 0,
+            1 if macd_line > signal_line else 0,
+            1 if indicators['RSI'] < 70 else 0,
+            1 if bb_percent < 80 else 0,
+            1 if indicators['STOCH_K'] < 80 else 0,
+            1 if indicators['CCI'] < 100 else 0,
+            1 if indicators['WILLIAMS_R'] < -20 else 0,
+            1 if indicators['MFI'] < 70 else 0,
+            1 if indicators['ADX'] > 20 else 0,
+            1 if indicators['SAR_TREND'] == "UP" else 0,
+            1 if indicators['OBV'] > 0 else 0,
+            1 if indicators['ICHIMOKU_TENKAN'] > indicators['ICHIMOKU_KIJUN'] else 0,
+            1 if indicators['PRICE'] > indicators['VWAP'] else 0,
+            1 if indicators['STD'] < indicators['PRICE'] * 0.01 else 0,
+            1 if trend_score > 0 else 0
+        ])
+        
+        base_probability = (positive_signals / total_indicators) * 100
+        
+        # Корректировка вероятности на основе силы сигнала
+        if score >= 8:
+            direction = "🚀 ВВЕРХ 🟢 STRONG CALL"
+            probability = min(98, 80 + score * 2)
+        elif score >= 4:
+            direction = "📈 ВВЕРХ 🟢 CALL"
+            probability = min(95, 75 + score * 2)
+        elif score <= -8:
+            direction = "🔻 ВНИЗ 🔴 STRONG PUT"
+            probability = min(98, 80 + abs(score) * 2)
+        elif score <= -4:
+            direction = "📉 ВНИЗ 🔴 PUT"
+            probability = min(95, 75 + abs(score) * 2)
+        elif score > 0:
+            direction = "↗️ ВВЕРХ 🟢 WEAK CALL"
+            probability = 60 + score
+        elif score < 0:
+            direction = "↘️ ВНИЗ 🔴 WEAK PUT"
+            probability = 60 + abs(score)
+        else:
+            direction = "⏸️ НЕЙТРАЛЬНО ⚪ WAIT"
             probability = 50
         
-        volatility_percent = (atr / prices[-1]) * 100
-        if volatility_percent < 0.3:
-            expiration = "3m-5m"
-        elif volatility_percent < 0.6:
-            expiration = "2m-3m"
-        else:
-            expiration = "1m-2m"
+        # Финальная вероятность (среднее между математической и эвристической)
+        final_probability = min(99, int((base_probability * 0.6) + (probability * 0.4)))
         
-        return direction, probability, reasons, indicators, expiration
+        # Рекомендация экспирации на основе волатильности
+        volatility_percent = (indicators['ATR'] / indicators['PRICE']) * 100
+        
+        if volatility_percent < 0.2:
+            expiration = "3m-5m (низкая волатильность)"
+        elif volatility_percent < 0.5:
+            expiration = "2m-3m (умеренная волатильность)"
+        else:
+            expiration = "1m-2m (высокая волатильность)"
+        
+        return direction, final_probability, reasons[:6], indicators, expiration
 
 analyzer = MarketAnalyzer()
 
@@ -367,386 +720,38 @@ class MarathonCalculator:
         final_balance = results[-1]['balance']
         total_profit = results[-1]['total_profit']
         
-        plan = f"**МАРАФОН НА 30 ДНЕЙ | ПЛАН ТОРГОВЛИ**\n\n"
-        plan += f"💰 **Стартовый баланс:** ${start_balance:,.2f}\n"
-        plan += f"🎯 **Ежедневная цель:** +{self.daily_profit}%\n"
-        plan += f"🏁 **Финальная цель:** ${final_balance:,.2f}\n"
-        plan += f"📈 **Общая прибыль:** ${total_profit:,.2f}\n\n"
-        plan += f"**ЕЖЕДНЕВНЫЙ ПЛАН:**\n\n"
+        plan = "✨ *МАРАФОН НА 30 ДНЕЙ | ПЛАН ТОРГОВЛИ* ✨\n\n"
+        plan += "💰 *Стартовый баланс:* $" + f"{start_balance:,.2f}" + "\n"
+        plan += "🎯 *Ежедневная цель:* +" + str(self.daily_profit) + "%\n"
+        plan += "🏁 *Финальная цель:* $" + f"{final_balance:,.2f}" + "\n"
+        plan += "📈 *Общая прибыль:* $" + f"{total_profit:,.2f}" + "\n\n"
+        plan += "📊 *ДЕТАЛЬНЫЙ ПЛАН НА КАЖДЫЙ ДЕНЬ:*\n\n"
+        
+        emoji_progress = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
         
         for i in range(min(10, len(results))):
             day_data = results[i]
-            plan += f"**День {day_data['day']}:** ${day_data['balance']:,.2f} (+${day_data['profit']:,.2f})\n"
+            emoji = emoji_progress[i] if i < len(emoji_progress) else f"{i+1}."
+            plan += f"{emoji} *День {day_data['day']}:* ${day_data['balance']:,.2f} (+${day_data['profit']:,.2f})\n"
         
         if len(results) > 10:
-            plan += f"...\n"
-            plan += f"**День 30:** ${results[-1]['balance']:,.2f} (+${results[-1]['profit']:,.2f})\n"
-        
-        plan += f"\n**СТРАТЕГИЯ:**\n"
-        plan += f"1. **Управление рисками:**\n"
-        plan += f"   • Размер сделки: 2-3% от баланса\n"
-        plan += f"   • Максимум 5 сделок в день\n"
-        plan += f"   • Стоп-лосс: 2 убыточные сделки подряд\n\n"
-        plan += f"2. **Время торговли:**\n"
-        plan += f"   • Лучшее время: 10:00-14:00 МСК\n"
-        plan += f"   • Избегать новостей\n"
-        plan += f"   • Перерывы каждые 2 часа\n\n"
-        plan += f"3. **Психология:**\n"
-        plan += f"   • Не гнаться за убытками\n"
-        plan += f"   • Фиксировать прибыль от 5%\n"
-        plan += f"   • Дневник трейдера\n\n"
-        plan += f"4. **Сигналы:**\n"
-        plan += f"   • Использовать только VIP сигналы\n"
-        plan += f"   • Ждать подтверждения 2-3 индикаторов\n"
-        plan += f"   • Не торговать против тренда\n\n"
-        plan += f"⚠️ **ВАЖНО:** Торговля CFD связана с рисками. Не рискуйте больше, чем можете позволить себе потерять."
-        
-        return plan, results
+            plan += "\n📈 *ПРОМЕЖУТОЧНЫ
+            if __name__ == "__main__":
+    # --- Запуск Flask сервера в отдельном потоке ---
+    thread = Thread(target=run_web)
+    thread.start()
 
-marathon_calc = MarathonCalculator()
+    # --- Запуск Telegram бота ---
+    import asyncio
 
-# ---------------- UI ----------------
-async def show_menu(update, context):
-    uid = str(update.effective_user.id)
-    text = f"**KURUT AI INFINITY | PRO MENU**\n\n"
-    text += f"👤 **Пользователь:** {update.effective_user.first_name}\n"
-    text += f"🎯 **Статус:** {'VIP ✅' if is_vip(uid) else 'Ожидание доступа'}\n"
-    text += f"📊 **Винрейт:** {calculate_win_rate(uid):.1f}%\n\n"
-    text += f"✨ **Доступные функции:**"
-    
-    kb = [
-        [InlineKeyboardButton("🎯 ПОЛУЧИТЬ СИГНАЛ", callback_data="market")],
-        [InlineKeyboardButton("🏃 МАРАФОН 30 ДНЕЙ", callback_data="marathon")],
-        [InlineKeyboardButton("🏆 ТОП ТРЕЙДЕРОВ", callback_data="top")],
-        [InlineKeyboardButton("📊 МОЯ СТАТИСТИКА", callback_data="my_stats")],
-        [InlineKeyboardButton("📚 ИНСТРУКЦИЯ", callback_data="guide")],
-        [InlineKeyboardButton("✍️ НАПИСАТЬ АДМИНУ", url=ADMIN_LINK)],
-        [InlineKeyboardButton("🔄 ОБНОВИТЬ", callback_data="refresh")]
-    ]
+    async def main():
+        app = Application.builder().token(TOKEN).build()
 
-    if update.callback_query:
-        await safe_edit(update.callback_query, text, InlineKeyboardMarkup(kb), "Markdown")
-    else:
-    if update.message:
-        await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
-    else:
-        await safe_edit(update.callback_query, text, InlineKeyboardMarkup(kb), "Markdown")
+        # Добавляем хэндлеры (подставь свои функции start, callback_handler и т.д.)
+        app.add_handler(CommandHandler("start", start))
+        app.add_handler(CallbackQueryHandler(callback_handler))
+        # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))  # пример
 
-# ---------------- SAFE EDIT ----------------
-async def safe_edit(query, text, reply_markup=None, parse_mode=None):
-    try:
-        await query.edit_message_text(text, reply_markup=reply_markup, parse_mode=parse_mode)
-    except BadRequest as e:
-        if "Message is not modified" in str(e):
-            pass
-        else:
-            raise
+        await app.run_polling()
 
-# ---------------- START ----------------
-async def start(update: Update, context):
-    uid = str(update.effective_user.id)
-    all_users.add(uid)
-    save_db(DB_ALL, list(all_users))
-    
-    if is_vip(uid):
-        await show_menu(update, context)
-    else:
-        text = f"**Добро пожаловать в KURUT AI INFINITY PRO**\n\n"
-        text += f"🎯 **Точные сигналы для OTC рынка Pocket Option**\n"
-        text += f"⚡ **Точность:** 75-95%\n"
-        text += f"⏱️ **Экспирации:** 10s, 30s, 1m, 2m, 3m, 5m, 8m\n\n"
-        text += f"**ДЛЯ ПОЛУЧЕНИЯ ДОСТУПА:**\n\n"
-        text += f"1️⃣ **Регистрация:** [Pocket Option]({REF_LINK})\n"
-        text += f"2️⃣ **Пополни баланс** от $50\n"
-        text += f"3️⃣ **Отправь ID:** `{uid}`\n"
-        text += f"4️⃣ **Админу:** {ADMIN_USER}\n\n"
-        text += f"**ПРЕИМУЩЕСТВА VIP:**\n"
-        text += f"• Точные сигналы с анализом\n"
-        text += f"• Поддержка 24/7\n"
-        text += f"• Обучение и стратегии\n"
-        text += f"• Личный марафон\n\n"
-        text += f"**СТАТИСТИКА:**\n"
-        text += f"✅ Успешных сигналов: 82%\n"
-        text += f"⚡ Средняя экспирация: 2-3 минуты\n"
-        text += f"🎯 Рекомендуемый риск: 2%\n\n"
-        text += f"✍️ **НАПИСАТЬ АДМИНУ:** [ТЫК]({ADMIN_LINK})\n\n"
-        text += f"⚠️ **ВАЖНО:** Торговля CFD связана с рисками. Не рискуйте больше, чем можете позволить себе потерять."
-        
-        kb = [
-            [InlineKeyboardButton("✍️ НАПИСАТЬ АДМИНУ", url=ADMIN_LINK)],
-            [InlineKeyboardButton("🔄 ОБНОВИТЬ СТАТУС", callback_data="check_access")]
-        ]
-        await update.message.reply_text(text, parse_mode="Markdown", 
-                                      disable_web_page_preview=True,
-                                      reply_markup=InlineKeyboardMarkup(kb))
-
-# ---------------- PAGINATION ----------------
-def get_paged_kb(data, page, prefix):
-    size = 8
-    start = page * size
-    chunk = data[start:start + size]
-
-    kb = []
-    for i, item in enumerate(chunk):
-        kb.append([InlineKeyboardButton(item, callback_data=f"asset_{start+i}")])
-
-    nav = []
-    if page > 0:
-        nav.append(InlineKeyboardButton("⬅️", callback_data=f"{prefix}_{page-1}"))
-    if start + size < len(data):
-        nav.append(InlineKeyboardButton("➡️", callback_data=f"{prefix}_{page+1}"))
-
-    if nav:
-        kb.append(nav)
-    
-    kb.append([InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")])
-
-    return InlineKeyboardMarkup(kb)
-
-# ---------------- CALLBACKS ----------------
-async def callback_handler(update: Update, context):
-    q = update.callback_query
-    uid = str(q.from_user.id)
-    await q.answer()
-    
-    if q.data == "refresh" or q.data == "back_menu":
-        await show_menu(update, context)
-        return
-        
-    if q.data == "check_access":
-        if is_vip(uid):
-            await q.edit_message_text("✅ Ваш VIP доступ активирован!", parse_mode="Markdown")
-            await asyncio.sleep(1)
-            await show_menu(update, context)
-        else:
-            await q.edit_message_text("❌ VIP доступ еще не активирован. Отправьте ваш ID админу.", parse_mode="Markdown")
-        return
-
-    if not is_vip(uid):
-        await q.edit_message_text("❌ У вас нет доступа к сигналам. Используйте /start для получения доступа.")
-        return
-
-    if q.data == "guide":
-        guide_text = "**ПОЛНАЯ ИНСТРУКЦИЯ К БОТУ**\n\n"
-        guide_text += "**КАК ПОЛЬЗОВАТЬСЯ СИГНАЛАМИ:**\n"
-        guide_text += "1. Нажмите 'ПОЛУЧИТЬ СИГНАЛ'\n"
-        guide_text += "2. Выберите рынок (OTC/Акции/Крипто)\n"
-        guide_text += "3. Выберите актив для анализа\n"
-        guide_text += "4. Выберите экспирацию (время)\n"
-        guide_text += "5. Получите точный сигнал с анализом\n\n"
-        guide_text += "**ВЫБОР ЭКСПИРАЦИИ:**\n"
-        guide_text += "• 10-30 секунд - для опытных, высокая волатильность\n"
-        guide_text += "• 1-3 минуты - оптимальный вариант, стабильная прибыль\n"
-        guide_text += "• 5-8 минут - для консервативных стратегий\n\n"
-        guide_text += "**РИСК-МЕНЕДЖМЕНТ:**\n"
-        guide_text += "• Размер сделки: 1-3% от депозита\n"
-        guide_text += "• Стоп-лосс: 2-3 убыточные сделки подряд = перерыв\n"
-        guide_text += "• Тейк-профит: 15-25% в день = остановка\n"
-        guide_text += "• Максимум: 5 сделок в день\n\n"
-        guide_text += "**ТЕХНИЧЕСКИЙ АНАЛИЗ БОТА:**\n"
-        guide_text += "Бот анализирует 10+ индикаторов:\n"
-        guide_text += "• EMA 9, 21, 50 - определение тренда\n"
-        guide_text += "• RSI 14 - перекупленность/перепроданность\n"
-        guide_text += "• MACD - момент и направление\n"
-        guide_text += "• Bollinger Bands - волатильность и уровни\n"
-        guide_text += "• Stochastic - моментум рынка\n"
-        guide_text += "• ATR - средний истинный диапазон\n\n"
-        guide_text += f"**ПОДДЕРЖКА:**\nПо всем вопросам: {ADMIN_USER}"
-        
-        kb = [[InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")]]
-        await safe_edit(q, guide_text, InlineKeyboardMarkup(kb), "Markdown")
-
-    elif q.data == "market":
-        kb = [
-            [InlineKeyboardButton("💱 OTC РЫНОК", callback_data="cu_0")],
-            [InlineKeyboardButton("🏢 АКЦИИ", callback_data="st_0")],
-            [InlineKeyboardButton("₿ КРИПТО", callback_data="cr_0")],
-            [InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")]
-        ]
-        await safe_edit(q, "**ВЫБЕРИ РЫНОК ДЛЯ АНАЛИЗА:**", InlineKeyboardMarkup(kb), "Markdown")
-
-    elif q.data.startswith(("cu_", "st_", "cr_")):
-        pref, page = q.data.split("_")
-        data = OTC_PAIRS if pref == "cu" else STOCKS if pref == "st" else CRYPTO
-        context.user_data["assets"] = data
-        context.user_data["market_type"] = pref
-        await safe_edit(q, "**ВЫБЕРИ АКТИВ ДЛЯ АНАЛИЗА:**", get_paged_kb(data, int(page), pref))
-
-    elif q.data.startswith("asset_"):
-        idx = int(q.data.split("_")[1])
-        asset = context.user_data["assets"][idx]
-        
-        context.user_data["selected_asset"] = asset
-        context.user_data["analysis_step"] = "expiration"
-        
-        kb = []
-        for exp in EXPIRATIONS:
-            kb.append([InlineKeyboardButton(f"⏱️ {exp}", callback_data=f"exp_{exp}")])
-        kb.append([InlineKeyboardButton("🔙 НАЗАД", callback_data=f"{context.user_data['market_type']}_0")])
-        
-        await safe_edit(q, f"**АКТИВ:** {asset}\n\n**ВЫБЕРИТЕ ЭКСПИРАЦИЮ:**", InlineKeyboardMarkup(kb), "Markdown")
-
-    elif q.data.startswith("exp_"):
-        expiration = q.data.split("_")[1]
-        asset = context.user_data.get("selected_asset", "Неизвестный актив")
-        
-        msg = await q.edit_message_text(f"**АНАЛИЗИРУЕМ {asset}...**\n\nЗагрузка рыночных данных...\nРасчет индикаторов...\nОпределение сигнала...")
-        
-        await asyncio.sleep(2)
-        
-        direction, probability, reasons, indicators, recommended_exp = analyzer.analyze_asset(asset)
-        
-        signal_text = f"**ТОЧНЫЙ СИГНАЛ | {asset}**\n\n"
-        signal_text += f"**НАПРАВЛЕНИЕ:** {direction}\n"
-        signal_text += f"**ВЕРОЯТНОСТЬ:** {probability}%\n"
-        signal_text += f"**ВАША ЭКСПИРАЦИЯ:** {expiration}\n"
-        signal_text += f"**РЕКОМЕНДУЕМАЯ:** {recommended_exp}\n\n"
-        signal_text += f"**ТЕХНИЧЕСКИЙ АНАЛИЗ:**\n"
-        signal_text += f"• RSI: {indicators['RSI']:.1f} {'(ПЕРЕПРОДАН)' if indicators['RSI'] < 30 else '(ПЕРЕКУПЛЕН)' if indicators['RSI'] > 70 else '(НЕЙТРАЛЬНО)'}\n"
-        signal_text += f"• MACD: {indicators['MACD']:.4f} {'(БЫЧИЙ)' if indicators['MACD'] > 0 else '(МЕДВЕЖИЙ)'}\n"
-        signal_text += f"• Stochastic: K={indicators['STOCH_K']:.1f}, D={indicators['STOCH_D']:.1f}\n"
-        bb_percent = ((indicators['PRICE'] - indicators['BB_LOWER']) / (indicators['BB_UPPER'] - indicators['BB_LOWER']) * 100)
-        signal_text += f"• Bollinger Bands: {bb_percent:.1f}%\n"
-        signal_text += f"• ATR: {indicators['ATR']:.4f}\n"
-        signal_text += f"• Тренд: {'ВОСХОДЯЩИЙ' if indicators['EMA_9'] > indicators['EMA_21'] else 'НИСХОДЯЩИЙ'}\n\n"
-        signal_text += f"**ОСНОВНЫЕ ПРИЧИНЫ:**\n"
-        
-        for i, reason in enumerate(reasons[:5], 1):
-            signal_text += f"{i}. {reason}\n"
-        
-        signal_text += f"\n**РЕКОМЕНДАЦИИ:**\n"
-        signal_text += f"• Размер сделки: {'2-3%' if probability > 85 else '1-2%' if probability > 75 else '0.5-1%'}\n"
-        signal_text += f"• Стоп-лосс: {'Не требуется' if probability > 90 else '1-2% от депозита'}\n"
-        signal_text += f"• Тейк-профит: {'15-20%' if expiration in ['10s', '30s'] else '10-15%' if expiration in ['1m', '2m'] else '8-12%'}\n\n"
-        signal_text += f"⚠️ **ВАЖНО:** Торговля CFD сопряжена с рисками."
-        
-        kb = [
-            [
-                InlineKeyboardButton("✅ СИГНАЛ СРАБОТАЛ", callback_data="res_plus"),
-                InlineKeyboardButton("❌ СИГНАЛ НЕ СРАБОТАЛ", callback_data="res_minus")
-            ],
-            [InlineKeyboardButton("🔄 НОВЫЙ СИГНАЛ", callback_data="market")],
-            [InlineKeyboardButton("🔙 ГЛАВНОЕ МЕНЮ", callback_data="back_menu")]
-        ]
-        
-        await msg.edit_text(signal_text, parse_mode="Markdown", reply_markup=InlineKeyboardMarkup(kb))
-        
-        log_signal(asset, direction, probability, indicators, expiration, uid)
-
-    elif q.data == "marathon":
-        await safe_edit(q, "💰 **ВВЕДИТЕ ВАШ СТАРТОВЫЙ БАЛАНС ($):**\n\nПример: 100, 500, 1000")
-        context.user_data["wait_balance"] = True
-
-      elif q.data == "top":
-        top_users = []
-
-        for user_id, stats in trader_stats.items():
-            if not isinstance(stats, dict):
-                continue
-
-            plus = stats.get('plus', 0)
-            minus = stats.get('minus', 0)
-            profit = stats.get('profit', 0)
-
-            total = plus + minus
-            winrate = (plus / total * 100) if total > 0 else 0
-
-            top_users.append({
-                "id": user_id,
-                "name": stats.get("name", "Аноним"),
-                "plus": plus,
-                "minus": minus,
-                "profit": profit,
-                "winrate": winrate
-            })
-
-        # Сортируем по винрейту
-        top_users.sort(key=lambda x: x["winrate"], reverse=True)
-
-        text = "🏆 **ТОП ТРЕЙДЕРОВ**\n\n"
-
-        if not top_users:
-            text += "Пока нет статистики."
-        else:
-            for i, user in enumerate(top_users[:10], 1):
-                text += (
-                    f"{i}. **{user['name']}**\n"
-                    f"   ✅ Плюс: {user['plus']} | ❌ Минус: {user['minus']}\n"
-                    f"   📈 Винрейт: {user['winrate']:.1f}% | 💰 Профит: ${user['profit']}\n\n"
-                )
-
-        kb = [[InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")]]
-        await safe_edit(q, text, InlineKeyboardMarkup(kb), "Markdown")  
-                # ---------------- MESSAGE HANDLER ----------------
-async def message_handler(update: Update, context):
-    if context.user_data.get("wait_balance"):
-        try:
-            bal = float(update.message.text.replace(",", "."))
-            context.user_data["wait_balance"] = False
-            
-            plan, results = marathon_calc.generate_plan(bal)
-            await update.message.reply_text(plan, parse_mode="Markdown")
-        except:
-            await update.message.reply_text("❌ Введите число!")
-
-# ---------------- ADMIN COMMANDS ----------------
-async def admin_commands(update: Update, context):
-    uid = str(update.effective_user.id)
-    if not is_admin(uid):
-        return
-
-    parts = update.message.text.split()
-    cmd = parts[0]
-
-    if cmd == "/grant" and len(parts) > 1:
-        tid = parts[1]
-        vip_users.add(tid)
-        save_db(DB_VIP, list(vip_users))
-        log_admin("GRANT", tid, uid)
-        await update.message.reply_text(f"✅ Доступ выдан: {tid}")
-
-    elif cmd == "/revoke" and len(parts) > 1:
-        tid = parts[1]
-        vip_users.discard(tid)
-        save_db(DB_VIP, list(vip_users))
-        log_admin("REVOKE", tid, uid)
-        await update.message.reply_text(f"❌ Доступ снят: {tid}")
-
-    elif cmd == "/send":
-        count = 0
-        for user in all_users:
-            try:
-                if update.message.reply_to_message:
-                    await context.bot.copy_message(
-                        chat_id=user,
-                        from_chat_id=update.message.chat_id,
-                        message_id=update.message.reply_to_message.message_id
-                    )
-                else:
-                    msg = update.message.text.replace("/send", "").strip()
-                    await context.bot.send_message(chat_id=user, text=msg)
-                count += 1
-                await asyncio.sleep(0.05)
-            except:
-                continue
-        await update.message.reply_text(f"📢 Отправлено: {count} пользователей")
-
-# ---------------- RUN ----------------
-def main():
-    # Запускаем веб-сервер в отдельном потоке
-    Thread(target=run_web).start()
-    
-    # Создаем приложение бота
-    app = Application.builder().token(TOKEN).build()
-    
-    # Добавляем обработчики
-    app.add_handler(CommandHandler("start", start))
-    app.add_handler(CallbackQueryHandler(callback_handler))
-    app.add_handler(MessageHandler(filters.Regex(r"^/(grant|revoke|send)"), admin_commands))
-    app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))
-    
-    print("🚀 KURUT AI INFINITY | COIP PRO ONLINE")
-    app.run_polling()
-
-if __name__ == "__main__":
-    main()
+    asyncio.run(main())
