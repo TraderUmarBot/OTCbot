@@ -30,8 +30,8 @@ def run_web():
 TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
 
 ADMIN_IDS = {6117198446, 7079260196}
-ADMIN_USER = "@id6117198446"
-ADMIN_LINK = f"https://t.me/{ADMIN_USER.replace('@', '')}"
+ADMIN_USER = "@Kuruttrader"
+ADMIN_LINK = "https://t.me/Kuruttrader"
 
 REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
 
@@ -427,7 +427,10 @@ async def show_menu(update, context):
     if update.callback_query:
         await safe_edit(update.callback_query, text, InlineKeyboardMarkup(kb), "Markdown")
     else:
+    if update.message:
         await update.message.reply_text(text, reply_markup=InlineKeyboardMarkup(kb), parse_mode="Markdown")
+    else:
+        await safe_edit(update.callback_query, text, InlineKeyboardMarkup(kb), "Markdown")
 
 # ---------------- SAFE EDIT ----------------
 async def safe_edit(query, text, reply_markup=None, parse_mode=None):
@@ -634,22 +637,46 @@ async def callback_handler(update: Update, context):
         await safe_edit(q, "💰 **ВВЕДИТЕ ВАШ СТАРТОВЫЙ БАЛАНС ($):**\n\nПример: 100, 500, 1000")
         context.user_data["wait_balance"] = True
 
-    elif q.data == "top":
+      elif q.data == "top":
         top_users = []
+
         for user_id, stats in trader_stats.items():
-            if isinstance(stats, dict):
-                plus = stats.get('plus', 0)
-                minus = stats.get('minus', 0)
-                profit = stats.get('profit', 0)
-                winrate = (plus / (plus + minus) * 100) if (plus + minus) > 0 else 0
-                top_users.append({
-    'id': user_id,
-    'name': stats.get('name', 'Аноним'),
-    'plus': plus,
-    'minus': minus,
-    'profit': profit,
-    'winrate': winrate
-})
+            if not isinstance(stats, dict):
+                continue
+
+            plus = stats.get('plus', 0)
+            minus = stats.get('minus', 0)
+            profit = stats.get('profit', 0)
+
+            total = plus + minus
+            winrate = (plus / total * 100) if total > 0 else 0
+
+            top_users.append({
+                "id": user_id,
+                "name": stats.get("name", "Аноним"),
+                "plus": plus,
+                "minus": minus,
+                "profit": profit,
+                "winrate": winrate
+            })
+
+        # Сортируем по винрейту
+        top_users.sort(key=lambda x: x["winrate"], reverse=True)
+
+        text = "🏆 **ТОП ТРЕЙДЕРОВ**\n\n"
+
+        if not top_users:
+            text += "Пока нет статистики."
+        else:
+            for i, user in enumerate(top_users[:10], 1):
+                text += (
+                    f"{i}. **{user['name']}**\n"
+                    f"   ✅ Плюс: {user['plus']} | ❌ Минус: {user['minus']}\n"
+                    f"   📈 Винрейт: {user['winrate']:.1f}% | 💰 Профит: ${user['profit']}\n\n"
+                )
+
+        kb = [[InlineKeyboardButton("🔙 НАЗАД", callback_data="back_menu")]]
+        await safe_edit(q, text, InlineKeyboardMarkup(kb), "Markdown")  
                 # ---------------- MESSAGE HANDLER ----------------
 async def message_handler(update: Update, context):
     if context.user_data.get("wait_balance"):
