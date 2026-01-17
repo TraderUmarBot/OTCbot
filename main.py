@@ -740,18 +740,20 @@ class MarathonCalculator:
 Здесь можно добавить оставшиеся дни марафона
 """
             
-
 if __name__ == "__main__":
     import os
     from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
     TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
 
+    # Создаем приложение бота
     app = Application.builder().token(TOKEN).build()
 
-    # Пример обработчиков
+    # --- ДОБАВЬ СВОИ ОБРАБОТЧИКИ ---
+    # Пример:
     # app.add_handler(CommandHandler("start", start))
     # app.add_handler(CallbackQueryHandler(callback_handler))
 
-    # ТОЛЬКО ПОЛЛИНГ
+    # Запуск бота через polling (ТОЛЬКО polling!)
+    print("🚀 Бот запущен. Ожидаем команды...")
     app.run_polling()
