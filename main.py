@@ -739,22 +739,22 @@ class MarathonCalculator:
 📈 *ПРОМЕЖУТОЧНЫЙ ПЛАН НА ОСТАЛЬНЫЕ ДНИ:*
 Здесь можно добавить оставшиеся дни марафона
 """
-            if __name__ == "__main__":
-    # --- Запуск Flask сервера в отдельном потоке ---
+            
+
+if __name__ == "__main__":
+    # запускаем веб-сервер в отдельном потоке
     thread = Thread(target=run_web)
     thread.start()
 
-    # --- Запуск Telegram бота ---
+    # запускаем Telegram бота
     import asyncio
+    from telegram.ext import Application
 
-    async def main():
-        app = Application.builder().token(TOKEN).build()
+    app = Application.builder().token(TOKEN).build()
 
-        # Добавляем хэндлеры (подставь свои функции start, callback_handler и т.д.)
-        app.add_handler(CommandHandler("start", start))
-        app.add_handler(CallbackQueryHandler(callback_handler))
-        # app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, message_handler))  # пример
+    # здесь нужно добавить обработчики команд, callback и т.д.
+    # например:
+    # app.add_handler(CommandHandler("start", start))
+    # app.add_handler(CallbackQueryHandler(callback_handler))
 
-        await app.run_polling()
-
-    asyncio.run(main())
+    app.run_polling()
