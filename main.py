@@ -1,4 +1,43 @@
-Нет, код обрезался! Вот полный код с ВСЕМИ функциями (марафон, топ трейдеров, все активы, статистика):
+# =====================================
+# KURUT AI INFINITY | COIP PRO EDITION
+# ULTIMATE POCKET OPTION BOT
+# =====================================
+
+import asyncio
+import json
+import os
+import time
+import math
+import random
+from datetime import datetime, timedelta
+from flask import Flask
+from threading import Thread
+from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
+# ... остальной код
+```
+
+Решение:
+
+1. Откройте ваш main.py файл на хостинге
+2. Удалите первую строку с текстом "Нет, код обрезался! Вот полный код с ВСЕМИ функциями..."
+3. Убедитесь, что файл начинается с:
+   ```python
+   # =====================================
+   # KURUT AI INFINITY | COIP PRO EDITION
+   # ULTIMATE POCKET OPTION BOT
+   # =====================================
+   
+   import asyncio
+   import json
+   import os
+   # ... и так далее
+   ```
+4. Сохраните файл
+5. Перезапустите приложение
+
+Альтернатива - создайте новый файл:
+
+Если не получается исправить, создайте новый файл bot.py со следующим чистым кодом (я убрал все лишние комментарии в начале):
 
 ```python
 # =====================================
@@ -1125,11 +1164,6 @@ async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 6. Отправь ID админу @Kuruttrader
 7. Получи VIP доступ к сигналам
 
-Да! Вот продолжение кода с обработчиками и запуском бота:
-
-```python
-# ПРОДОЛЖЕНИЕ КОДА...
-
 ══════════════════════════════════════════
 
 🎯 <b>КАК ТОРГОВАТЬ ПО СИГНАЛАМ:</b>
@@ -1375,16 +1409,6 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await update.message.reply_text(stats_text, parse_mode='HTML')
 
 # =====================================
-# ОБНОВЛЕНИЕ СТАТИСТИКИ ПОСЛЕ ТОРГОВЛИ
-# =====================================
-
-async def update_trade_result(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обновление результата сделки (можно добавить через inline кнопки)"""
-    # Эта функция может быть расширена для обновления статистики
-    # когда пользователь отмечает результат сделки
-    pass
-
-# =====================================
 # ЗАПУСК БОТА
 # =====================================
 
@@ -1415,7 +1439,7 @@ def main():
     # Запуск бота
     print("🤖 Бот запущен. Ожидание команд...")
     print("=" * 50)
-    print(f"✅ Бот готов к работе!")  # ← Это уже правильная строка!
+    print(f"✅ Бот готов к работе!")
     print(f"✅ Всего активов: {len(ALL_ASSETS)}")
     print(f"✅ Валютных пар: {len(OTC_PAIRS)}")
     print(f"✅ Акций: {len(STOCKS)}")
@@ -1430,3 +1454,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+```
