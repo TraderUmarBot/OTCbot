@@ -767,25 +767,29 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     if __name__ == "__main__":
     from threading import Thread
-    from telegram import Update
-    from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
+    from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
-    # --- Запуск веб-сервера Flask в отдельном потоке ---
+    # --- 1️⃣ Запуск веб-сервера Flask в отдельном потоке ---
     web_thread = Thread(target=run_web)
     web_thread.start()
 
-    # --- Создание Telegram бота ---
+    # --- 2️⃣ Создание Telegram бота ---
     app = Application.builder().token(TOKEN).build()
 
-    # --- Регистрируем обработчики команд ---
+    # --- 3️⃣ Добавление всех обработчиков команд ---
     app.add_handler(CommandHandler("start", start))
-    app.add_handler(CommandHandler("register", register_command))
+    app.add_handler(CommandHandler("stats", stats_command))
     app.add_handler(CommandHandler("vip", vip_command))
-    app.add_handler(CommandHandler("profile", profile_command))
     app.add_handler(CommandHandler("signal", signal_command))
+    app.add_handler(CommandHandler("profile", profile_command))
     app.add_handler(CommandHandler("marathon", marathon_command))
     app.add_handler(CommandHandler("analytics", analytics_command))
-    app.add_handler(CallbackQueryHandler(callback_handler))  # кнопки
+    app.add_handler(CommandHandler("register", register_command))
+    
+    # --- 4️⃣ Обработчик кнопок (callback) ---
+    app.add_handler(CallbackQueryHandler(callback_handler))
 
     print("🚀 Бот и веб-сервер запущены. Ожидаем команды...")
+
+    # --- 5️⃣ Запуск бота ---
     app.run_polling()
