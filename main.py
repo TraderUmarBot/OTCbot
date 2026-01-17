@@ -742,19 +742,33 @@ class MarathonCalculator:
             
 
 if __name__ == "__main__":
-    # запускаем веб-сервер в отдельном потоке
-    thread = Thread(target=run_web)
-    thread.start()
+    from threading import Thread
+    import os
+    from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
-    # запускаем Telegram бота
-    import asyncio
-    from telegram.ext import Application
+    # Токен
+    TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
 
+    # Запуск веб-сервера в отдельном потоке (если нужен)
+    def run_web():
+        from flask import Flask
+        app = Flask(__name__)
+
+        @app.route("/")
+        def index():
+            return "Бот ULTRA KURUT работает!"
+
+        app.run(host="0.0.0.0", port=8080)
+
+    web_thread = Thread(target=run_web)
+    web_thread.start()
+
+    # Инициализация бота
     app = Application.builder().token(TOKEN).build()
 
-    # здесь нужно добавить обработчики команд, callback и т.д.
-    # например:
+    # Добавляем обработчики команд и callback
     # app.add_handler(CommandHandler("start", start))
     # app.add_handler(CallbackQueryHandler(callback_handler))
 
+    # Запуск бота (только один экземпляр!)
     app.run_polling()
