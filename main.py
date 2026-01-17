@@ -36,6 +36,13 @@ ADMIN_LINK = "https://t.me/Kuruttrader"
 
 REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
 
+# ---------------- HANDLERS ----------------
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    await update.message.reply_text(
+        f"Привет, {user.first_name}! 👋\nЯ ваш бот сигналов."
+    )
+    
 REGISTER_TEXT = f"""
 🎯 **РЕГИСТРАЦИЯ НА POCKET OPTION**
 
@@ -739,34 +746,29 @@ class MarathonCalculator:
 📈 *ПРОМЕЖУТОЧНЫЙ ПЛАН НА ОСТАЛЬНЫЕ ДНИ:*
 Здесь можно добавить оставшиеся дни марафона
 """
-            
-if __name__ == "__main__":
-    import os
+            if __name__ == "__main__":
     from threading import Thread
     from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
-    TOKEN = os.environ.get("TOKEN", "8578509228:AAHNy5zNB0pLNA96c-671Y7zVyUitj5ecRc")
-
     # --- 1️⃣ Запуск веб-сервера Flask в отдельном потоке ---
-    def run_web():
-        from flask import Flask
-        server = Flask("")
-        
-        @server.route("/")
-        def home():
-            return "KURUT AI INFINITY | COIP PRO ACTIVE"
-
-        server.run(host="0.0.0.0", port=8080)
-
     web_thread = Thread(target=run_web)
     web_thread.start()
 
-    # --- 2️⃣ Запуск Telegram бота ---
+    # --- 2️⃣ Создание и запуск Telegram бота ---
     app = Application.builder().token(TOKEN).build()
 
-    # --- ДОБАВЬ СВОИ ОБРАБОТЧИКИ ---
-    # Пример:
-    # app.add_handler(CommandHandler("start", start))
+    # --- Добавляем обработчики команд ---
+    # Например обработчик /start
+    from telegram.ext import ContextTypes, Update
+
+    async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+        user = update.effective_user
+        await update.message.reply_text(
+            f"Привет, {user.first_name}! 👋\nЯ ваш бот сигналов."
+        )
+
+    app.add_handler(CommandHandler("start", start))
+    # Здесь можно добавить другие обработчики, например:
     # app.add_handler(CallbackQueryHandler(callback_handler))
 
     print("🚀 Бот и веб-сервер запущены. Ожидаем команды...")
