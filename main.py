@@ -746,9 +746,10 @@ class MarathonCalculator:
 📈 *ПРОМЕЖУТОЧНЫЙ ПЛАН НА ОСТАЛЬНЫЕ ДНИ:*
 Здесь можно добавить оставшиеся дни марафона
 """
-            if __name__ == "__main__":
+
+if __name__ == "__main__":
     from threading import Thread
-    from telegram.ext import Application, CommandHandler, CallbackQueryHandler
+    from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, Update
 
     # --- 1️⃣ Запуск веб-сервера Flask в отдельном потоке ---
     web_thread = Thread(target=run_web)
@@ -757,10 +758,7 @@ class MarathonCalculator:
     # --- 2️⃣ Создание и запуск Telegram бота ---
     app = Application.builder().token(TOKEN).build()
 
-    # --- Добавляем обработчики команд ---
-    # Например обработчик /start
-    from telegram.ext import ContextTypes, Update
-
+    # --- Пример обработчика команды /start ---
     async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
         user = update.effective_user
         await update.message.reply_text(
@@ -768,7 +766,7 @@ class MarathonCalculator:
         )
 
     app.add_handler(CommandHandler("start", start))
-    # Здесь можно добавить другие обработчики, например:
+    # Здесь можно добавить другие обработчики
     # app.add_handler(CallbackQueryHandler(callback_handler))
 
     print("🚀 Бот и веб-сервер запущены. Ожидаем команды...")
