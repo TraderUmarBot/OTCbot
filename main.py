@@ -735,7 +735,10 @@ class MarathonCalculator:
             plan += f"{emoji} *День {day_data['day']}:* ${day_data['balance']:,.2f} (+${day_data['profit']:,.2f})\n"
         
         if len(results) > 10:
-            plan += "\n📈 *ПРОМЕЖУТОЧНЫ
+            plan += """
+📈 *ПРОМЕЖУТОЧНЫЙ ПЛАН НА ОСТАЛЬНЫЕ ДНИ:*
+Здесь можно добавить оставшиеся дни марафона
+"""
             if __name__ == "__main__":
     # --- Запуск Flask сервера в отдельном потоке ---
     thread = Thread(target=run_web)
