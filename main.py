@@ -749,13 +749,14 @@ class MarathonCalculator:
 
 if __name__ == "__main__":
     from threading import Thread
-    from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes, Update
+    from telegram import Update
+    from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
 
-    # --- 1️⃣ Запуск веб-сервера Flask в отдельном потоке ---
+    # --- Запуск веб-сервера Flask в отдельном потоке ---
     web_thread = Thread(target=run_web)
     web_thread.start()
 
-    # --- 2️⃣ Создание и запуск Telegram бота ---
+    # --- Создание Telegram бота ---
     app = Application.builder().token(TOKEN).build()
 
     # --- Пример обработчика команды /start ---
@@ -766,8 +767,7 @@ if __name__ == "__main__":
         )
 
     app.add_handler(CommandHandler("start", start))
-    # Здесь можно добавить другие обработчики
-    # app.add_handler(CallbackQueryHandler(callback_handler))
+    # app.add_handler(CallbackQueryHandler(callback_handler))  # если нужны кнопки
 
     print("🚀 Бот и веб-сервер запущены. Ожидаем команды...")
     app.run_polling()
