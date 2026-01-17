@@ -742,11 +742,26 @@ class MarathonCalculator:
             
 if __name__ == "__main__":
     import os
+    from threading import Thread
     from telegram.ext import Application, CommandHandler, CallbackQueryHandler
 
-    TOKEN = os.environ.get("TOKEN", "8578509228:AAHNy5zNB0pLNA96c-671Y7zVyUitj5ecRc")
+    TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
 
-    # Создаем приложение бота
+    # --- 1️⃣ Запуск веб-сервера Flask в отдельном потоке ---
+    def run_web():
+        from flask import Flask
+        server = Flask("")
+        
+        @server.route("/")
+        def home():
+            return "KURUT AI INFINITY | COIP PRO ACTIVE"
+
+        server.run(host="0.0.0.0", port=8080)
+
+    web_thread = Thread(target=run_web)
+    web_thread.start()
+
+    # --- 2️⃣ Запуск Telegram бота ---
     app = Application.builder().token(TOKEN).build()
 
     # --- ДОБАВЬ СВОИ ОБРАБОТЧИКИ ---
@@ -754,6 +769,5 @@ if __name__ == "__main__":
     # app.add_handler(CommandHandler("start", start))
     # app.add_handler(CallbackQueryHandler(callback_handler))
 
-    # Запуск бота через polling (ТОЛЬКО polling!)
-    print("🚀 Бот запущен. Ожидаем команды...")
+    print("🚀 Бот и веб-сервер запущены. Ожидаем команды...")
     app.run_polling()
