@@ -769,15 +769,15 @@ async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     # --- Создание Telegram бота ---
     app = Application.builder().token(TOKEN).build()
 
-    # --- Пример обработчика команды /start ---
-    async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-        user = update.effective_user
-        await update.message.reply_text(
-            f"Привет, {user.first_name}! 👋\nЯ ваш бот сигналов."
-        )
-
+    # --- Регистрируем обработчики команд ---
     app.add_handler(CommandHandler("start", start))
-    # app.add_handler(CallbackQueryHandler(callback_handler))  # если нужны кнопки
+    app.add_handler(CommandHandler("register", register_command))
+    app.add_handler(CommandHandler("vip", vip_command))
+    app.add_handler(CommandHandler("profile", profile_command))
+    app.add_handler(CommandHandler("signal", signal_command))
+    app.add_handler(CommandHandler("marathon", marathon_command))
+    app.add_handler(CommandHandler("analytics", analytics_command))
+    app.add_handler(CallbackQueryHandler(callback_handler))  # кнопки
 
     print("🚀 Бот и веб-сервер запущены. Ожидаем команды...")
     app.run_polling()
