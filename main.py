@@ -29,7 +29,7 @@ def run_web():
 
 # ---------------- CONFIG ----------------
 
-TOKEN = os.environ.get("TOKEN", "8578509228:AAE2D6ANQGgXWkyLkVXYnq_htqFbTAYF_Ms")
+TOKEN = os.environ.get("TOKEN", "8578509228:AAHNy5zNB0pLNA96c-671Y7zVyUitj5ecRc")
 ADMIN_IDS = {6117198446, 7079260196}
 ADMIN_USER = "@Kuruttrader"
 ADMIN_LINK = "https://t.me/Kuruttrader"
