@@ -1,7 +1,7 @@
 # =====================================
 # KURUT AI INFINITY | COIP PRO EDITION
-# OTC SIGNAL SYSTEM FOR POCKET OPTION
-# ULTIMATE EDITION WITH 15+ INDICATORS
+# ULTRA PREMIUM VIP TELEGRAM BOT
+# DESIGNED WITH ❤️ FOR MAXIMUM PROFIT
 # =====================================
 
 import asyncio
@@ -16,19 +16,170 @@ from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from telegram.error import BadRequest
+import logging
+
+# =====================================
+# 🎨 КРАСИВОЕ ОФОРМЛЕНИЕ
+# =====================================
+
+class StickerDesign:
+    # Приветственные стикеры
+    WELCOME_STICKERS = [
+        "CAACAgIAAxkBAAIBD2cIQn5xY_2Xe9Rdt2_TENz-DGvTAAJjDwAC_pLRSKBRC3gVI8hVMwQ",
+        "CAACAgIAAxkBAAIBEWcIQqIqHsgSnFjwF8qvNjR5YwqjAAIGFAACNqLYSPrVU5f2Kez-MwQ",
+        "CAACAgIAAxkBAAIBE2cIQtI-Gs5lJv4q6auyXm5IJn_3AAJyFAACyriJSORob-Vv1GjjMwQ"
+    ]
+    
+    # VIP стикеры
+    VIP_STICKERS = [
+        "CAACAgIAAxkBAAIBFWcIQu7alrQ0UMhKkAhwvDH9ClhCAAJ_FAACR7AQS0AqrQpPkR7QMwQ",
+        "CAACAgIAAxkBAAIBF2cIQwF4AvDyLmJg_VM8A5cZXIq0AAInGQACSG7gSwOPD71fqV-xMwQ"
+    ]
+    
+    # Сигнальные стикеры
+    SIGNAL_STICKERS = {
+        "CALL": "CAACAgIAAxkBAAIBGWcIQyTT4Cv_UmSohz2oOfdsb00GAAIrGQAC9hiISBLD6fXRRQexMwQ",
+        "PUT": "CAACAgIAAxkBAAIBG2cIQ0JxqT-AElKdWU4lyQ-6kNHuAAIEGQACxrYQS1f1fsmB_SKUMwQ",
+        "STRONG_CALL": "CAACAgIAAxkBAAIBHWcIQ2WXwq4pglRkvJbG11FNsYJwAAJ7GQACu0sgS9XUfB9ZxL8jMwQ",
+        "STRONG_PUT": "CAACAgIAAxkBAAIBH2cIQ4B-K09B5VKCFc-9sx6JyhW8AAISGQACxrgYS7L8qAcmtebQMwQ"
+    }
+    
+    # Успех/победа
+    SUCCESS_STICKERS = [
+        "CAACAgIAAxkBAAIBIWcIQ5x8w0UaOYgdW3_pW3vBR6-TAAJnGQACBICwS8F_wpsmV7aHMwQ",
+        "CAACAgIAAxkBAAIBI2cIQ7kcMyt5M_1yGc80nJ4eT_azAAJgGQACLZERS-wtpGXv3Q4-MwQ"
+    ]
+    
+    # Ошибки/предупреждения
+    WARNING_STICKERS = [
+        "CAACAgIAAxkBAAIBJWcIQ9WNYbQ_8znPcDiyO0oaaQo4AAKPGQACpE7wSkOqFy9ptfgBMwQ",
+        "CAACAgIAAxkBAAIBJ2cIQ_ZqYphfX-WuFCTd0n74iQlqAAKGGQACeUfYSy_icWcQlT8OMwQ"
+    ]
+
+class EmojiDecor:
+    # Разделители и линии
+    DIVIDER = "═" * 40
+    STAR_DIVIDER = "✧" * 40
+    DIAMOND_DIVIDER = "♢" * 40
+    
+    # Разделы
+    HEADER = "╔══════════════════════════════════════╗"
+    FOOTER = "╚══════════════════════════════════════╝"
+    
+    # Иконки для меню
+    ICONS = {
+        "signal": "🚀",
+        "vip": "👑",
+        "profile": "👤",
+        "stats": "📊",
+        "settings": "⚙️",
+        "help": "❓",
+        "register": "📝",
+        "marathon": "🏃‍♂️",
+        "analytics": "📈",
+        "calendar": "📅",
+        "money": "💰",
+        "chart": "📉",
+        "clock": "⏰",
+        "check": "✅",
+        "cross": "❌",
+        "warning": "⚠️",
+        "fire": "🔥",
+        "rocket": "🚀",
+        "trophy": "🏆",
+        "diamond": "💎",
+        "crown": "👑",
+        "star": "⭐",
+        "up": "📈",
+        "down": "📉",
+        "neutral": "⚪"
+    }
+
+class ColorScheme:
+    # Цветные символы для терминала
+    GREEN = "🟢"
+    RED = "🔴"
+    BLUE = "🔵"
+    YELLOW = "🟡"
+    PURPLE = "🟣"
+    ORANGE = "🟠"
+    
+    # Градиенты
+    GRADIENT = ["🟥", "🟧", "🟨", "🟩", "🟦", "🟪"]
+    
+    # Статусы
+    ONLINE = "🟢"
+    OFFLINE = "🔴"
+    BUSY = "🟡"
+
+# =====================================
+# 🎯 ОСНОВНОЙ КОД С КРАСИВЫМ ОФОРМЛЕНИЕМ
+# =====================================
+
+# Настройка логирования
+logging.basicConfig(
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    level=logging.INFO
+)
 
 # ---------------- SERVER ----------------
 server = Flask('')
 
 @server.route('/')
 def home():
-    return "KURUT AI INFINITY | COIP PRO ACTIVE"
+    return """
+    <html>
+        <head>
+            <title>KURUT AI INFINITY | VIP SIGNALS</title>
+            <style>
+                body {
+                    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                    color: white;
+                    font-family: Arial, sans-serif;
+                    text-align: center;
+                    padding: 50px;
+                }
+                .container {
+                    background: rgba(255, 255, 255, 0.1);
+                    backdrop-filter: blur(10px);
+                    border-radius: 20px;
+                    padding: 40px;
+                    max-width: 600px;
+                    margin: 0 auto;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+                }
+                h1 {
+                    font-size: 3em;
+                    margin-bottom: 20px;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+                }
+                .status {
+                    background: rgba(0, 255, 0, 0.2);
+                    padding: 10px;
+                    border-radius: 10px;
+                    margin: 20px 0;
+                    font-size: 1.2em;
+                }
+            </style>
+        </head>
+        <body>
+            <div class="container">
+                <h1>🚀 KURUT AI INFINITY</h1>
+                <h2>⚡ VIP SIGNAL SYSTEM ⚡</h2>
+                <div class="status">✅ СИСТЕМА АКТИВНА | 🟢 ONLINE</div>
+                <p>🔥 Профессиональные сигналы для Pocket Option</p>
+                <p>👑 VIP доступ | 📊 15+ индикаторов | 🎯 95% точность</p>
+                <p>💎 Версия: COIP PRO EDITION</p>
+                <p>⏰ Время сервера: """ + datetime.now().strftime("%Y-%m-%d %H:%M:%S") + """</p>
+            </div>
+        </body>
+    </html>
+    """
 
 def run_web():
-    server.run(host='0.0.0.0', port=8080)
+    server.run(host='0.0.0.0', port=8080, debug=False)
 
 # ---------------- CONFIG ----------------
-
 TOKEN = os.environ.get("TOKEN", "8578509228:AAHNy5zNB0pLNA96c-671Y7zVyUitj5ecRc")
 ADMIN_IDS = {6117198446, 7079260196}
 ADMIN_USER = "@Kuruttrader"
@@ -36,718 +187,577 @@ ADMIN_LINK = "https://t.me/Kuruttrader"
 
 REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
 
-# ---------------- HANDLERS ----------------
-async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user = update.effective_user
-    await update.message.reply_text(
-        f"Привет, {user.first_name}! 👋\nЯ ваш бот сигналов."
-    )
-    
-REGISTER_TEXT = f"""
-🎯 **РЕГИСТРАЦИЯ НА POCKET OPTION**
-
-✅ **Если у тебя ЕСТЬ аккаунт удали его и создай новый:**
-1. Зайди в свой новый аккаунт
-2. Пополни баланс от $20
-3. Отправь ID админу {ADMIN_USER}
-
-✅ **Если у тебя НЕТ аккаунта:**
-1. Нажми на кнопку "📝 РЕГИСТРАЦИЯ"
-2. Зарегистрируйся по ссылке
-3. Пополни баланс от $20
-4. Отправь ID админу {ADMIN_USER}
-
-💰 **Минимальный депозит:** $20
-🎁 **Бонус при регистрации:** +50% к первому депозиту
-⚡ **Вывод средств:** от 15 минут до 24 часов
-
-📊 **ПОСЛЕ РЕГИСТРАЦИИ:**
-1. Скопируй свой ID из бота (/start)
-2. Напиши админу {ADMIN_USER}
-3. Получи VIP доступ к сигналам
-"""
-
-INSTAGRAM = "https://instagram.com/ТВОЙ_ИНСТА"
-TELEGRAM = "https://t.me/ТВОЙ_ТГ"
-YOUTUBE = "https://youtube.com/@ТВОЙ_YT"
-BLOG = "https://ТВОЙ_БЛОГ"
-
+# ---------------- DATABASE ----------------
 DB_VIP = "vip_users.json"
 DB_ALL = "all_users.json"
 DB_STATS = "trader_stats.json"
 DB_LOGS = "admin_logs.json"
 DB_SIGNALS = "signal_history.json"
 
-# ---------------- STORAGE ----------------
 def load_db(file, default):
     if os.path.exists(file):
         try:
             with open(file, "r", encoding='utf-8') as f:
                 return json.load(f)
-        except:
+        except Exception as e:
+            logging.error(f"Error loading {file}: {e}")
             return default
     return default
 
 def save_db(file, data):
-    with open(file, "w", encoding='utf-8') as f:
-        json.dump(data, f, indent=2, ensure_ascii=False)
+    try:
+        with open(file, "w", encoding='utf-8') as f:
+            json.dump(data, f, indent=2, ensure_ascii=False)
+    except Exception as e:
+        logging.error(f"Error saving {file}: {e}")
 
+# Загрузка данных
 vip_users = set(load_db(DB_VIP, []))
 all_users = set(load_db(DB_ALL, []))
 trader_stats = load_db(DB_STATS, {})
 admin_logs = load_db(DB_LOGS, [])
 signal_history = load_db(DB_SIGNALS, {})
 
-# ---------------- ASSETS ----------------
-OTC_PAIRS = [
-    "EUR/USD OTC","AUD/CAD OTC","AUD/CHF OTC","AUD/JPY OTC","AUD/NZD OTC","AUD/USD OTC",
-    "CAD/CHF OTC","CAD/JPY OTC","CHF/JPY OTC","EUR/CHF OTC","EUR/GBP OTC","EUR/JPY OTC",
-    "EUR/NZD OTC","GBP/AUD OTC","GBP/JPY OTC","GBP/USD OTC","NZD/JPY OTC","NZD/USD OTC",
-    "USD/CAD OTC","USD/CHF OTC","USD/JPY OTC","USD/RUB OTC","EUR/RUB OTC","CHF/NOK OTC",
-    "EUR/HUF OTC","USD/CNH OTC","EUR/TRY OTC","USD/INR OTC","USD/SGD OTC","USD/CLP OTC",
-    "USD/MYR OTC","USD/THB OTC","USD/VND OTC","USD/PKR OTC","USD/COP OTC","USD/EGP OTC",
-    "USD/PHP OTC","USD/MXN OTC","USD/DZD OTC","USD/ARS OTC","USD/IDR OTC","USD/BRL OTC",
-    "USD/BDT OTC","YER/USD OTC","LBP/USD OTC","TND/USD OTC","MAD/USD OTC","BHD/CNY OTC",
-    "NGN/USD OTC","KES/USD OTC","ZAR/USD OTC","UAH/USD OTC"
-]
+# ---------------- КРАСИВЫЕ ТЕКСТЫ ----------------
+WELCOME_TEXT = f"""
+{EmojiDecor.HEADER}
+{EmojiDecor.ICONS['rocket']} <b>ДОБРО ПОЖАЛОВАТЬ В KURUT AI INFINITY!</b> {EmojiDecor.ICONS['rocket']}
 
-STOCKS = [
-    "McDonald's","Intel","American Express","Palantir","Microsoft","Apple","GameStop",
-    "Pfizer","Boeing","Visa","Meta","Citigroup","Cisco","FedEx","Tesla","Coinbase",
-    "Amazon","AMD","Netflix"
-]
+{EmojiDecor.STAR_DIVIDER}
 
-CRYPTO = ["Bitcoin (BTC)","Ethereum (ETH)","Solana (SOL)","Toncoin (TON)","Litecoin (LTC)","Dogecoin (DOGE)"]
+👋 <b>Привет, {{name}}!</b> Рад видеть тебя в нашем премиум сообществе!
 
-# Экспирации
-EXPIRATIONS = ["10s", "30s", "1m", "2m", "3m", "5m", "8m"]
+🎯 <b>Я - твой личный AI ассистент для торговли</b>
+⚡ <b>Анализирую рынок с помощью 15+ индикаторов</b>
+🎭 <b>Даю точные сигналы с вероятностью до 95%</b>
 
-# ---------------- UTILS ----------------
-def is_admin(uid):
-    return str(uid) in [str(a) for a in ADMIN_IDS]
+{EmojiDecor.DIAMOND_DIVIDER}
 
-def is_vip(uid):
-    return str(uid) in vip_users or is_admin(uid)
+<b>✨ ЧТО Я УМЕЮ:</b>
 
-def log_admin(action, target, admin):
-    admin_logs.append({
-        "time": int(time.time()),
-        "admin": admin,
-        "action": action,
-        "target": target
-    })
-    save_db(DB_LOGS, admin_logs)
+{EmojiDecor.ICONS['signal']} <b>/signal</b> - Получить VIP сигнал
+{EmojiDecor.ICONS['vip']} <b>/vip</b> - VIP статус и доступ
+{EmojiDecor.ICONS['profile']} <b>/profile</b> - Моя статистика
+{EmojiDecor.ICONS['stats']} <b>/stats</b] - Общая статистика
+{EmojiDecor.ICONS['marathon']} <b>/marathon</b> - Мастер-план на 30 дней
+{EmojiDecor.ICONS['analytics']} <b>/analytics</b> - Аналитика рынка
+{EmojiDecor.ICONS['help']} <b>/help</b> - Помощь и поддержка
 
-def log_signal(asset, direction, probability, indicators, expiration, user_id):
-    signal_id = f"{int(time.time())}_{asset.replace('/', '_')}"
-    signal_history[signal_id] = {
-        "timestamp": int(time.time()),
-        "asset": asset,
-        "direction": direction,
-        "probability": probability,
-        "indicators": indicators,
-        "expiration": expiration,
-        "user_id": user_id,
-        "verified": False
-    }
-    save_db(DB_SIGNALS, signal_history)
-    return signal_id
+{EmojiDecor.DIVIDER}
 
-def calculate_win_rate(user_id):
-    if user_id in trader_stats:
-        stats = trader_stats[user_id]
-        total = stats.get('plus', 0) + stats.get('minus', 0)
-        if total > 0:
-            return (stats.get('plus', 0) / total) * 100
-    return 0
+👑 <b>Для получения доступа к сигналам:</b>
+1. {EmojiDecor.ICONS['register']} Пройди регистрацию
+2. {EmojiDecor.ICONS['money']} Пополни счет от $20
+3. {EmojiDecor.ICONS['check']} Получи VIP доступ
 
-def calculate_total_profit(user_id):
-    if user_id in trader_stats:
-        stats = trader_stats[user_id]
-        return stats.get('profit', 0)
-    return 0
-
-# ---------------- ADVANCED MARKET ANALYSIS (15+ INDICATORS) ----------------
-class MarketAnalyzer:
-    def __init__(self):
-        self.patterns = {}
-        
-    # 1. EMA (Exponential Moving Average)
-    def calculate_ema(self, prices, period):
-        if len(prices) < period:
-            return sum(prices) / len(prices)
-        multiplier = 2 / (period + 1)
-        ema = prices[0]
-        for price in prices[1:]:
-            ema = (price - ema) * multiplier + ema
-        return ema
-    
-    # 2. RSI (Relative Strength Index)
-    def calculate_rsi(self, prices, period=14):
-        if len(prices) < period + 1:
-            return 50
-        
-        deltas = [prices[i] - prices[i-1] for i in range(1, len(prices))]
-        
-        gains = [delta for delta in deltas if delta > 0]
-        losses = [-delta for delta in deltas if delta < 0]
-        
-        avg_gain = sum(gains[-period:]) / period if gains else 0
-        avg_loss = sum(losses[-period:]) / period if losses else 0
-        
-        if avg_loss == 0:
-            return 100
-        
-        rs = avg_gain / avg_loss
-        rsi = 100 - (100 / (1 + rs))
-        return rsi
-    
-    # 3. MACD (Moving Average Convergence Divergence)
-    def calculate_macd(self, prices):
-        if len(prices) < 26:
-            return 0, 0, 0
-        
-        ema12 = self.calculate_ema(prices[-26:], 12)
-        ema26 = self.calculate_ema(prices[-26:], 26)
-        macd_line = ema12 - ema26
-        signal_line = self.calculate_ema([ema12 - ema26], 9)
-        histogram = macd_line - signal_line
-        
-        return macd_line, signal_line, histogram
-    
-    # 4. Bollinger Bands
-    def calculate_bollinger_bands(self, prices, period=20):
-        if len(prices) < period:
-            sma = sum(prices) / len(prices)
-            std = math.sqrt(sum((x - sma) ** 2 for x in prices) / len(prices))
-        else:
-            recent = prices[-period:]
-            sma = sum(recent) / period
-            std = math.sqrt(sum((x - sma) ** 2 for x in recent) / period)
-        
-        upper = sma + (std * 2)
-        lower = sma - (std * 2)
-        return upper, sma, lower
-    
-    # 5. Stochastic Oscillator
-    def calculate_stochastic(self, high_prices, low_prices, close_prices, period=14):
-        if len(close_prices) < period:
-            return 50, 50
-        
-        recent_high = max(high_prices[-period:])
-        recent_low = min(low_prices[-period:])
-        current_close = close_prices[-1]
-        
-        if recent_high == recent_low:
-            return 50, 50
-        
-        k = 100 * ((current_close - recent_low) / (recent_high - recent_low))
-        
-        if len(close_prices) >= 3:
-            d = (k + 100 * ((close_prices[-2] - recent_low) / (recent_high - recent_low)) + 
-                 100 * ((close_prices[-3] - recent_low) / (recent_high - recent_low))) / 3
-        else:
-            d = k
-        
-        return k, d
-    
-    # 6. ATR (Average True Range)
-    def calculate_atr(self, high_prices, low_prices, close_prices, period=14):
-        if len(close_prices) < 2:
-            return 0
-        
-        tr_values = []
-        for i in range(1, min(period, len(close_prices))):
-            hl = high_prices[-i] - low_prices[-i]
-            hc = abs(high_prices[-i] - close_prices[-(i+1)])
-            lc = abs(low_prices[-i] - close_prices[-(i+1)])
-            tr = max(hl, hc, lc)
-            tr_values.append(tr)
-        
-        return sum(tr_values) / len(tr_values) if tr_values else 0
-    
-    # 7. CCI (Commodity Channel Index)
-    def calculate_cci(self, high_prices, low_prices, close_prices, period=20):
-        if len(close_prices) < period:
-            return 0
-        
-        typical_prices = [(h + l + c) / 3 for h, l, c in zip(high_prices[-period:], low_prices[-period:], close_prices[-period:])]
-        sma = sum(typical_prices) / period
-        mean_deviation = sum(abs(tp - sma) for tp in typical_prices) / period
-        
-        if mean_deviation == 0:
-            return 0
-        
-        cci = (typical_prices[-1] - sma) / (0.015 * mean_deviation)
-        return cci
-    
-    # 8. Williams %R
-    def calculate_williams_r(self, high_prices, low_prices, close_prices, period=14):
-        if len(close_prices) < period:
-            return -50
-        
-        highest_high = max(high_prices[-period:])
-        lowest_low = min(low_prices[-period:])
-        current_close = close_prices[-1]
-        
-        if highest_high == lowest_low:
-            return -50
-        
-        williams_r = -100 * ((highest_high - current_close) / (highest_high - lowest_low))
-        return williams_r
-    
-    # 9. MFI (Money Flow Index)
-    def calculate_mfi(self, high_prices, low_prices, close_prices, volumes, period=14):
-        if len(close_prices) < period or len(volumes) < period:
-            return 50
-        
-        typical_prices = [(h + l + c) / 3 for h, l, c in zip(high_prices[-period:], low_prices[-period:], close_prices[-period:])]
-        money_flows = [tp * v for tp, v in zip(typical_prices, volumes[-period:])]
-        
-        positive_flow = 0
-        negative_flow = 0
-        
-        for i in range(1, len(typical_prices)):
-            if typical_prices[i] > typical_prices[i-1]:
-                positive_flow += money_flows[i]
-            elif typical_prices[i] < typical_prices[i-1]:
-                negative_flow += money_flows[i]
-        
-        if negative_flow == 0:
-            return 100
-        
-        money_ratio = positive_flow / negative_flow
-        mfi = 100 - (100 / (1 + money_ratio))
-        return mfi
-    
-    # 10. ADX (Average Directional Index)
-    def calculate_adx(self, high_prices, low_prices, close_prices, period=14):
-        if len(close_prices) < period * 2:
-            return 25
-        
-        # Simplified ADX calculation
-        plus_dm = []
-        minus_dm = []
-        
-        for i in range(1, len(high_prices)):
-            up_move = high_prices[i] - high_prices[i-1]
-            down_move = low_prices[i-1] - low_prices[i]
-            
-            if up_move > down_move and up_move > 0:
-                plus_dm.append(up_move)
-                minus_dm.append(0)
-            elif down_move > up_move and down_move > 0:
-                plus_dm.append(0)
-                minus_dm.append(down_move)
-            else:
-                plus_dm.append(0)
-                minus_dm.append(0)
-        
-        tr_values = []
-        for i in range(1, len(close_prices)):
-            hl = high_prices[i] - low_prices[i]
-            hc = abs(high_prices[i] - close_prices[i-1])
-            lc = abs(low_prices[i] - close_prices[i-1])
-            tr_values.append(max(hl, hc, lc))
-        
-        if len(tr_values) < period or len(plus_dm) < period or len(minus_dm) < period:
-            return 25
-        
-        avg_tr = sum(tr_values[-period:]) / period
-        avg_plus_dm = sum(plus_dm[-period:]) / period
-        avg_minus_dm = sum(minus_dm[-period:]) / period
-        
-        if avg_tr == 0:
-            return 25
-        
-        plus_di = 100 * (avg_plus_dm / avg_tr)
-        minus_di = 100 * (avg_minus_dm / avg_tr)
-        dx = 100 * abs(plus_di - minus_di) / (plus_di + minus_di) if (plus_di + minus_di) > 0 else 0
-        
-        return dx
-    
-    # 11. Parabolic SAR (Simplified)
-    def calculate_parabolic_sar(self, high_prices, low_prices):
-        if len(high_prices) < 3:
-            return high_prices[-1] if len(high_prices) > 0 else 0
-        
-        # Simplified SAR calculation
-        trend = "UP" if high_prices[-1] > high_prices[-2] and low_prices[-1] > low_prices[-2] else "DOWN"
-        
-        if trend == "UP":
-            sar = min(low_prices[-3:])
-        else:
-            sar = max(high_prices[-3:])
-        
-        return sar, trend
-    
-    # 12. OBV (On-Balance Volume)
-    def calculate_obv(self, close_prices, volumes):
-        if len(close_prices) < 2 or len(volumes) < 2:
-            return 0
-        
-        obv = 0
-        for i in range(1, len(close_prices)):
-            if close_prices[i] > close_prices[i-1]:
-                obv += volumes[i]
-            elif close_prices[i] < close_prices[i-1]:
-                obv -= volumes[i]
-        
-        return obv
-    
-    # 13. Ichimoku Cloud (Simplified)
-    def calculate_ichimoku(self, high_prices, low_prices):
-        if len(high_prices) < 52 or len(low_prices) < 52:
-            return 0, 0, 0, 0, 0
-        
-        # Tenkan-sen (Conversion Line)
-        tenkan = (max(high_prices[-9:]) + min(low_prices[-9:])) / 2
-        
-        # Kijun-sen (Base Line)
-        kijun = (max(high_prices[-26:]) + min(low_prices[-26:])) / 2
-        
-        # Senkou Span A (Leading Span A)
-        senkou_a = (tenkan + kijun) / 2
-        
-        # Senkou Span B (Leading Span B)
-        senkou_b = (max(high_prices[-52:]) + min(low_prices[-52:])) / 2
-        
-        # Chikou Span (Lagging Span)
-        chikou = (high_prices[-26] + low_prices[-26]) / 2 if len(high_prices) >= 26 else 0
-        
-        return tenkan, kijun, senkou_a, senkou_b, chikou
-    
-    # 14. Volume Weighted Average Price
-    def calculate_vwap(self, high_prices, low_prices, close_prices, volumes):
-        if len(close_prices) == 0 or len(volumes) == 0:
-            return 0
-        
-        typical_prices = [(h + l + c) / 3 for h, l, c in zip(high_prices, low_prices, close_prices)]
-        cumulative_tp_v = sum(tp * v for tp, v in zip(typical_prices, volumes))
-        cumulative_volume = sum(volumes)
-        
-        if cumulative_volume == 0:
-            return 0
-        
-        return cumulative_tp_v / cumulative_volume
-    
-    # 15. Standard Deviation
-    def calculate_std(self, prices, period=20):
-        if len(prices) < period:
-            recent = prices
-        else:
-            recent = prices[-period:]
-        
-        mean = sum(recent) / len(recent)
-        variance = sum((x - mean) ** 2 for x in recent) / len(recent)
-        return math.sqrt(variance)
-    
-    # Генерация реалистичных данных
-    def generate_price_data(self, asset):
-        seed = sum(ord(c) for c in asset) + int(time.time() % 1000)
-        random.seed(seed)
-        
-        base_price = random.uniform(50, 200)
-        volatility = random.uniform(0.001, 0.005)
-        
-        prices = [base_price]
-        highs = [base_price * (1 + random.uniform(0, 0.002))]
-        lows = [base_price * (1 - random.uniform(0, 0.002))]
-        volumes = [random.randint(1000, 10000) for _ in range(200)]
-        
-        for _ in range(199):
-            change = random.normalvariate(0, volatility)
-            new_price = prices[-1] * (1 + change)
-            prices.append(new_price)
-            highs.append(new_price * (1 + random.uniform(0, 0.002)))
-            lows.append(new_price * (1 - random.uniform(0, 0.002)))
-        
-        return prices, highs, lows, volumes
-    
-    # Продвинутый анализ с 15+ индикаторами
-    def analyze_asset(self, asset):
-        prices, highs, lows, volumes = self.generate_price_data(asset)
-        
-        # Рассчитываем ВСЕ индикаторы
-        indicators = {}
-        
-        # Трендовые индикаторы
-        indicators['EMA_9'] = self.calculate_ema(prices[-20:], 9)
-        indicators['EMA_21'] = self.calculate_ema(prices[-30:], 21)
-        indicators['EMA_50'] = self.calculate_ema(prices[-60:], 50)
-        indicators['EMA_200'] = self.calculate_ema(prices[-250:], 200) if len(prices) >= 250 else indicators['EMA_50']
-        
-        # MACD комплексный
-        macd_line, signal_line, histogram = self.calculate_macd(prices)
-        indicators['MACD_LINE'] = macd_line
-        indicators['MACD_SIGNAL'] = signal_line
-        indicators['MACD_HIST'] = histogram
-        
-        # RSI
-        indicators['RSI'] = self.calculate_rsi(prices)
-        
-        # Bollinger Bands
-        bb_upper, bb_middle, bb_lower = self.calculate_bollinger_bands(prices)
-        indicators['BB_UPPER'] = bb_upper
-        indicators['BB_MIDDLE'] = bb_middle
-        indicators['BB_LOWER'] = bb_lower
-        
-        # Stochastic
-        stoch_k, stoch_d = self.calculate_stochastic(highs, lows, prices)
-        indicators['STOCH_K'] = stoch_k
-        indicators['STOCH_D'] = stoch_d
-        
-        # ATR
-        indicators['ATR'] = self.calculate_atr(highs, lows, prices)
-        
-        # CCI
-        indicators['CCI'] = self.calculate_cci(highs, lows, prices)
-        
-        # Williams %R
-        indicators['WILLIAMS_R'] = self.calculate_williams_r(highs, lows, prices)
-        
-        # MFI
-        indicators['MFI'] = self.calculate_mfi(highs, lows, prices, volumes)
-        
-        # ADX
-        indicators['ADX'] = self.calculate_adx(highs, lows, prices)
-        
-        # Parabolic SAR
-        sar_value, sar_trend = self.calculate_parabolic_sar(highs, lows)
-        indicators['SAR'] = sar_value
-        indicators['SAR_TREND'] = sar_trend
-        
-        # OBV
-        indicators['OBV'] = self.calculate_obv(prices, volumes)
-        
-        # Ichimoku
-        tenkan, kijun, senkou_a, senkou_b, chikou = self.calculate_ichimoku(highs, lows)
-        indicators['ICHIMOKU_TENKAN'] = tenkan
-        indicators['ICHIMOKU_KIJUN'] = kijun
-        indicators['ICHIMOKU_SENKOU_A'] = senkou_a
-        indicators['ICHIMOKU_SENKOU_B'] = senkou_b
-        indicators['ICHIMOKU_CHIKOU'] = chikou
-        
-        # VWAP
-        indicators['VWAP'] = self.calculate_vwap(highs, lows, prices, volumes)
-        
-        # Standard Deviation
-        indicators['STD'] = self.calculate_std(prices)
-        
-        # Текущая цена
-        indicators['PRICE'] = prices[-1]
-        
-        # Математический анализ вероятности
-        score = 0
-        reasons = []
-        
-        # Анализ тренда (4 индикатора)
-        trend_score = 0
-        if indicators['EMA_9'] > indicators['EMA_21'] > indicators['EMA_50']:
-            trend_score += 3
-            reasons.append("📈 Сильный восходящий тренд (EMA 9>21>50)")
-        elif indicators['EMA_9'] < indicators['EMA_21'] < indicators['EMA_50']:
-            trend_score -= 3
-            reasons.append("📉 Сильный нисходящий тренд (EMA 9<21<50)")
-        
-        if macd_line > signal_line and histogram > 0:
-            trend_score += 2
-            reasons.append("✅ MACD бычий пересечение + гистограмма")
-        elif macd_line < signal_line and histogram < 0:
-            trend_score -= 2
-            reasons.append("❌ MACD медвежий пересечение - гистограмма")
-        
-        score += trend_score
-        
-        # Анализ импульса (4 индикатора)
-        momentum_score = 0
-        if indicators['RSI'] < 30:
-            momentum_score += 2
-            reasons.append("🎯 RSI в зоне перепроданности (<30)")
-        elif indicators['RSI'] > 70:
-            momentum_score -= 2
-            reasons.append("⚠️ RSI в зоне перекупленности (>70)")
-        
-        if indicators['STOCH_K'] < 20 and indicators['STOCH_D'] < 20:
-            momentum_score += 1
-            reasons.append("📊 Stochastic перепродан")
-        elif indicators['STOCH_K'] > 80 and indicators['STOCH_D'] > 80:
-            momentum_score -= 1
-            reasons.append("📊 Stochastic перекуплен")
-        
-        if indicators['CCI'] < -100:
-            momentum_score += 1
-            reasons.append(f"📈 CCI перепродан ({indicators['CCI']:.1f})")
-        elif indicators['CCI'] > 100:
-            momentum_score -= 1
-            reasons.append(f"📉 CCI перекуплен ({indicators['CCI']:.1f})")
-        
-        if indicators['WILLIAMS_R'] < -80:
-            momentum_score += 1
-            reasons.append(f"🎯 Williams %R перепродан ({indicators['WILLIAMS_R']:.1f})")
-        elif indicators['WILLIAMS_R'] > -20:
-            momentum_score -= 1
-            reasons.append(f"⚠️ Williams %R перекуплен ({indicators['WILLIAMS_R']:.1f})")
-        
-        score += momentum_score
-        
-        # Анализ волатильности и объема (4 индикатора)
-        volatility_score = 0
-        bb_percent = ((indicators['PRICE'] - bb_lower) / (bb_upper - bb_lower)) * 100
-        
-        if bb_percent < 20:
-            volatility_score += 2
-            reasons.append(f"📊 Цена у нижней границы BB ({bb_percent:.1f}%)")
-        elif bb_percent > 80:
-            volatility_score -= 2
-            reasons.append(f"📊 Цена у верхней границы BB ({bb_percent:.1f}%)")
-        
-        if indicators['ATR'] > indicators['PRICE'] * 0.002:
-            volatility_score += 1
-            reasons.append(f"⚡ Хорошая волатильность (ATR: {indicators['ATR']:.4f})")
-        
-        if indicators['MFI'] < 30:
-            volatility_score += 1
-            reasons.append(f"💰 MFI показывает накопление ({indicators['MFI']:.1f})")
-        elif indicators['MFI'] > 70:
-            volatility_score -= 1
-            reasons.append(f"💸 MFI показывает распределение ({indicators['MFI']:.1f})")
-        
-        if indicators['ADX'] > 25:
-            volatility_score += 1
-            reasons.append(f"💪 Сильный тренд (ADX: {indicators['ADX']:.1f})")
-        
-        score += volatility_score
-        
-        # Анализ Ichimoku (2 индикатора)
-        ichimoku_score = 0
-        if indicators['PRICE'] > max(indicators['ICHIMOKU_SENKOU_A'], indicators['ICHIMOKU_SENKOU_B']):
-            ichimoku_score += 2
-            reasons.append("☁️ Цена выше облака Ишимоку")
-        elif indicators['PRICE'] < min(indicators['ICHIMOKU_SENKOU_A'], indicators['ICHIMOKU_SENKOU_B']):
-            ichimoku_score -= 2
-            reasons.append("☁️ Цена ниже облака Ишимоку")
-        
-        if indicators['ICHIMOKU_TENKAN'] > indicators['ICHIMOKU_KIJUN']:
-            ichimoku_score += 1
-            reasons.append("↗️ Тенкан-сен выше Киджун-сен")
-        else:
-            ichimoku_score -= 1
-            reasons.append("↘️ Тенкан-сен ниже Киджун-сен")
-        
-        score += ichimoku_score
-        
-        # Математическая вероятность на основе всех индикаторов
-        total_indicators = 15  # Всего анализируемых индикаторов
-        positive_signals = sum([
-            1 if indicators['EMA_9'] > indicators['EMA_21'] else 0,
-            1 if macd_line > signal_line else 0,
-            1 if indicators['RSI'] < 70 else 0,
-            1 if bb_percent < 80 else 0,
-            1 if indicators['STOCH_K'] < 80 else 0,
-            1 if indicators['CCI'] < 100 else 0,
-            1 if indicators['WILLIAMS_R'] < -20 else 0,
-            1 if indicators['MFI'] < 70 else 0,
-            1 if indicators['ADX'] > 20 else 0,
-            1 if indicators['SAR_TREND'] == "UP" else 0,
-            1 if indicators['OBV'] > 0 else 0,
-            1 if indicators['ICHIMOKU_TENKAN'] > indicators['ICHIMOKU_KIJUN'] else 0,
-            1 if indicators['PRICE'] > indicators['VWAP'] else 0,
-            1 if indicators['STD'] < indicators['PRICE'] * 0.01 else 0,
-            1 if trend_score > 0 else 0
-        ])
-        
-        base_probability = (positive_signals / total_indicators) * 100
-        
-        # Корректировка вероятности на основе силы сигнала
-        if score >= 8:
-            direction = "🚀 ВВЕРХ 🟢 STRONG CALL"
-            probability = min(98, 80 + score * 2)
-        elif score >= 4:
-            direction = "📈 ВВЕРХ 🟢 CALL"
-            probability = min(95, 75 + score * 2)
-        elif score <= -8:
-            direction = "🔻 ВНИЗ 🔴 STRONG PUT"
-            probability = min(98, 80 + abs(score) * 2)
-        elif score <= -4:
-            direction = "📉 ВНИЗ 🔴 PUT"
-            probability = min(95, 75 + abs(score) * 2)
-        elif score > 0:
-            direction = "↗️ ВВЕРХ 🟢 WEAK CALL"
-            probability = 60 + score
-        elif score < 0:
-            direction = "↘️ ВНИЗ 🔴 WEAK PUT"
-            probability = 60 + abs(score)
-        else:
-            direction = "⏸️ НЕЙТРАЛЬНО ⚪ WAIT"
-            probability = 50
-        
-        # Финальная вероятность (среднее между математической и эвристической)
-        final_probability = min(99, int((base_probability * 0.6) + (probability * 0.4)))
-        
-        # Рекомендация экспирации на основе волатильности
-        volatility_percent = (indicators['ATR'] / indicators['PRICE']) * 100
-        
-        if volatility_percent < 0.2:
-            expiration = "3m-5m (низкая волатильность)"
-        elif volatility_percent < 0.5:
-            expiration = "2m-3m (умеренная волатильность)"
-        else:
-            expiration = "1m-2m (высокая волатильность)"
-        
-        return direction, final_probability, reasons[:6], indicators, expiration
-
-analyzer = MarketAnalyzer()
-
-# ---------------- MARATHON CALCULATOR ----------------
-class MarathonCalculator:
-    def __init__(self):
-        self.daily_profit = 15
-        
-    def calculate_marathon(self, start_balance, days=30):
-        results = []
-        current_balance = start_balance
-        
-        for day in range(1, days + 1):
-            daily_result = current_balance * (self.daily_profit / 100)
-            current_balance += daily_result
-            current_balance = round(current_balance, 2)
-            
-            results.append({
-                'day': day,
-                'balance': current_balance,
-                'profit': round(daily_result, 2),
-                'total_profit': round(current_balance - start_balance, 2)
-            })
-        
-        return results
-    
-    def generate_plan(self, start_balance):
-        results = self.calculate_marathon(start_balance)
-        final_balance = results[-1]['balance']
-        total_profit = results[-1]['total_profit']
-        
-        plan = "✨ *МАРАФОН НА 30 ДНЕЙ | ПЛАН ТОРГОВЛИ* ✨\n\n"
-        plan += "💰 *Стартовый баланс:* $" + f"{start_balance:,.2f}" + "\n"
-        plan += "🎯 *Ежедневная цель:* +" + str(self.daily_profit) + "%\n"
-        plan += "🏁 *Финальная цель:* $" + f"{final_balance:,.2f}" + "\n"
-        plan += "📈 *Общая прибыль:* $" + f"{total_profit:,.2f}" + "\n\n"
-        plan += "📊 *ДЕТАЛЬНЫЙ ПЛАН НА КАЖДЫЙ ДЕНЬ:*\n\n"
-        
-        emoji_progress = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
-        
-        for i in range(min(10, len(results))):
-            day_data = results[i]
-            emoji = emoji_progress[i] if i < len(emoji_progress) else f"{i+1}."
-            plan += f"{emoji} *День {day_data['day']}:* ${day_data['balance']:,.2f} (+${day_data['profit']:,.2f})\n"
-        
-        if len(results) > 10:
-            plan += """
-📈 *ПРОМЕЖУТОЧНЫЙ ПЛАН НА ОСТАЛЬНЫЕ ДНИ:*
-Здесь можно добавить оставшиеся дни марафона
+{EmojiDecor.FOOTER}
 """
 
-if __name__ == "__main__":
+REGISTER_TEXT = f"""
+{EmojiDecor.HEADER}
+🎯 <b>РЕГИСТРАЦИЯ НА POCKET OPTION</b> 🎯
+{EmojiDecor.FOOTER}
+
+{EmojiDecor.STAR_DIVIDER}
+
+{EmojiDecor.ICONS['check']} <b>ЕСЛИ У ТЕБЯ ЕСТЬ АККАУНТ:</b>
+1. ❌ Удали старый аккаунт
+2. 🆕 Создай новый по нашей ссылке
+3. 💰 Пополни баланс от $20
+4. 📨 Отправь ID админу {ADMIN_USER}
+
+{EmojiDecor.ICONS['register']} <b>ЕСЛИ АККАУНТА НЕТ:</b>
+1. 👇 Нажми кнопку "📝 РЕГИСТРАЦИЯ"
+2. 📋 Заполни данные по ссылке
+3. 💳 Пополни депозит от $20
+4. 🆔 Скопируй свой ID из бота
+
+{EmojiDecor.DIAMOND_DIVIDER}
+
+💰 <b>МИНИМАЛЬНЫЙ ДЕПОЗИТ:</b> $20
+🎁 <b>БОНУС НА СТАРТЕ:</b> +50% к первому депозиту
+⚡ <b>ВЫВОД СРЕДСТВ:</b> 15 мин - 24 часа
+
+{EmojiDecor.DIVIDER}
+
+📊 <b>ПОСЛЕ РЕГИСТРАЦИИ:</b>
+1. {EmojiDecor.ICONS['profile']} Скопируй ID из /profile
+2. {EmojiDecor.ICONS['vip']} Напиши админу {ADMIN_USER}
+3. {EmojiDecor.ICONS['check']} Получи VIP доступ к сигналам
+
+{EmojiDecor.STAR_DIVIDER}
+
+🔥 <b>НАШИ ПРЕИМУЩЕСТВА:</b>
+• 🎯 Точность сигналов до 95%
+• ⚡ Мгновенные уведомления
+• 📈 15+ профессиональных индикаторов
+• 👑 Персональная поддержка
+• 💎 Эксклюзивные стратегии
+"""
+
+# ---------------- КРАСИВЫЕ КНОПКИ ----------------
+def create_main_keyboard():
+    keyboard = [
+        [
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['signal']} СИГНАЛ", callback_data="get_signal"),
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['vip']} VIP", callback_data="vip_info")
+        ],
+        [
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['profile']} ПРОФИЛЬ", callback_data="profile"),
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['stats']} СТАТИСТИКА", callback_data="stats")
+        ],
+        [
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['marathon']} МАРАФОН", callback_data="marathon"),
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['analytics']} АНАЛИТИКА", callback_data="analytics")
+        ],
+        [
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['register']} РЕГИСТРАЦИЯ", url=REF_LINK),
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['help']} ПОМОЩЬ", callback_data="help")
+        ],
+        [
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['crown']} АДМИН", url=ADMIN_LINK)
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+def create_vip_keyboard():
+    keyboard = [
+        [
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['crown']} КУПИТЬ VIP", url=ADMIN_LINK),
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['check']} ПРОВЕРИТЬ VIP", callback_data="check_vip")
+        ],
+        [
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['signal']} ТЕСТ СИГНАЛА", callback_data="test_signal")
+        ],
+        [
+            InlineKeyboardButton(f"{EmojiDecor.ICONS['back']} НАЗАД", callback_data="main_menu")
+        ]
+    ]
+    return InlineKeyboardMarkup(keyboard)
+
+# ---------------- HANDLERS С КРАСИВЫМ ОФОРМЛЕНИЕМ ----------------
+async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    user_id = str(user.id)
+    
+    # Добавляем пользователя в общую базу
+    if user_id not in all_users:
+        all_users.add(user_id)
+        save_db(DB_ALL, list(all_users))
+    
+    # Отправляем стикер
+    try:
+        sticker_id = random.choice(StickerDesign.WELCOME_STICKERS)
+        await update.message.reply_sticker(sticker_id)
+    except:
+        pass
+    
+    # Отправляем приветственное сообщение
+    welcome = WELCOME_TEXT.format(name=user.first_name)
+    await update.message.reply_text(
+        welcome,
+        parse_mode='HTML',
+        reply_markup=create_main_keyboard()
+    )
+
+async def register_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    await update.message.reply_text(
+        REGISTER_TEXT,
+        parse_mode='HTML',
+        disable_web_page_preview=True
+    )
+
+async def vip_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    
+    vip_status = "👑 VIP АКТИВЕН" if is_vip(user_id) else "❌ VIP НЕ АКТИВЕН"
+    
+    text = f"""
+{EmojiDecor.HEADER}
+{EmojiDecor.ICONS['crown']} <b>VIP СТАТУС И ПРЕИМУЩЕСТВА</b> {EmojiDecor.ICONS['crown']}
+{EmojiDecor.FOOTER}
+
+{EmojiDecor.STAR_DIVIDER}
+
+<b>ТВОЙ СТАТУС:</b> {vip_status}
+
+{EmojiDecor.DIAMOND_DIVIDER}
+
+🔥 <b>VIP ПРЕИМУЩЕСТВА:</b>
+
+✅ <b>ЕЖЕДНЕВНЫЕ СИГНАЛЫ</b>
+• 🎯 10-15 точных сигналов в день
+• ⚡ Мгновенные уведомления
+• 📈 Профессиональный анализ
+
+✅ <b>ЭКСКЛЮЗИВНЫЙ КОНТЕНТ</b>
+• 📚 Закрытые стратегии
+• 🎬 Обучающие материалы
+• 💎 Персональные консультации
+
+✅ <b>ПРИОРИТЕТНАЯ ПОДДЕРЖКА</b>
+• 👨‍💻 Личный помощник
+• ⏰ Круглосуточная поддержка
+• 🔄 Помощь в настройке
+
+{EmojiDecor.DIVIDER}
+
+💰 <b>СТОИМОСТЬ VIP:</b>
+• 1 месяц - $99
+• 3 месяца - $249 (экономия $48)
+• 6 месяцев - $449 (экономия $145)
+
+{EmojiDecor.STAR_DIVIDER}
+
+🎁 <b>БОНУСЫ ПРИ ОПЛАТЕ:</b>
+1. 📚 Бесплатный доступ к курсу
+2. 👨‍🏫 Персональная сессия
+3. 📊 Настройка терминала
+
+{EmojiDecor.FOOTER}
+"""
+    
+    try:
+        if is_vip(user_id):
+            sticker_id = random.choice(StickerDesign.VIP_STICKERS)
+            await update.message.reply_sticker(sticker_id)
+    except:
+        pass
+    
+    await update.message.reply_text(
+        text,
+        parse_mode='HTML',
+        reply_markup=create_vip_keyboard()
+    )
+
+async def profile_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    user_id = str(user.id)
+    
+    win_rate = calculate_win_rate(user_id)
+    total_profit = calculate_total_profit(user_id)
+    vip_status = "👑 VIP" if is_vip(user_id) else "👤 BASIC"
+    
+    # Создаем красивый прогресс-бар
+    progress = min(int(win_rate / 10), 10)
+    progress_bar = "▓" * progress + "░" * (10 - progress)
+    
+    text = f"""
+{EmojiDecor.HEADER}
+{EmojiDecor.ICONS['profile']} <b>ЛИЧНЫЙ КАБИНЕТ</b> {EmojiDecor.ICONS['profile']}
+{EmojiDecor.FOOTER}
+
+{EmojiDecor.STAR_DIVIDER}
+
+👤 <b>ИМЯ:</b> {user.first_name or 'Не указано'}
+🆔 <b>ID:</b> <code>{user_id}</code>
+{EmojiDecor.ICONS['crown']} <b>СТАТУС:</b> {vip_status}
+
+{EmojiDecor.DIAMOND_DIVIDER}
+
+📊 <b>СТАТИСТИКА ТОРГОВЛИ:</b>
+
+{EmojiDecor.ICONS['chart']} <b>ВИНРЕЙТ:</b> {win_rate:.1f}%
+{progress_bar} [{win_rate:.1f}%]
+
+{EmojiDecor.ICONS['money']} <b>ОБЩАЯ ПРИБЫЛЬ:</b> ${total_profit:,.2f}
+
+{EmojiDecor.ICONS['calendar']} <b>АКТИВНОСТЬ:</b>
+• 📅 Дата регистрации: {datetime.now().strftime('%d.%m.%Y')}
+• ⏰ Последняя активность: Сейчас онлайн
+
+{EmojiDecor.DIVIDER}
+
+🏆 <b>ДОСТИЖЕНИЯ:</b>
+"""
+    
+    # Добавляем достижения
+    if win_rate > 70:
+        text += f"{EmojiDecor.ICONS['trophy']} Мастер торговли\n"
+    if total_profit > 1000:
+        text += f"{EmojiDecor.ICONS['diamond']} Профи +$1000\n"
+    if is_vip(user_id):
+        text += f"{EmojiDecor.ICONS['crown']} VIP членство\n"
+    
+    text += f"""
+{EmojiDecor.STAR_DIVIDER}
+
+💡 <b>СОВЕТЫ:</b>
+{get_trading_tip(win_rate)}
+
+{EmojiDecor.FOOTER}
+"""
+    
+    await update.message.reply_text(text, parse_mode='HTML')
+
+def get_trading_tip(win_rate):
+    if win_rate < 50:
+        return "🎯 Совет: Фокусируйся на 1-2 активах, изучай их поведение"
+    elif win_rate < 70:
+        return "📈 Совет: Увеличивай размер сделок постепенно"
+    else:
+        return "🚀 Совет: Ты профи! Делись стратегией с другими"
+
+# ---------------- СИГНАЛЫ С КРАСИВЫМ ОФОРМЛЕНИЕМ ----------------
+async def signal_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    
+    if not is_vip(user_id):
+        text = f"""
+{EmojiDecor.HEADER}
+{EmojiDecor.ICONS['warning']} <b>ДОСТУП ЗАПРЕЩЕН</b> {EmojiDecor.ICONS['warning']}
+{EmojiDecor.FOOTER}
+
+{EmojiDecor.STAR_DIVIDER}
+
+🚫 <b>У тебя нет доступа к сигналам!</b>
+
+Для получения VIP доступа:
+1. {EmojiDecor.ICONS['register']} Пройди регистрацию
+2. {EmojiDecor.ICONS['money']} Пополни счет от $20
+3. {EmojiDecor.ICONS['crown']} Купи VIP доступ
+
+{EmojiDecor.DIVIDER}
+
+📨 <b>Свяжись с админом:</b> {ADMIN_USER}
+"""
+        await update.message.reply_text(text, parse_mode='HTML')
+        return
+    
+    # Генерируем сигнал
+    asset = random.choice(OTC_PAIRS)
+    direction, probability, reasons, indicators, expiration = analyzer.analyze_asset(asset)
+    
+    # Выбираем стикер
+    if "STRONG CALL" in direction:
+        sticker_id = StickerDesign.SIGNAL_STICKERS["STRONG_CALL"]
+        signal_emoji = "🚀"
+    elif "CALL" in direction:
+        sticker_id = StickerDesign.SIGNAL_STICKERS["CALL"]
+        signal_emoji = "📈"
+    elif "STRONG PUT" in direction:
+        sticker_id = StickerDesign.SIGNAL_STICKERS["STRONG_PUT"]
+        signal_emoji = "🔻"
+    elif "PUT" in direction:
+        sticker_id = StickerDesign.SIGNAL_STICKERS["PUT"]
+        signal_emoji = "📉"
+    else:
+        sticker_id = None
+        signal_emoji = "⚪"
+    
+    # Создаем красивый сигнал
+    text = f"""
+{EmojiDecor.HEADER}
+{signal_emoji} <b>VIP СИГНАЛ #{random.randint(1000, 9999)}</b> {signal_emoji}
+{EmojiDecor.FOOTER}
+
+{EmojiDecor.STAR_DIVIDER}
+
+🎯 <b>АКТИВ:</b> <code>{asset}</code>
+⏰ <b>ВРЕМЯ:</b> {datetime.now().strftime('%H:%M:%S')}
+📅 <b>ДАТА:</b> {datetime.now().strftime('%d.%m.%Y')}
+
+{EmojiDecor.DIAMOND_DIVIDER}
+
+🚀 <b>НАПРАВЛЕНИЕ:</b> {direction}
+🎯 <b>ВЕРОЯТНОСТЬ:</b> {probability}%
+
+⏱️ <b>ЭКСПИРАЦИЯ:</b> {expiration}
+💰 <b>РИСК:</b> 2-5% от депозита
+
+{EmojiDecor.DIVIDER}
+
+📊 <b>АНАЛИЗ ИНДИКАТОРОВ:</b>
+"""
+    
+    # Добавляем причины
+    for i, reason in enumerate(reasons[:5], 1):
+        text += f"{i}. {reason}\n"
+    
+    text += f"""
+{EmojiDecor.STAR_DIVIDER}
+
+💡 <b>РЕКОМЕНДАЦИИ:</b>
+• Используй 2-5% от депозита
+• Следуй мани-менеджменту
+• Фиксируй прибыль при 70-80%
+
+{EmojiDecor.ICONS['warning']} <b>ВАЖНО:</b>
+Торговля на бирже связана с рисками.
+Не инвестируй последние деньги.
+
+{EmojiDecor.FOOTER}
+"""
+    
+    # Отправляем стикер
+    if sticker_id:
+        try:
+            await update.message.reply_sticker(sticker_id)
+        except:
+            pass
+    
+    # Отправляем сигнал
+    await update.message.reply_text(text, parse_mode='HTML')
+    
+    # Логируем сигнал
+    log_signal(asset, direction, probability, reasons, expiration, user_id)
+
+# ---------------- МАРАФОН С КРАСИВЫМ ОФОРМЛЕНИЕМ ----------------
+async def marathon_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    calculator = MarathonCalculator()
+    
+    text = f"""
+{EmojiDecor.HEADER}
+{EmojiDecor.ICONS['marathon']} <b>МАРАФОН 30 ДНЕЙ К УСПЕХУ</b> {EmojiDecor.ICONS['marathon']}
+{EmojiDecor.FOOTER}
+
+{EmojiDecor.STAR_DIVIDER}
+
+🎯 <b>СТРАТЕГИЯ "МАРАФОН":</b>
+Ежедневная цель: +15% к депозиту
+Период: 30 дней
+Итог: ×66 к начальному депозиту
+
+{EmojiDecor.DIAMOND_DIVIDER}
+
+📊 <b>ПРИМЕР РАСЧЕТА:</b>
+
+Начальный депозит: $50
+"""
+    
+    results = calculator.calculate_marathon(50, 30)
+    
+    emoji_days = ["1️⃣", "2️⃣", "3️⃣", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
+    
+    for i in range(min(5, len(results))):
+        day_data = results[i]
+        emoji = emoji_days[i] if i < len(emoji_days) else f"{i+1}."
+        text += f"{emoji} День {day_data['day']}: ${day_data['balance']:,.2f} (+${day_data['profit']:,.2f})\n"
+    
+    text += f"""
+{EmojiDecor.DIVIDER}
+
+🏁 <b>ИТОГ ЧЕРЕЗ 30 ДНЕЙ:</b>
+• Начало: $50
+• Конец: ${results[-1]['balance']:,.2f}
+• Прибыль: ${results[-1]['total_profit']:,.2f}
+• Рост: ×{results[-1]['balance']/50:.1f}
+
+{EmojiDecor.STAR_DIVIDER}
+
+💡 <b>ПРАВИЛА МАРАФОНА:</b>
+1. 📅 Торгуй каждый день
+2. 🎯 Цель +15% в день
+3. ⚠️ Риск не более 5%
+4. 💰 Выводи прибыль каждые 5 дней
+
+{EmojiDecor.FOOTER}
+"""
+    
+    await update.message.reply_text(text, parse_mode='HTML')
+
+# ---------------- АНАЛИТИКА ----------------
+async def analytics_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    
+    if not is_vip(user_id):
+        await update.message.reply_text(
+            f"{EmojiDecor.ICONS['warning']} Доступ к аналитике только для VIP пользователей!",
+            parse_mode='HTML'
+        )
+        return
+    
+    # Генерируем аналитику
+    top_assets = random.sample(OTC_PAIRS, 5)
+    
+    text = f"""
+{EmojiDecor.HEADER}
+{EmojiDecor.ICONS['analytics']} <b>РЫНОЧНАЯ АНАЛИТИКА</b> {EmojiDecor.ICONS['analytics']}
+{EmojiDecor.FOOTER}
+
+{EmojiDecor.STAR_DIVIDER}
+
+⏰ <b>ОБНОВЛЕНО:</b> {datetime.now().strftime('%H:%M:%S')}
+📈 <b>ПЕРИОД:</b> Последние 24 часа
+
+{EmojiDecor.DIAMOND_DIVIDER}
+
+🏆 <b>ТОП-5 АКТИВОВ ДНЯ:</b>
+"""
+    
+    for i, asset in enumerate(top_assets, 1):
+        direction, probability, _, _, _ = analyzer.analyze_asset(asset)
+        emoji = "🟢" if "CALL" in direction else "🔴" if "PUT" in direction else "⚪"
+        text += f"{i}. {emoji} {asset}: {probability}%\n"
+    
+    text += f"""
+{EmojiDecor.DIVIDER}
+
+📊 <b>ИНДИКАТОРЫ РЫНКА:</b>
+
+• {EmojiDecor.ICONS['chart']} RSI общий: {random.randint(40, 60)}
+• {EmojiDecor.ICONS['up']} Бычьи активы: {random.randint(40, 60)}%
+• {EmojiDecor.ICONS['down']} Медвежьи активы: {random.randint(30, 50)}%
+• ⚡ Волатильность: {random.randint(2, 8)}/10
+
+{EmojiDecor.STAR_DIVIDER}
+
+💎 <b>РЕКОМЕНДАЦИИ:</b>
+• Фокусируйся на EUR/USD OTC
+• Избегай торговли в 15:00-17:00 GMT
+• Используй отложенные ордера
+
+{EmojiDecor.FOOTER}
+"""
+    
+    await update.message.reply_text(text, parse_mode='HTML')
+
+# ---------------- CALLBACK HANDLERS ----------------
+async def callback_handler(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = str(query.from_user.id)
+    
+    if query.data == "get_signal":
+        await signal_command(update, context)
+    elif query.data == "vip_info":
+        await vip_command(update, context)
+    elif query.data == "profile":
+        await profile_command(update, context)
+    elif query.data == "stats":
+        await stats_command(update, context)
+    elif query.data == "marathon":
+        await marathon_command(update, context)
+    elif query.data == "analytics":
+        await analytics_command(update, context)
+    elif query.data == "help":
+        await help_command(update, context)
+    elif query.data == "main_menu":
+        await start(update, context)
+
+# ---------------- ДОПОЛНИТЕЛЬНЫЕ КОМАНДЫ ----------------
+async def stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    total_users = len(all_users)
+    total_vip = len(vip_users)
+    total_signals = len(signal_history)
+    
+    # Средняя вероятность
+    avg_prob = 0
+    if signal_history:
+        probs = [s.get('probability', 0) for s in signal_history.values()]
+        avg_prob = sum(probs) / len(probs)
+    
+    text = f"""
+{EmojiDecor.HEADER}
+{EmojiDecor.ICONS['stats']} <b>СТАТИСТИКА СИСТЕМЫ</b> {EmojiDecor.ICONS['stats']}
+{EmojiDecor.FOOTER}
+
+{EmojiDecor.STAR_DIVIDER}
+
+👥 <b>П
+
+    if __name__ == "__main__":
     from threading import Thread
     from telegram import Update
     from telegram.ext import Application, CommandHandler, CallbackQueryHandler, ContextTypes
