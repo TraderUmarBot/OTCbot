@@ -13,48 +13,6 @@ from datetime import datetime, timedelta
 from flask import Flask
 from threading import Thread
 from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
-# ... остальной код
-```
-
-Решение:
-
-1. Откройте ваш main.py файл на хостинге
-2. Удалите первую строку с текстом "Нет, код обрезался! Вот полный код с ВСЕМИ функциями..."
-3. Убедитесь, что файл начинается с:
-   ```python
-   # =====================================
-   # KURUT AI INFINITY | COIP PRO EDITION
-   # ULTIMATE POCKET OPTION BOT
-   # =====================================
-   
-   import asyncio
-   import json
-   import os
-   # ... и так далее
-   ```
-4. Сохраните файл
-5. Перезапустите приложение
-
-Альтернатива - создайте новый файл:
-
-Если не получается исправить, создайте новый файл bot.py со следующим чистым кодом (я убрал все лишние комментарии в начале):
-
-```python
-# =====================================
-# KURUT AI INFINITY | COIP PRO EDITION
-# ULTIMATE POCKET OPTION BOT
-# =====================================
-
-import asyncio
-import json
-import os
-import time
-import math
-import random
-from datetime import datetime, timedelta
-from flask import Flask
-from threading import Thread
-from telegram import InlineKeyboardButton, InlineKeyboardMarkup, Update
 from telegram.ext import Application, CommandHandler, CallbackQueryHandler, MessageHandler, filters, ContextTypes
 from telegram.error import BadRequest
 import logging
@@ -1454,4 +1412,3 @@ def main():
 
 if __name__ == "__main__":
     main()
-```
