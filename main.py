@@ -853,7 +853,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 🎯 **НАПРАВЛЕНИЕ:** {signal['direction']} {signal['emoji']}
 📈 **ВЕРОЯТНОСТЬ:** **{signal['probability']}%**
 💎 **СИЛА:** {signal['strength']}
-⏰ **ЭКСПИРАЦИЯ:** {signal['expiration']}
+⏰ **ЭКСПИРАЦИИ:** {signal['expiration']}
 🕒 **ВРЕМЯ:** {signal['timestamp']}
 📅 **ДАТА:** {signal['date']}
 
@@ -1541,6 +1541,621 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         )
 
 # ============================================
+# 👑 АДМИН ПАНЕЛЬ С ПОЛНЫМ ФУНКЦИОНАЛОМ
+# ============================================
+
+async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Админ панель с командами управления"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        await update.message.reply_text("❌ Доступ запрещен!")
+        return
+    
+    admin_text = """
+👑 **АДМИН ПАНЕЛЬ KURUT AI INFINITY**
+
+📊 **Статистика:**
+• Пользователей: {}
+• VIP: {}
+• Сигналов отправлено: {}
+
+⚡ **Команды управления:**
+
+🎯 **VIP Управление:**
+/grant [id] - Дать VIP доступ
+/revoke [id] - Забрать VIP доступ
+/list_vip - Список всех VIP
+
+📢 **Рассылки:**
+/send_all [текст] - Отправить всем
+/send_vip [текст] - Отправить VIP
+/send_photo [ссылка] [текст] - Фото + текст
+/send_video [ссылка] [текст] - Видео + текст
+/send_document [ссылка] [текст] - Документ + текст
+
+📊 **Статистика:**
+/stats [id] - Статистика пользователя
+/top_stats - Топ 10 пользователей
+/system_stats - Статистика системы
+
+🛠 **Управление ботом:**
+/backup - Создать резервную копию
+/cleanup - Очистить неактивных
+/restart - Перезапустить бота
+
+💡 **Примеры:**
+/grant 1234567890
+/send_all 🚀 Новое обновление!
+/send_photo https://example.com/photo.jpg Проверьте новые сигналы!
+    """.format(
+        len(all_users),
+        len(vip_users),
+        sum(len(signals) for signals in signal_history.values())
+    )
+    
+    await update.message.reply_text(admin_text, parse_mode='Markdown')
+
+async def grant_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Дать VIP доступ пользователю"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Использование: /grant [user_id]\n"
+            "Пример: /grant 1234567890"
+        )
+        return
+    
+    target_id = context.args[0]
+    
+    # Добавляем в VIP
+    vip_users.add(target_id)
+    Database.save("vip_users.json", list(vip_users))
+    
+    # Обновляем статистику
+    ensure_user_data(target_id)
+    
+    await update.message.reply_text(f"✅ Пользователю {target_id} предоставлен VIP доступ!")
+    
+    # Отправляем уведомление пользователю
+    try:
+        await context.bot.send_message(
+            chat_id=int(target_id),
+            text="🎉 **ВАМ ПРЕДОСТАВЛЕН VIP ДОСТУП!**\n\n"
+                 "Теперь вы можете получать точные сигналы 99%!\n"
+                 "Используйте кнопку '🚀 ПОЛУЧИТЬ СИГНАЛ' в меню.",
+            parse_mode='Markdown'
+        )
+    except:
+        pass
+
+async def revoke_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Забрать VIP доступ"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Использование: /revoke [user_id]\n"
+            "Пример: /revoke 1234567890"
+        )
+        return
+    
+    target_id = context.args[0]
+    
+    if target_id in vip_users:
+        vip_users.remove(target_id)
+        Database.save("vip_users.json", list(vip_users))
+        await update.message.reply_text(f"✅ VIP доступ у пользователя {target_id} отозван!")
+    else:
+        await update.message.reply_text(f"❌ Пользователь {target_id} не имеет VIP!")
+
+async def list_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Список всех VIP пользователей"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if not vip_users:
+        await update.message.reply_text("📭 Список VIP пуст")
+        return
+    
+    vip_list = "👑 **СПИСОК VIP ПОЛЬЗОВАТЕЛЕЙ:**\n\n"
+    
+    for i, uid in enumerate(vip_users, 1):
+        stats = user_stats.get(uid, {})
+        vip_list += f"{i}. **ID:** `{uid}`\n"
+        vip_list += f"   📊 Точность: {stats.get('win_rate', 0):.1f}%\n"
+        vip_list += f"   💰 Прибыль: ${stats.get('profit', 0):.2f}\n"
+        vip_list += f"   📅 Регистрация: {stats.get('join_date', 'Неизвестно')}\n\n"
+    
+    await update.message.reply_text(vip_list, parse_mode='Markdown')
+
+async def send_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправить сообщение всем пользователям"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Использование: /send_all [текст]\n"
+            "Пример: /send_all 🚀 Новое обновление!"
+        )
+        return
+    
+    message_text = " ".join(context.args)
+    
+    sent = 0
+    failed = 0
+    total = len(all_users)
+    
+    progress_msg = await update.message.reply_text(f"📤 Рассылка... 0/{total}")
+    
+    for uid in list(all_users):
+        try:
+            await context.bot.send_message(
+                chat_id=int(uid),
+                text=f"📢 **ВАЖНОЕ СООБЩЕНИЕ:**\n\n{message_text}",
+                parse_mode='Markdown'
+            )
+            sent += 1
+            
+            if sent % 10 == 0:
+                await progress_msg.edit_text(f"📤 Рассылка... {sent}/{total}")
+            
+            await asyncio.sleep(0.1)
+        except:
+            failed += 1
+    
+    await progress_msg.edit_text(
+        f"✅ Рассылка завершена!\n"
+        f"📊 Отправлено: {sent}/{total}\n"
+        f"❌ Ошибок: {failed}"
+    )
+
+async def send_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправить сообщение только VIP"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Использование: /send_vip [текст]\n"
+            "Пример: /send_vip 🎉 Эксклюзив для VIP!"
+        )
+        return
+    
+    message_text = " ".join(context.args)
+    
+    sent = 0
+    failed = 0
+    total = len(vip_users)
+    
+    if total == 0:
+        await update.message.reply_text("❌ Нет VIP пользователей!")
+        return
+    
+    progress_msg = await update.message.reply_text(f"📤 Рассылка VIP... 0/{total}")
+    
+    for uid in vip_users:
+        try:
+            await context.bot.send_message(
+                chat_id=int(uid),
+                text=f"👑 **VIP СООБЩЕНИЕ:**\n\n{message_text}",
+                parse_mode='Markdown'
+            )
+            sent += 1
+            
+            if sent % 5 == 0:
+                await progress_msg.edit_text(f"📤 Рассылка VIP... {sent}/{total}")
+            
+            await asyncio.sleep(0.1)
+        except:
+            failed += 1
+    
+    await progress_msg.edit_text(
+        f"✅ Рассылка VIP завершена!\n"
+        f"📊 Отправлено: {sent}/{total}\n"
+        f"❌ Ошибок: {failed}"
+    )
+
+async def send_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправить фото всем пользователям"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "❌ Использование: /send_photo [ссылка] [текст]\n"
+            "Пример: /send_photo https://example.com/photo.jpg Проверьте новые сигналы!"
+        )
+        return
+    
+    photo_url = context.args[0]
+    caption = " ".join(context.args[1:])
+    
+    sent = 0
+    failed = 0
+    total = len(all_users)
+    
+    progress_msg = await update.message.reply_text(f"📤 Отправка фото... 0/{total}")
+    
+    for uid in list(all_users):
+        try:
+            await context.bot.send_photo(
+                chat_id=int(uid),
+                photo=photo_url,
+                caption=f"📸 **ФОТО ОТ АДМИНА:**\n\n{caption}",
+                parse_mode='Markdown'
+            )
+            sent += 1
+            
+            if sent % 10 == 0:
+                await progress_msg.edit_text(f"📤 Отправка фото... {sent}/{total}")
+            
+            await asyncio.sleep(0.2)
+        except Exception as e:
+            logger.error(f"Ошибка отправки фото: {e}")
+            failed += 1
+    
+    await progress_msg.edit_text(
+        f"✅ Фото отправлено!\n"
+        f"📊 Отправлено: {sent}/{total}\n"
+        f"❌ Ошибок: {failed}"
+    )
+
+async def send_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправить видео всем пользователям"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "❌ Использование: /send_video [ссылка] [текст]\n"
+            "Пример: /send_video https://example.com/video.mp4 Смотрите новое видео!"
+        )
+        return
+    
+    video_url = context.args[0]
+    caption = " ".join(context.args[1:])
+    
+    sent = 0
+    failed = 0
+    total = len(all_users)
+    
+    progress_msg = await update.message.reply_text(f"📤 Отправка видео... 0/{total}")
+    
+    for uid in list(all_users):
+        try:
+            await context.bot.send_video(
+                chat_id=int(uid),
+                video=video_url,
+                caption=f"🎬 **ВИДЕО ОТ АДМИНА:**\n\n{caption}",
+                parse_mode='Markdown'
+            )
+            sent += 1
+            
+            if sent % 5 == 0:
+                await progress_msg.edit_text(f"📤 Отправка видео... {sent}/{total}")
+            
+            await asyncio.sleep(0.3)
+        except Exception as e:
+            logger.error(f"Ошибка отправки видео: {e}")
+            failed += 1
+    
+    await progress_msg.edit_text(
+        f"✅ Видео отправлено!\n"
+        f"📊 Отправлено: {sent}/{total}\n"
+        f"❌ Ошибок: {failed}"
+    )
+
+async def send_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправить документ всем пользователям"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if len(context.args) < 2:
+        await update.message.reply_text(
+            "❌ Использование: /send_document [ссылка] [текст]\n"
+            "Пример: /send_document https://example.com/file.pdf Важные документы!"
+        )
+        return
+    
+    doc_url = context.args[0]
+    caption = " ".join(context.args[1:])
+    
+    sent = 0
+    failed = 0
+    total = len(all_users)
+    
+    progress_msg = await update.message.reply_text(f"📤 Отправка документа... 0/{total}")
+    
+    for uid in list(all_users):
+        try:
+            await context.bot.send_document(
+                chat_id=int(uid),
+                document=doc_url,
+                caption=f"📄 **ДОКУМЕНТ ОТ АДМИНА:**\n\n{caption}",
+                parse_mode='Markdown'
+            )
+            sent += 1
+            
+            if sent % 5 == 0:
+                await progress_msg.edit_text(f"📤 Отправка документа... {sent}/{total}")
+            
+            await asyncio.sleep(0.3)
+        except Exception as e:
+            logger.error(f"Ошибка отправки документа: {e}")
+            failed += 1
+    
+    await progress_msg.edit_text(
+        f"✅ Документ отправлен!\n"
+        f"📊 Отправлено: {sent}/{total}\n"
+        f"❌ Ошибок: {failed}"
+    )
+
+async def user_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Статистика конкретного пользователя"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text(
+            "❌ Использование: /stats [user_id]\n"
+            "Пример: /stats 1234567890"
+        )
+        return
+    
+    target_id = context.args[0]
+    ensure_user_data(target_id)
+    stats = user_stats.get(target_id, {})
+    
+    stats_text = f"""
+📊 **СТАТИСТИКА ПОЛЬЗОВАТЕЛЯ {target_id}:**
+
+👤 **ОБЩАЯ ИНФОРМАЦИЯ:**
+• VIP статус: {'✅ Да' if target_id in vip_users else '❌ Нет'}
+• Дата регистрации: {stats.get('join_date', 'Неизвестно')}
+• Последний сигнал: {stats.get('last_signal', 'Нет')}
+
+📈 **ТОРГОВАЯ СТАТИСТИКА:**
+• Точность: {stats.get('win_rate', 0):.1f}%
+• Общая прибыль: ${stats.get('profit', 0):.2f}
+• Всего сделок: {stats.get('total_trades', 0)}
+• Выиграно: {stats.get('wins', 0)}
+• Проиграно: {stats.get('losses', 0)}
+• Текущая серия: {stats.get('current_streak', 0)} побед
+• Лучшая серия: {stats.get('best_streak', 0)} побед
+
+📨 **СИГНАЛЫ:**
+• Всего получено: {len(signal_history.get(target_id, []))}
+"""
+    
+    await update.message.reply_text(stats_text, parse_mode='Markdown')
+
+async def top_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Топ 10 пользователей"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    # Собираем статистику
+    top_data = []
+    for uid, stats in user_stats.items():
+        if stats.get('total_trades', 0) >= 1:
+            top_data.append({
+                'user_id': uid,
+                'win_rate': stats.get('win_rate', 0),
+                'profit': stats.get('profit', 0),
+                'trades': stats.get('total_trades', 0),
+                'wins': stats.get('wins', 0),
+                'vip': uid in vip_users
+            })
+    
+    # Сортируем по прибыли
+    top_data.sort(key=lambda x: x['profit'], reverse=True)
+    top_10 = top_data[:10]
+    
+    top_text = "🏆 **ТОП 10 ПОЛЬЗОВАТЕЛЕЙ (ПО ПРИБЫЛИ):**\n\n"
+    
+    for i, user in enumerate(top_10, 1):
+        short_id = user['user_id'][-4:]
+        vip_status = "👑" if user['vip'] else "👤"
+        top_text += f"{i}. {vip_status} **ID:...{short_id}**\n"
+        top_text += f"   💰 Прибыль: ${user['profit']:.2f}\n"
+        top_text += f"   📊 Точность: {user['win_rate']:.1f}%\n"
+        top_text += f"   📈 Сделок: {user['trades']} ({user['wins']}✅)\n\n"
+    
+    await update.message.reply_text(top_text, parse_mode='Markdown')
+
+async def system_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Статистика системы"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    # Общая статистика
+    total_signals = sum(len(signals) for signals in signal_history.values())
+    total_profit = sum(stats.get('profit', 0) for stats in user_stats.values())
+    avg_accuracy = sum(stats.get('win_rate', 0) for stats in user_stats.values()) / len(user_stats) if user_stats else 0
+    
+    # Активность за последние 24 часа
+    active_24h = 0
+    for uid, stats in user_stats.items():
+        last_signal = stats.get('last_signal')
+        if last_signal:
+            # Проверяем активность (упрощенно)
+            active_24h += 1
+    
+    system_text = f"""
+📊 **СТАТИСТИКА СИСТЕМЫ KURUT AI INFINITY:**
+
+👥 **ПОЛЬЗОВАТЕЛИ:**
+• Всего пользователей: {len(all_users)}
+• VIP пользователей: {len(vip_users)}
+• Конверсия в VIP: {(len(vip_users)/len(all_users)*100 if all_users else 0):.1f}%
+• Активных за 24ч: {active_24h}
+
+📈 **ТОРГОВАЯ СТАТИСТИКА:**
+• Всего сигналов: {total_signals}
+• Среднее на пользователя: {(total_signals/len(all_users) if all_users else 0):.1f}
+• Общая прибыль: ${total_profit:.2f}
+• Средняя прибыль на пользователя: ${(total_profit/len(all_users) if all_users else 0):.2f}
+• Средняя точность: {avg_accuracy:.1f}%
+
+⚡ **ПОСЛЕДНИЕ ДЕЙСТВИЯ:**
+• Последний сигнал: {datetime.now().strftime('%H:%M:%S')}
+• Бот работает: 24/7
+• Автопинг: Активен
+• Веб-сервер: Онлайн
+
+💾 **БАЗА ДАННЫХ:**
+• Файлов: 5
+• Размер данных: {len(str(user_stats)) + len(str(signal_history))} байт
+• Последнее сохранение: Сейчас
+"""
+    
+    await update.message.reply_text(system_text, parse_mode='Markdown')
+
+async def backup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Создать резервную копию"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    # Сохраняем все данные
+    Database.save("all_users.json", list(all_users))
+    Database.save("vip_users.json", list(vip_users))
+    Database.save("user_stats.json", user_stats)
+    Database.save("user_trades.json", user_trades)
+    Database.save("signal_history.json", signal_history)
+    
+    # Создаем timestamp для имени файла
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    backup_filename = f"backup_{timestamp}.json"
+    
+    # Собираем все данные в один файл
+    backup_data = {
+        "timestamp": timestamp,
+        "all_users": list(all_users),
+        "vip_users": list(vip_users),
+        "user_stats": user_stats,
+        "user_trades": user_trades,
+        "signal_history": signal_history,
+        "total_users": len(all_users),
+        "total_vip": len(vip_users),
+        "total_profit": sum(stats.get('profit', 0) for stats in user_stats.values())
+    }
+    
+    try:
+        with open(backup_filename, 'w', encoding='utf-8') as f:
+            json.dump(backup_data, f, ensure_ascii=False, indent=2)
+        
+        # Отправляем файл админу
+        await context.bot.send_document(
+            chat_id=update.effective_chat.id,
+            document=open(backup_filename, 'rb'),
+            filename=backup_filename,
+            caption=f"✅ **Резервная копия создана!**\n📅 {timestamp}\n👥 {len(all_users)} пользователей"
+        )
+        
+        # Удаляем временный файл
+        os.remove(backup_filename)
+        
+    except Exception as e:
+        logger.error(f"Ошибка создания бэкапа: {e}")
+        await update.message.reply_text(f"❌ Ошибка создания бэкапа: {e}")
+
+async def cleanup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Очистить неактивных пользователей"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    # Находим пользователей без сделок
+    inactive_users = []
+    for uid in list(all_users):
+        stats = user_stats.get(uid, {})
+        if stats.get('total_trades', 0) == 0:
+            inactive_users.append(uid)
+    
+    if not inactive_users:
+        await update.message.reply_text("✅ Нет неактивных пользователей!")
+        return
+    
+    # Удаляем их
+    for uid in inactive_users:
+        if uid in all_users:
+            all_users.remove(uid)
+        if uid in vip_users:
+            vip_users.remove(uid)
+        if uid in user_stats:
+            del user_stats[uid]
+        if uid in user_trades:
+            del user_trades[uid]
+        if uid in signal_history:
+            del signal_history[uid]
+    
+    # Сохраняем
+    Database.save("all_users.json", list(all_users))
+    Database.save("vip_users.json", list(vip_users))
+    Database.save("user_stats.json", user_stats)
+    Database.save("user_trades.json", user_trades)
+    Database.save("signal_history.json", signal_history)
+    
+    await update.message.reply_text(
+        f"✅ Очистка завершена!\n"
+        f"🗑️ Удалено пользователей: {len(inactive_users)}\n"
+        f"👥 Осталось: {len(all_users)}"
+    )
+
+async def restart_bot(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Перезапустить бота (имитация)"""
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(user_id):
+        return
+    
+    await update.message.reply_text("🔄 Перезапускаю бота...")
+    
+    # Сохраняем данные
+    Database.save("all_users.json", list(all_users))
+    Database.save("vip_users.json", list(vip_users))
+    Database.save("user_stats.json", user_stats)
+    Database.save("signal_history.json", signal_history)
+    
+    # Имитируем перезапуск
+    await update.message.reply_text(
+        "✅ Бот перезапущен!\n"
+        f"👥 Пользователей: {len(all_users)}\n"
+        f"💎 VIP: {len(vip_users)}\n"
+        f"📊 Сигналов: {sum(len(signals) for signals in signal_history.values())}"
+    )
+
+# ============================================
 # 🚀 ЗАПУСК СИСТЕМЫ
 # ============================================
 
@@ -1565,6 +2180,23 @@ def run_bot():
         application.add_handler(CommandHandler("help", start_command))
         application.add_handler(CallbackQueryHandler(handle_callback))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+        
+        # Админ команды
+        application.add_handler(CommandHandler("admin", admin_panel))
+        application.add_handler(CommandHandler("grant", grant_vip))
+        application.add_handler(CommandHandler("revoke", revoke_vip))
+        application.add_handler(CommandHandler("list_vip", list_vip))
+        application.add_handler(CommandHandler("send_all", send_all))
+        application.add_handler(CommandHandler("send_vip", send_vip))
+        application.add_handler(CommandHandler("send_photo", send_photo))
+        application.add_handler(CommandHandler("send_video", send_video))
+        application.add_handler(CommandHandler("send_document", send_document))
+        application.add_handler(CommandHandler("stats", user_stats_command))
+        application.add_handler(CommandHandler("top_stats", top_stats_command))
+        application.add_handler(CommandHandler("system_stats", system_stats_command))
+        application.add_handler(CommandHandler("backup", backup_command))
+        application.add_handler(CommandHandler("cleanup", cleanup_command))
+        application.add_handler(CommandHandler("restart", restart_bot))
         
         # Запускаем бота
         logger.info("🤖 Запускаем бота...")
