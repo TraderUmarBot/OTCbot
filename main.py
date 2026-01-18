@@ -133,7 +133,7 @@ def run_flask():
 # КОНФИГУРАЦИЯ
 # =====================================
 
-TOKEN = os.environ.get("TOKEN", "ВАШ_ТОКЕН_ЗДЕСЬ")  # Вставьте токен в переменные окружения Render
+TOKEN = os.environ.get("TOKEN", "8578509228:AAHXaUiCbIsum-0xBoKrL6rcAh380lpsuHQ")  # Вставьте токен в переменные окружения Render
 ADMIN_IDS = {6117198446, 7079260196}  # Ваши ID через запятую
 ADMIN_USER = "@Kuruttrader"
 ADMIN_LINK = "https://t.me/Kuruttrader"
