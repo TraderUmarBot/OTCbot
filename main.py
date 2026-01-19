@@ -376,7 +376,7 @@ OTC_PAIRS = [
     "EUR/USD OTC", "GBP/USD OTC", "USD/JPY OTC", "AUD/USD OTC", 
     "USD/CAD OTC", "USD/CHF OTC", "NZD/USD OTC", "EUR/GBP OTC",
     "EUR/JPY OTC", "GBP/JPY OTC", "AUD/JPY OTC", "EUR/AUD OTC",
-    "USD/CNH OTC", "USD/SGD OTC", "USD/HKD OTC", "USD/TRY OTC",
+    "USD/CNH OTC", "USD/SGD OTC", "USD/ OTC", "USD/TRY OTC",
     "EUR/TRY OTC", "USD/ZAR OTC", "USD/MXN OTC", "USD/SEK OTC",
     "USD/NOK OTC", "USD/PLN OTC", "USD/CZK OTC", "USD/HUF OTC",
     "USD/RUB OTC", "EUR/RUB OTC", "USD/BRL OTC", "USD/INR OTC",
@@ -1277,17 +1277,17 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 📢 **ОФИЦИАЛЬНЫЕ КАНАЛЫ:**
 
-• **Telegram канал:** @KurutAISignals
-• **Канал с отзывами:** @KurutReviews
-• **Образовательный канал:** @KurutTradingAcademy
+• **Telegram канал:** @KURUTTRADING
+• **Канал с отзывами:** @kurut_o
+• **Образовательный канал:** @KURUTTRADING
 
 ══════════════════════════════════════════════════════════
 
 💬 **ЧАТЫ И СООБЩЕСТВА:**
 
 • **VIP чат:** Доступен только для VIP пользователей
-• **Чат для обсуждения:** @KurutTradingChat
-• **Чат поддержки:** @KurutSupportChat
+• **Чат для обсуждения:** @Kurutopen
+• **Чат поддержки:** @Kurutopen
 
 ══════════════════════════════════════════════════════════
 
