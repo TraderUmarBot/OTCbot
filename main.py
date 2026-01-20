@@ -2,8 +2,8 @@
 # 🚀 KURUT AI INFINITY | ULTIMATE OTC BOT PRO
 # ============================================
 # АВТОР: @Kuruttrader
-# ВЕРСИЯ: 4.0 | MULTI-LANGUAGE EDITION
-# ДАТА: 19.01.2024
+# ВЕРСИЯ: 4.5 | PERFECT EDITION
+# ДАТА: 21.01.2024
 # ============================================
 
 import json
@@ -14,7 +14,7 @@ import threading
 import time
 import urllib.request
 from datetime import datetime, timedelta
-from flask import Flask
+from flask import Flask, request
 from threading import Thread
 from telegram import (
     InlineKeyboardButton, 
@@ -144,7 +144,7 @@ def home():
 
 @app.route('/ping')
 def ping():
-    return json.dumps({"status": "online", "timestamp": datetime.now().isoformat(), "service": "KURUT AI INFINITY", "version": "4.0"})
+    return json.dumps({"status": "online", "timestamp": datetime.now().isoformat(), "service": "KURUT AI INFINITY", "version": "4.5"})
 
 @app.route('/health')
 def health():
@@ -185,10 +185,9 @@ class TranslationSystem:
             'en': '🇺🇸 English'
         }
         
-        # Русский (базовый)
+        # Полные переводы для всех языков
         self.texts = {
             'ru': {
-                # Основные
                 'welcome': "👋 Добро пожаловать в KURUT AI INFINITY!\n\n🚀 Профессиональные сигналы OTC для Pocket Option\n🎯 Точность: 95-99%\n📊 15+ индикаторов анализа\n\nВыберите язык:",
                 'choose_category': "🎯 ВЫБЕРИТЕ КАТЕГОРИЮ АКТИВА:",
                 'choose_asset': "📊 Выберите актив:",
@@ -212,11 +211,11 @@ class TranslationSystem:
                 'tp': "• Тейк-профит: 85-95%",
                 'sl': "• Стоп-лосс: Автоматический",
                 'instruction': "🎯 ИНСТРУКЦИЯ ДЛЯ POCKET OPTION:",
-                'instruction_steps': "1. Откройте {}\n2. Направление: {}\n3. Время: {}\n4. Подтвердите сделку",
+                'instruction_steps': "1. Откройте {asset}\n2. Направление: {direction}\n3. Время: {expiration}\n4. Подтвердите сделку",
                 'good_luck': "🚀 УДАЧНОЙ ТОРГОВЛИ!",
                 'trade_win': "✅ СДЕЛКА ВЫИГРАНА!",
                 'trade_loss': "❌ СДЕЛКА ПРОИГРАНА",
-                'profit': "💰 Прибыль: {}%",
+                'profit': "💰 Прибыль: {profit}%",
                 'next_signal': "🔄 Следующий сигнал через 30 сек",
                 'my_stats': "📊 ВАША СТАТИСТИКА",
                 'accuracy': "🎯 Точность",
@@ -229,6 +228,7 @@ class TranslationSystem:
                 'vip_active': "✅ VIP АКТИВЕН",
                 'vip_required': "🔒 ТРЕБУЕТСЯ VIP",
                 'get_vip': "👑 ПОЛУЧИТЬ VIP",
+                'get_signal': "🚀 ПОЛУЧИТЬ СИГНАЛ",
                 'vip_info': "💰 VIP ДОСТУП К СИГНАЛАМ 99%!\n\n📋 Как получить:\n1. Регистрация на Pocket Option\n2. Пополнение от $20\n3. Контакт с админом\n\n💎 Стоимость:\n• 1 неделя: $49\n• 1 месяц: $149\n• 3 месяца: $399",
                 'registration': "📝 РЕГИСТРАЦИЯ",
                 'contact_admin': "📞 СВЯЗАТЬСЯ С АДМИНОМ",
@@ -240,6 +240,21 @@ class TranslationSystem:
                 'random_generating': "🎯 Генерирую случайный сигнал...",
                 'back': "🔙 НАЗАД",
                 'main_menu': "🏠 ГЛАВНОЕ МЕНЮ",
+                'next': "➡️ ВПЕРЕД",
+                'indicators': "индикаторов",
+                'minutes': "минут",
+                'status': "Статус",
+                'wins_in_row': "побед подряд",
+                'stats_updated': "Статистика обновлена!",
+                'dont_worry': "Не расстраивайтесь!",
+                'next_better': "Следующий сигнал будет точнее!",
+                'reduce_next': "Уменьшите следующую сделку на 50%",
+                'use_menu': "Используйте кнопки меню!",
+                'no_traders_yet': "Пока нет трейдеров в рейтинге",
+                'forex_pairs': "Валютные пары",
+                'cryptocurrencies': "Криптовалюты",
+                'total_accuracy': "Общая точность",
+                'marathon_info': "📅 **МАРАФОН 30 ДНЕЙ**\n\n🎯 Создайте свой план торговли на 30 дней!\n\n💰 Введите стартовый депозит ($):",
                 'categories': {
                     'forex': "💱 ВАЛЮТНЫЕ ПАРЫ",
                     'crypto': "₿ КРИПТОВАЛЮТЫ", 
@@ -259,40 +274,267 @@ class TranslationSystem:
             'en': {
                 'welcome': "👋 Welcome to KURUT AI INFINITY!\n\n🚀 Professional OTC signals for Pocket Option\n🎯 Accuracy: 95-99%\n📊 15+ analysis indicators\n\nChoose language:",
                 'choose_category': "🎯 CHOOSE ASSET CATEGORY:",
+                'choose_asset': "📊 Choose asset:",
+                'choose_expiration': "⏰ CHOOSE EXPIRATION TIME:",
                 'selected_asset': "✅ SELECTED ASSET: {}\n\n⏰ CHOOSE EXPIRATION TIME:",
                 'signal_title': "🎯 TRADING SIGNAL",
+                'asset': "📊 ASSET",
+                'direction': "🎯 DIRECTION",
+                'probability': "📈 PROBABILITY",
+                'expiration': "⏰ EXPIRATION",
+                'time': "🕒 TIME",
+                'date': "📅 DATE",
+                'analysis': "📊 15+ INDICATORS ANALYSIS:",
                 'call': "🟢 UP (CALL)",
                 'put': "🔴 DOWN (PUT)",
-                'good_luck': "🚀 GOOD LUCK TRADING!"
+                'strength_high': "💎 VERY STRONG",
+                'strength_medium': "📈 STRONG",
+                'strength_low': "📊 MODERATE",
+                'recommendations': "⚠️ RECOMMENDATIONS:",
+                'risk': "• Risk: 2-5% of deposit",
+                'tp': "• Take-profit: 85-95%",
+                'sl': "• Stop-loss: Automatic",
+                'instruction': "🎯 INSTRUCTION FOR POCKET OPTION:",
+                'instruction_steps': "1. Open {asset}\n2. Direction: {direction}\n3. Time: {expiration}\n4. Confirm trade",
+                'good_luck': "🚀 GOOD LUCK TRADING!",
+                'trade_win': "✅ TRADE WON!",
+                'trade_loss': "❌ TRADE LOST",
+                'profit': "💰 Profit: {profit}%",
+                'next_signal': "🔄 Next signal in 30 sec",
+                'my_stats': "📊 YOUR STATISTICS",
+                'accuracy': "🎯 Accuracy",
+                'total_profit': "💰 Profit",
+                'total_trades': "📊 Total trades",
+                'wins': "✅ Wins",
+                'losses': "❌ Losses",
+                'streak': "🔥 Current streak",
+                'best_streak': "🏆 Best streak",
+                'vip_active': "✅ VIP ACTIVE",
+                'vip_required': "🔒 VIP REQUIRED",
+                'get_vip': "👑 GET VIP",
+                'get_signal': "🚀 GET SIGNAL",
+                'vip_info': "💰 VIP ACCESS TO 99% SIGNALS!\n\n📋 How to get:\n1. Register on Pocket Option\n2. Deposit from $20\n3. Contact admin\n\n💎 Price:\n• 1 week: $49\n• 1 month: $149\n• 3 months: $399",
+                'registration': "📝 REGISTRATION",
+                'contact_admin': "📞 CONTACT ADMIN",
+                'about_bot': "🤖 ABOUT BOT",
+                'bot_info': "🚀 KURUT AI INFINITY\n\n🎯 Professional signal bot\n📊 Accuracy: 95-99%\n⏰ Expirations: 1-10 minutes\n🌍 Languages: RU/UZ/KG/EN",
+                'socials': "📱 SOCIALS",
+                'socials_info': "🌐 Our socials:\n\n📢 Telegram: {}\n🎬 YouTube: {}\n📸 Instagram: {}\n💬 Open chat: {}",
+                'random_signal': "🎲 RANDOM SIGNAL",
+                'random_generating': "🎯 Generating random signal...",
+                'back': "🔙 BACK",
+                'main_menu': "🏠 MAIN MENU",
+                'next': "➡️ NEXT",
+                'indicators': "indicators",
+                'minutes': "minutes",
+                'status': "Status",
+                'wins_in_row': "wins in a row",
+                'stats_updated': "Stats updated!",
+                'dont_worry': "Don't worry!",
+                'next_better': "Next signal will be more accurate!",
+                'reduce_next': "Reduce next trade by 50%",
+                'use_menu': "Use menu buttons!",
+                'no_traders_yet': "No traders in ranking yet",
+                'forex_pairs': "Forex pairs",
+                'cryptocurrencies': "Cryptocurrencies",
+                'total_accuracy': "Total accuracy",
+                'marathon_info': "📅 **30 DAYS MARATHON**\n\n🎯 Create your trading plan for 30 days!\n\n💰 Enter starting deposit ($):",
+                'categories': {
+                    'forex': "💱 FOREX PAIRS",
+                    'crypto': "₿ CRYPTOCURRENCIES", 
+                    'stocks': "📊 STOCKS"
+                },
+                'expirations': {
+                    '1m': "1️⃣ 1M", '2m': "2️⃣ 2M", '3m': "3️⃣ 3M",
+                    '4m': "4️⃣ 4M", '5m': "5️⃣ 5M", '6m': "6️⃣ 6M",
+                    '7m': "7️⃣ 7M", '8m': "8️⃣ 8M", '9m': "9️⃣ 9M",
+                    '10m': "🔟 10M"
+                },
+                'random': "🎲 RANDOM",
+                'all_assets': "📈 ALL ASSETS",
+                'marathon': "📅 30 DAYS MARATHON",
+                'top_traders': "🏆 TOP TRADERS"
             },
             'uz': {
                 'welcome': "👋 KURUT AI INFINITY-ga xush kelibsiz!\n\n🚀 Pocket Option uchun professional OTC signallari\n🎯 Aniqlik: 95-99%\n📊 15+ tahlil indikatorlari\n\nTilni tanlang:",
                 'choose_category': "🎯 ACTIV KATEGORIYASINI TANLANG:",
+                'choose_asset': "📊 Activni tanlang:",
+                'choose_expiration': "⏰ MUHLAT VAQTINI TANLANG:",
                 'selected_asset': "✅ TANLANGAN ACTIV: {}\n\n⏰ MUHLAT VAQTINI TANLANG:",
                 'signal_title': "🎯 SAVDO SIGNALI",
+                'asset': "📊 ACTIV",
+                'direction': "🎯 YOʻNALISH",
+                'probability': "📈 EHTIMOLLIK",
+                'expiration': "⏰ MUHLAT",
+                'time': "🕒 VAQT",
+                'date': "📅 SANA",
+                'analysis': "📊 15+ INDIKATOR TAHLILI:",
                 'call': "🟢 YUQORI (CALL)",
-                'put': "🔴 PASTGA (PUT)", 
-                'good_luck': "🚀 OMADLI SAVDO!"
+                'put': "🔴 PASTGA (PUT)",
+                'strength_high': "💎 JUDA KUCHLI",
+                'strength_medium': "📈 KUCHLI",
+                'strength_low': "📊 OʻRTA",
+                'recommendations': "⚠️ TAVSIYALAR:",
+                'risk': "• Risk: depozitdan 2-5%",
+                'tp': "• Foyda olish: 85-95%",
+                'sl': "• Stop-loss: Avtomatik",
+                'instruction': "🎯 POCKET OPTION UCHUN KOʻRSATMA:",
+                'instruction_steps': "1. {asset} oching\n2. Yoʻnalish: {direction}\n3. Vaqt: {expiration}\n4. Sotuvni tasdiqlang",
+                'good_luck': "🚀 OMADLI SAVDO!",
+                'trade_win': "✅ SOTUV YUTQAZILDI!",
+                'trade_loss': "❌ SOTUV YUTQAZILDI",
+                'profit': "💰 Foyda: {profit}%",
+                'next_signal': "🔄 Keyingi signal 30 soniyada",
+                'my_stats': "📊 STATISTIKANGIZ",
+                'accuracy': "🎯 Aniqlik",
+                'total_profit': "💰 Foyda",
+                'total_trades': "📊 Jami sotuvlar",
+                'wins': "✅ Gʻalabalar",
+                'losses': "❌ Magʻlubiyatlar",
+                'streak': "🔥 Joriy seriya",
+                'best_streak': "🏆 Eng yaxshi seriya",
+                'vip_active': "✅ VIP FAOL",
+                'vip_required': "🔒 VIP TALAB QILINADI",
+                'get_vip': "👑 VIP OLISH",
+                'get_signal': "🚀 SIGNAL OLISH",
+                'vip_info': "💰 99% SIGNALLARGA VIP KIRISH!\n\n📋 Qanday olish:\n1. Pocket Option-da roʻyxatdan oʻting\n2. $20 dan depozit qoʻying\n3. Admin bilan bogʻlaning\n\n💎 Narx:\n• 1 hafta: $49\n• 1 oy: $149\n• 3 oy: $399",
+                'registration': "📝 ROʻYXATDAN OʻTISH",
+                'contact_admin': "📞 ADMIN BILAN BOGʻLANISH",
+                'about_bot': "🤖 BOT HAQIDA",
+                'bot_info': "🚀 KURUT AI INFINITY\n\n🎯 Professional signal bot\n📊 Aniqlik: 95-99%\n⏰ Muhlat: 1-10 daqiqa\n🌍 Tillar: RU/UZ/KG/EN",
+                'socials': "📱 IJTIMOIY TARMOQLAR",
+                'socials_info': "🌐 Bizning ijtimoiy tarmoqlar:\n\n📢 Telegram: {}\n🎬 YouTube: {}\n📸 Instagram: {}\n💬 Ochiq chat: {}",
+                'random_signal': "🎲 TASODIFIY SIGNAL",
+                'random_generating': "🎯 Tasodifiy signal yaratilmoqda...",
+                'back': "🔙 ORQAGA",
+                'main_menu': "🏠 ASOSIY MENYU",
+                'next': "➡️ KEYINGI",
+                'indicators': "indikatorlar",
+                'minutes': "daqiqa",
+                'status': "Holat",
+                'wins_in_row': "ketma-ket gʻalabalar",
+                'stats_updated': "Statistika yangilandi!",
+                'dont_worry': "Tashvishlanmang!",
+                'next_better': "Keyingi signal aniqroq boʻladi!",
+                'reduce_next': "Keyingi sotuvni 50% kamaytiring",
+                'use_menu': "Menyu tugmalaridan foydalaning!",
+                'no_traders_yet': "Hozircha reytingda treyderlar yoʻq",
+                'forex_pairs': "Valyuta juftlari",
+                'cryptocurrencies': "Kriptovalyutalar",
+                'total_accuracy': "Umumiy aniqlik",
+                'marathon_info': "📅 **30 KUNLIK MARAFON**\n\n🎯 30 kunlik savdo rejangizni yarating!\n\n💰 Boshlangʻich depozitni kiriting ($):",
+                'categories': {
+                    'forex': "💱 VALYUTA JUFTLARI",
+                    'crypto': "₿ KRIPTOVALYUTALAR", 
+                    'stocks': "📊 AKSIYALAR"
+                },
+                'expirations': {
+                    '1m': "1️⃣ 1M", '2m': "2️⃣ 2M", '3m': "3️⃣ 3M",
+                    '4m': "4️⃣ 4M", '5m': "5️⃣ 5M", '6m': "6️⃣ 6M",
+                    '7m': "7️⃣ 7M", '8m': "8️⃣ 8M", '9m': "9️⃣ 9M",
+                    '10m': "🔟 10M"
+                },
+                'random': "🎲 TASODIFIY",
+                'all_assets': "📈 BARCHA ACTIVLAR",
+                'marathon': "📅 30 KUNLIK MARAFON",
+                'top_traders': "🏆 ENG YAXSHI TREYDERLAR"
             },
             'kg': {
                 'welcome': "👋 KURUT AI INFINITY-ге кош келиңиз!\n\n🚀 Pocket Option үчүн профессионалдык OTC сигналдары\n🎯 Тактык: 95-99%\n📊 15+ талдоо индикаторлору\n\nТилди тандаңыз:",
                 'choose_category': "🎯 АКТИВ КАТЕГОРИЯСЫН ТАНДАҢЫЗ:",
+                'choose_asset': "📊 Активи тандаңыз:",
+                'choose_expiration': "⏰ МӨӨНӨТ УБАКТЫСЫН ТАНДАҢЫЗ:",
                 'selected_asset': "✅ ТАНДАЛГАН АКТИВ: {}\n\n⏰ МӨӨНӨТ УБАКТЫСЫН ТАНДАҢЫЗ:",
                 'signal_title': "🎯 СООДО СИГНАЛЫ",
+                'asset': "📊 АКТИВ",
+                'direction': "🎯 БАГЫТ",
+                'probability': "📈 ЫКТИМАЛДЫК",
+                'expiration': "⏰ МӨӨНӨТ",
+                'time': "🕒 УБАКЫТ",
+                'date': "📅 КҮН",
+                'analysis': "📊 15+ ИНДИКАТОР ТАЛДООСУ:",
                 'call': "🟢 ЖОГОРУ (CALL)",
                 'put': "🔴 ТӨМӨН (PUT)",
-                'good_luck': "🚀 ИЙГИЛИКТҮҮ СООДО!"
+                'strength_high': "💎 АЯБАЙ КҮЧТҮҮ",
+                'strength_medium': "📈 КҮЧТҮҮ",
+                'strength_low': "📊 ОРТОЧО",
+                'recommendations': "⚠️ СУНУШТАР:",
+                'risk': "• ТӨРТҮҮ: депозиттен 2-5%",
+                'tp': "• Пайда алуу: 85-95%",
+                'sl': "• Стоп-лосс: Автоматтык",
+                'instruction': "🎯 POCKET OPTION ҮЧҮН КӨРСӨТМӨ:",
+                'instruction_steps': "1. {asset} ачкыла\n2. Багыт: {direction}\n3. Убакыт: {expiration}\n4. Соодону ырастаңыз",
+                'good_luck': "🚀 ИЙГИЛИКТҮҮ СООДО!",
+                'trade_win': "✅ САТУУ ЖЕНИШ КЕЛДИ!",
+                'trade_loss': "❌ САТУУ ЖОГОЛДУ",
+                'profit': "💰 Пайда: {profit}%",
+                'next_signal': "🔄 Кийинки сигнал 30 секундда",
+                'my_stats': "📊 СИЗДИН СТАТИСТИКАНЫЗ",
+                'accuracy': "🎯 Тактык",
+                'total_profit': "💰 Пайда",
+                'total_trades': "📊 Жалпы соодолор",
+                'wins': "✅ Жеңүүлөр",
+                'losses': "❌ Жоголуулар",
+                'streak': "🔥 Учурдагы серия",
+                'best_streak': "🏆 Эң жакшы серия",
+                'vip_active': "✅ VIP АКТИВДҮҮ",
+                'vip_required': "🔒 VIP ТАЛАП КЫЛЫНАТ",
+                'get_vip': "👑 VIP АЛУУ",
+                'get_signal': "🚀 СИГНАЛ АЛУУ",
+                'vip_info': "💰 99% СИГНАЛДАРҒА VIP КИРИШ!\n\n📋 Кантип алуу керек:\n1. Pocket Option-до катталуу\n2. $20 дан депозит салуу\n3. Админ менен байланышуу\n\n💎 Баасы:\n• 1 жума: $49\n• 1 ай: $149\n• 3 ай: $399",
+                'registration': "📝 КАТТАЛУУ",
+                'contact_admin': "📞 АДМИН МЕНЕН БАЙЛАНЫШУУ",
+                'about_bot': "🤖 БОТ ЖӨНҮНДӨ",
+                'bot_info': "🚀 KURUT AI INFINITY\n\n🎯 Профессионалдык сигнал боту\n📊 Тактык: 95-99%\n⏰ Мөөнөттөр: 1-10 мүнөт\n🌍 Тилдер: RU/UZ/KG/EN",
+                'socials': "📱 СОЦИАЛДЫК ТАРМАКТАР",
+                'socials_info': "🌐 Биздин социалдык тармактарыбыз:\n\n📢 Telegram: {}\n🎬 YouTube: {}\n📸 Instagram: {}\n💬 Ачык чат: {}",
+                'random_signal': "🎲 ТЫЙМЫНДАЛГАН СИГНАЛ",
+                'random_generating': "🎯 Тыймындалган сигнал түзүлүүдө...",
+                'back': "🔙 АРТКА",
+                'main_menu': "🏠 НЕГИЗГИ МЕНЮ",
+                'next': "➡️ КИЙИНКИ",
+                'indicators': "индикаторлор",
+                'minutes': "мүнөт",
+                'status': "Статус",
+                'wins_in_row': "катарынан жеңүүлөр",
+                'stats_updated': "Статистика жаңыртылды!",
+                'dont_worry': "Капа болбогула!",
+                'next_better': "Кийинки сигнал такыраак болот!",
+                'reduce_next': "Кийинки соодону 50% азайтыңыз",
+                'use_menu': "Меню баскычтарын колдонуңуз!",
+                'no_traders_yet': "Азырынча рейтингде трейдерлер жок",
+                'forex_pairs': "Валюта жуптары",
+                'cryptocurrencies': "Криптовалюталар",
+                'total_accuracy': "Жалпы тактык",
+                'marathon_info': "📅 **30 КҮНДҮК МАРАФОН**\n\n🎯 30 күндүк соодо планыңызды түзүңүз!\n\n💰 Баштапкы депозитти киргизиңиз ($):",
+                'categories': {
+                    'forex': "💱 ВАЛЮТА ЖУПТАРЫ",
+                    'crypto': "₿ КРИПТОВАЛЮТАЛАР", 
+                    'stocks': "📊 АКЦИЯЛАР"
+                },
+                'expirations': {
+                    '1m': "1️⃣ 1M", '2m': "2️⃣ 2M", '3m': "3️⃣ 3M",
+                    '4m': "4️⃣ 4M", '5m': "5️⃣ 5M", '6m': "6️⃣ 6M",
+                    '7m': "7️⃣ 7M", '8m': "8️⃣ 8M", '9m': "9️⃣ 9M",
+                    '10m': "🔟 10M"
+                },
+                'random': "🎲 ТЫЙМЫНДАЛГАН",
+                'all_assets': "📈 БАРДЫК АКТИВДЕР",
+                'marathon': "📅 30 КҮНДҮК МАРАФОН",
+                'top_traders': "🏆 ЭҢ ЖАКШЫ ТРЕЙДЕРЛЕР"
             }
         }
     
     def get(self, key, lang='ru', **kwargs):
         """Получить перевод с подстановкой значений"""
-        text = self.texts.get(lang, self.texts['ru']).get(key, self.texts['ru'].get(key, key))
-        if kwargs:
-            try:
+        try:
+            text_dict = self.texts.get(lang, self.texts['ru'])
+            text = text_dict.get(key, self.texts['ru'].get(key, key))
+            if kwargs:
                 text = text.format(**kwargs)
-            except:
-                pass
+        except Exception as e:
+            logger.error(f"Translation error: {e}")
+            text = key
         return text
     
     def get_language_name(self, lang_code):
@@ -532,7 +774,7 @@ class KeyboardManager:
         if page > 0:
             nav_buttons.append(InlineKeyboardButton("⬅️ " + translations.get('back', lang), callback_data=f"page_{category}_{page-1}"))
         if end < len(items):
-            nav_buttons.append(InlineKeyboardButton(translations.get('next', lang, 'ВПЕРЕД') + " ➡️", callback_data=f"page_{category}_{page+1}"))
+            nav_buttons.append(InlineKeyboardButton(translations.get('next', lang) + " ➡️", callback_data=f"page_{category}_{page+1}"))
         
         if nav_buttons:
             keyboard.append(nav_buttons)
@@ -761,11 +1003,11 @@ class OTCSignalGenerator:
         
         # Определение силы сигнала
         if probability >= 97:
-            strength = "💎 ОЧЕНЬ СИЛЬНЫЙ"
+            strength = translations.get('strength_high', 'ru')
         elif probability >= 95:
-            strength = "📈 СИЛЬНЫЙ"
+            strength = translations.get('strength_medium', 'ru')
         else:
-            strength = "📊 УМЕРЕННЫЙ"
+            strength = translations.get('strength_low', 'ru')
         
         return {
             'asset': asset,
@@ -799,23 +1041,24 @@ class OTCSignalGenerator:
         final_probability = int(analysis['probability'] * exp_mult)
         final_probability = min(max(final_probability, 92), 99)
         
-        # Определение emoji для направления
+        # Определение направления
+        lang = 'ru'  # По умолчанию
         if analysis['direction'] == "CALL":
             direction_emoji = "🟢"
-            direction_text = translations.get('call', 'ru')
+            direction_text = translations.get('call', lang)
         else:
             direction_emoji = "🔴"
-            direction_text = translations.get('put', 'ru')
+            direction_text = translations.get('put', lang)
             # PUT обычно на 1-2% менее вероятен
             final_probability = max(final_probability - 1, 92)
         
         # Обновляем силу сигнала
         if final_probability >= 97:
-            strength = "💎 ОЧЕНЬ СИЛЬНЫЙ"
+            strength = translations.get('strength_high', lang)
         elif final_probability >= 95:
-            strength = "📈 СИЛЬНЫЙ"
+            strength = translations.get('strength_medium', lang)
         else:
-            strength = "📊 УМЕРЕННЫЙ"
+            strength = translations.get('strength_low', lang)
         
         return {
             "asset": asset,
@@ -873,11 +1116,11 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, lan
     welcome_text = f"""
 🚀 **KURUT AI INFINITY**
 
-👋 {translations.get('welcome', user_lang).split('Добро пожаловать')[0] if user_lang == 'ru' else translations.get('welcome', user_lang).split('Welcome')[0] if user_lang == 'en' else translations.get('welcome', user_lang).split('xush kelibsiz')[0] if user_lang == 'uz' else translations.get('welcome', user_lang).split('кош келиңиз')[0] if user_lang == 'kg' else ''}
+{translations.get('welcome', user_lang).split('!')[0]}!
 
 🎯 **{translations.get('accuracy', user_lang)}:** 95-99%
-📊 **15+ {translations.get('indicators', user_lang, 'индикаторов')}**
-⏰ **1-10 {translations.get('minutes', user_lang, 'минут')}**
+📊 **15+ {translations.get('indicators', user_lang)}**
+⏰ **1-10 {translations.get('minutes', user_lang)}**
 👑 **{translations.get('vip_active' if is_vip(user_id) else 'vip_required', user_lang)}**
 """
     
@@ -985,12 +1228,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             })
             Database.save("signal_history.json", signal_history)
             
-            # Формируем короткое сообщение сигнала
+            # Формируем сигнал на языке пользователя
             signal_text = f"""
 🎯 **{translations.get('signal_title', user_lang)}** #{signal['signal_id']}
 
 {translations.get('asset', user_lang)}: **{signal['asset']}**
-{translations.get('direction', user_lang)}: **{signal['direction_emoji']} {signal['direction_text']}**
+{translations.get('direction', user_lang)}: **{signal['direction_emoji']} {translations.get('call' if signal['direction'] == 'CALL' else 'put', user_lang)}**
 {translations.get('probability', user_lang)}: **{signal['probability']}%**
 {translations.get('strength', user_lang)}: {signal['strength']}
 {translations.get('expiration', user_lang)}: **{signal['expiration']}**
@@ -1009,7 +1252,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 {translations.get('sl', user_lang)}
 
 🎯 **{translations.get('instruction', user_lang)}**
-{translations.get('instruction_steps', user_lang, asset=signal['asset'], direction=signal['direction_text'], expiration=signal['expiration'])}
+{translations.get('instruction_steps', user_lang, asset=signal['asset'], direction=translations.get('call' if signal['direction'] == 'CALL' else 'put', user_lang), expiration=signal['expiration'])}
 
 {translations.get('good_luck', user_lang)}
 """
@@ -1078,12 +1321,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             })
             Database.save("signal_history.json", signal_history)
             
-            # Формируем короткое сообщение сигнала
+            # Формируем сигнал на языке пользователя
             signal_text = f"""
 🎯 **{translations.get('signal_title', user_lang)}** #{signal['signal_id']}
 
 {translations.get('asset', user_lang)}: **{signal['asset']}**
-{translations.get('direction', user_lang)}: **{signal['direction_emoji']} {signal['direction_text']}**
+{translations.get('direction', user_lang)}: **{signal['direction_emoji']} {translations.get('call' if signal['direction'] == 'CALL' else 'put', user_lang)}**
 {translations.get('probability', user_lang)}: **{signal['probability']}%**
 {translations.get('strength', user_lang)}: {signal['strength']}
 {translations.get('expiration', user_lang)}: **{signal['expiration']}**
@@ -1102,7 +1345,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 {translations.get('sl', user_lang)}
 
 🎯 **{translations.get('instruction', user_lang)}**
-{translations.get('instruction_steps', user_lang, asset=signal['asset'], direction=signal['direction_text'], expiration=signal['expiration'])}
+{translations.get('instruction_steps', user_lang, asset=signal['asset'], direction=translations.get('call' if signal['direction'] == 'CALL' else 'put', user_lang), expiration=signal['expiration'])}
 
 {translations.get('good_luck', user_lang)}
 """
@@ -1122,7 +1365,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 {translations.get('trade_win', user_lang)}
 
 {translations.get('profit', user_lang, profit=profit)}
-📊 {translations.get('stats_updated', user_lang, 'Статистика обновлена')}
+📊 {translations.get('stats_updated', user_lang)}
 
 {translations.get('next_signal', user_lang)}
 """
@@ -1131,9 +1374,9 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 result_text = f"""
 {translations.get('trade_loss', user_lang)}
 
-📉 {translations.get('dont_worry', user_lang, 'Не расстраивайтесь!')}
-🎯 {translations.get('next_better', user_lang, 'Следующий сигнал будет точнее')}
-💡 {translations.get('reduce_next', user_lang, 'Уменьшите следующую сделку на 50%')}
+📉 {translations.get('dont_worry', user_lang)}
+🎯 {translations.get('next_better', user_lang)}
+💡 {translations.get('reduce_next', user_lang)}
 """
             
             await query.edit_message_text(
@@ -1151,15 +1394,15 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 📊 **{translations.get('my_stats', user_lang)}**
 
 👤 **ID:** `{user_id}`
-👑 **{translations.get('status', user_lang, 'Статус')}:** {'✅ VIP' if is_vip(user_id) else '🔒 Обычный'}
+👑 **{translations.get('status', user_lang)}:** {'✅ VIP' if is_vip(user_id) else '🔒 Обычный'}
 
 {translations.get('accuracy', user_lang)}: **{stats['win_rate']:.1f}%**
 {translations.get('total_profit', user_lang)}: **${stats['profit']:,.2f}**
 {translations.get('total_trades', user_lang)}: **{stats['total_trades']}**
 {translations.get('wins', user_lang)}: **{stats['wins']}**
 {translations.get('losses', user_lang)}: **{stats['losses']}**
-{translations.get('streak', user_lang)}: **{stats['current_streak']}** {translations.get('wins_in_row', user_lang, 'побед')}
-{translations.get('best_streak', user_lang)}: **{stats['best_streak']}** {translations.get('wins_in_row', user_lang, 'побед')}
+{translations.get('streak', user_lang)}: **{stats['current_streak']}** {translations.get('wins_in_row', user_lang)}
+{translations.get('best_streak', user_lang)}: **{stats['best_streak']}** {translations.get('wins_in_row', user_lang)}
 """
             
             await query.edit_message_text(
@@ -1229,7 +1472,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     top_text += f"   💰 {translations.get('total_profit', user_lang)}: ${trader['profit']:.2f}\n"
                     top_text += f"   📈 {translations.get('total_trades', user_lang)}: {trader['total']}\n\n"
             else:
-                top_text += translations.get('no_traders_yet', user_lang, 'Пока нет трейдеров в рейтинге')
+                top_text += translations.get('no_traders_yet', user_lang)
             
             await query.edit_message_text(
                 top_text,
@@ -1242,16 +1485,16 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             assets_text = f"""
 📈 **{translations.get('all_assets', user_lang)}**
 
-💱 **{translations.get('forex_pairs', user_lang, 'Валютные пары')} ({len(OTC_PAIRS)}):**
+💱 **{translations.get('forex_pairs', user_lang)} ({len(OTC_PAIRS)}):**
 {', '.join(OTC_PAIRS[:5])}...
 
-₿ **{translations.get('cryptocurrencies', user_lang, 'Криптовалюты')} ({len(CRYPTO)}):**
+₿ **{translations.get('cryptocurrencies', user_lang)} ({len(CRYPTO)}):**
 {', '.join(CRYPTO[:5])}...
 
-📊 **{translations.get('stocks', user_lang, 'Акции')} ({len(STOCKS)}):**
+📊 **{translations.get('stocks', user_lang)} ({len(STOCKS)}):**
 {', '.join(STOCKS[:5])}...
 
-🎯 **{translations.get('total_accuracy', user_lang, 'Общая точность')}:** 95-99%
+🎯 **{translations.get('total_accuracy', user_lang)}:** 95-99%
 """
             
             await query.edit_message_text(
@@ -1262,18 +1505,22 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # МАРАФОН 30 ДНЕЙ
         elif data == "marathon":
-            marathon_text = translations.get('marathon_info', user_lang, 
-                "📅 **МАРАФОН 30 ДНЕЙ**\n\n🎯 Создайте свой план торговли на 30 дней!\n\n💰 Введите стартовый депозит ($):")
+            marathon_text = translations.get('marathon_info', user_lang)
             
             await query.edit_message_text(
                 marathon_text,
                 parse_mode='Markdown'
             )
             context.user_data["awaiting_deposit"] = True
-    
+        
+        # ОБРАБОТКА ДРУГИХ КОМАНД
+        else:
+            await query.answer("⚡ Кнопка активирована!")
+            
     except Exception as e:
         logger.error(f"Ошибка в handle_callback: {e}")
-        await query.answer("⚠️ Ошибка!", show_alert=True)
+        await query.answer("⚠️ Ошибка! Попробуйте снова.", show_alert=True)
+        await show_main_menu(query, context, user_lang)
 
 # ============================================
 # 📨 ОБРАБОТКА ТЕКСТОВЫХ СООБЩЕНИЙ
@@ -1344,7 +1591,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         else:
             await update.message.reply_text(
-                translations.get('use_menu', user_lang, "Используйте кнопки меню"),
+                translations.get('use_menu', user_lang),
                 reply_markup=KeyboardManager.main_menu(user_id, user_lang)
             )
     
@@ -1599,29 +1846,32 @@ def run_bot():
         application.add_handler(CommandHandler("restart", restart_bot))
         
         # Запускаем бота
-        logger.info("🤖 Запускаем бота KURUT AI INFINITY v4.0...")
+        logger.info("🤖 Запускаем бота KURUT AI INFINITY v4.5...")
         application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
         
     except KeyboardInterrupt:
         logger.info("⛔ Бот остановлен")
     except Exception as e:
-        logger.error(f"💥 Ошибка: {e}")
-        # Сохраняем данные
+        logger.error(f"💥 Критическая ошибка: {e}")
+        # Сохраняем данные перед выходом
         Database.save("all_users.json", list(all_users))
         Database.save("vip_users.json", list(vip_users))
         Database.save("user_stats.json", user_stats)
         Database.save("signal_history.json", signal_history)
         Database.save("user_languages.json", user_languages)
+        raise e
 
 # ============================================
 # 🎯 ТОЧКА ВХОДА
 # ============================================
 
 if __name__ == '__main__':
-    logger.info("🚀 ЗАПУСКАЕМ KURUT AI INFINITY v4.0...")
+    logger.info("🚀 ЗАПУСКАЕМ KURUT AI INFINITY v4.5...")
     logger.info(f"🌍 Языки: RU/UZ/KG/EN")
     logger.info(f"👑 Админы: {ADMIN_IDS}")
     logger.info(f"👥 Пользователей: {len(all_users)}")
     logger.info(f"📊 Активов OTC: {len(ALL_ASSETS)}")
+    logger.info(f"🎯 Точность сигналов: 95-99%")
     
+    # Запускаем бота
     run_bot()
