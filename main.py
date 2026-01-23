@@ -2178,20 +2178,46 @@ async def main():
         logger.info(f"🤖 Автосигналы: каждые 5 минут")
         logger.info(f"🌍 Языки: RU/UZ/KG/EN")
         
-        try:
-    logger.info("🚀 Запуск polling...")
-
-    await application.run_polling(
+try:
+    logger.info("🚀 Запуск бота...")
+    
+    # Инициализируем приложение
+    await application.initialize()
+    
+    # Запускаем бота
+    await application.start()
+    
+    logger.info("✅ Бот успешно запущен!")
+    
+    # Основной цикл работы
+    await application.updater.start_polling(
         allowed_updates=Update.ALL_TYPES,
-        close_loop=False
+        drop_pending_updates=True
     )
-
+    
+    # Бесконечный цикл для поддержания работы
+    idle_event = asyncio.Event()
+    await idle_event.wait()
+    
 except KeyboardInterrupt:
     logger.info("⛔️ Бот остановлен пользователем")
-
+    
 except Exception as e:
-    logger.exception(f"💥 Критическая ошибка: {e}")
-       
+    logger.error(f"💥 Критическая ошибка: {e}")
+    logger.exception("Детали ошибки:")
+    
+finally:
+    # Корректное завершение
+    try:
+        if application.updater:
+            await application.updater.stop()
+        if application:
+            await application.stop()
+            await application.shutdown()
+        logger.info("🔄 Бот корректно остановлен")
+    except Exception as e:
+        logger.error(f"Ошибка при остановке: {e}")
+        
 # Сохраняем данные перед выходом
         try:
             Database.save("all_users.json", list(all_users))
