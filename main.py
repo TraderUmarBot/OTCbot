@@ -2178,18 +2178,21 @@ async def main():
         logger.info(f"🤖 Автосигналы: каждые 5 минут")
         logger.info(f"🌍 Языки: RU/UZ/KG/EN")
         
-       # Запускаем бота (POLLING)
-logger.info("🚀 Запуск polling...")
-await application.run_polling(
-    allowed_updates=Update.ALL_TYPES,
-    close_loop=False
-)
-    except KeyboardInterrupt:
-        logger.info("⛔ Бот остановлен пользователем")
-    except Exception as e:
-        logger.error(f"💥 Критическая ошибка: {e}")
-        
-        # Сохраняем данные перед выходом
+        try:
+    logger.info("🚀 Запуск polling...")
+
+    await application.run_polling(
+        allowed_updates=Update.ALL_TYPES,
+        close_loop=False
+    )
+
+except KeyboardInterrupt:
+    logger.info("⛔️ Бот остановлен пользователем")
+
+except Exception as e:
+    logger.exception(f"💥 Критическая ошибка: {e}")
+       
+# Сохраняем данные перед выходом
         try:
             Database.save("all_users.json", list(all_users))
             Database.save("vip_users.json", list(vip_users))
