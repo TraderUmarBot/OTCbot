@@ -2124,66 +2124,6 @@ def run_flask():
 
 async def main():
     """Основная функция запуска бота"""
-    try:
-        # Запускаем Flask сервер в отдельном потоке
-        flask_thread = Thread(target=run_flask, daemon=True)
-        flask_thread.start()
-        logger.info("🌐 Flask сервер запущен на порту 8080")
-        
-        # Запускаем автопинг
-        pinger = AutoPinger()
-        pinger.start()
-        logger.info("🔄 Автопинг запущен (каждые 3 минуты)")
-        
-        # Создаем приложение бота
-        application = Application.builder().token(TOKEN).build()
-        
-        # Создаем и запускаем систему автосигналов
-        auto_sender = AdvancedAutoSignalSender(application.bot)
-        asyncio.create_task(auto_sender.start())
-        logger.info("🤖 Автосигналы запущены (каждые 5 минут)")
-        
-        # Добавляем обработчики команд
-        application.add_handler(CommandHandler("start", start_command))
-        application.add_handler(CommandHandler("menu", start_command))
-        application.add_handler(CommandHandler("help", start_command))
-        
-        # Добавляем обработчики callback
-        application.add_handler(CallbackQueryHandler(handle_callback))
-        
-        # Добавляем обработчики сообщений
-        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-        
-        # Добавляем админ команды
-        application.add_handler(CommandHandler("admin", show_admin_panel))
-        application.add_handler(CommandHandler("grant", grant_vip))
-        application.add_handler(CommandHandler("revoke", revoke_vip))
-        application.add_handler(CommandHandler("list_vip", list_vip))
-        application.add_handler(CommandHandler("send_all", send_all))
-        application.add_handler(CommandHandler("send_vip", send_vip))
-        application.add_handler(CommandHandler("stats", user_stats_command))
-        application.add_handler(CommandHandler("top_stats", top_stats_command))
-        application.add_handler(CommandHandler("system_stats", system_stats_command))
-        application.add_handler(CommandHandler("backup", backup_command))
-        application.add_handler(CommandHandler("cleanup", cleanup_command))
-        
-        # Логируем запуск
-        logger.info("🚀 ЗАПУСКАЕМ KURUT AI INFINITY v9.1")
-        logger.info(f"👑 Админы: {ADMIN_IDS}")
-        logger.info(f"👥 Пользователей: {len(all_users)}")
-        logger.info(f"📊 Пар OTC: {len(OTC_PAIRS)}")
-        logger.info(f"📈 Пар биржевых: {len(EXCHANGE_PAIRS)}")
-        logger.info(f"🎯 Точность: 96-99%")
-        logger.info(f"📈 Индикаторы: 20+")
-        logger.info(f"🤖 Автосигналы: каждые 5 минут")
-        logger.info(f"🌍 Языки: RU/UZ/KG/EN")
-        
-# ============================================
-# 🚀 ЗАПУСК БОТА (ИСПРАВЛЕННЫЙ)
-# ============================================
-
-async def main():
-    """Основная функция запуска бота"""
     # Запускаем Flask сервер в отдельном потоке
     flask_thread = Thread(target=run_flask, daemon=True)
     flask_thread.start()
