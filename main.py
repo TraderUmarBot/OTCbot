@@ -19,7 +19,10 @@ from threading import Thread
 from telegram import (
     InlineKeyboardButton, 
     InlineKeyboardMarkup, 
-    Update
+    Update,
+    InputMediaPhoto,
+    InputMediaVideo,
+    InputMediaDocument
 )
 from telegram.ext import (
     Application,
@@ -38,7 +41,6 @@ from ta.momentum import RSIIndicator, StochasticOscillator
 from ta.trend import MACD, EMAIndicator, ADXIndicator
 from ta.volatility import BollingerBands
 import requests
-from bs4 import BeautifulSoup
 
 # ============================================
 # 🔧 НАСТРОЙКИ ЛОГИРОВАНИЯ
@@ -168,6 +170,14 @@ ADMIN_USER = "@Kuruttrader"
 ADMIN_LINK = "https://t.me/Kuruttrader"
 REF_LINK = "https://po-ru4.click/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
 
+# Соцсети
+SOCIALS = {
+    "telegram": "https://t.me/KURUTTRADING",
+    "youtube": "https://youtube.com/@kurut_kg",
+    "instagram": "https://www.instagram.com/kurut_trading",
+    "open_chat": "https://t.me/Kurutopen"
+}
+
 # ============================================
 # 🌍 МНОГОЯЗЫЧНАЯ СИСТЕМА
 # ============================================
@@ -207,10 +217,6 @@ class TranslationSystem:
                 'instruction_warning2': "• Строго соблюдайте мани-менеджмент",
                 'instruction_warning3': "• Не увеличивайте ставки после проигрыша",
                 'instruction_warning4': "• Дисциплина - ключ к успеху",
-                'instruction_success': "🚀 **УСПЕХ ГАРАНТИРОВАН ПРИ:**",
-                'instruction_success1': "• Строгом следовании сигналам бота",
-                'instruction_success2': "• Правильном мани-менеджменте",
-                'instruction_success3': "• Торговле только на проверенных сигналах",
                 'choose_market': "🎯 ВЫБЕРИТЕ ТИП РЫНКА:",
                 'otc_market': "💱 OTC РЫНОК (Внебиржевой)",
                 'exchange_market': "🏛️ БИРЖЕВОЙ РЫНОК",
@@ -252,14 +258,13 @@ class TranslationSystem:
                 'vip_required': "🔒 ТРЕБУЕТСЯ VIP",
                 'get_vip': "👑 ПОЛУЧИТЬ VIP",
                 'get_signal': "🚀 ПОЛУЧИТЬ СИГНАЛ",
-                'vip_info': "💰 VIP ДОСТУП К ПРОФЕССИОНАЛЬНЫМ СИГНАЛАМ!\n\n📋 Как получить доступ:\n1. Регистрация на Pocket Option\n2. Пополнение от $50\n3. Контакт с админом @Kuruttrader\n\n💎 Преимущества VIP:\n• Сигналы точностью 96-99%\n• Автосигналы каждые 5 минут\n• Персональная поддержка\n• Доступ ко всем парам",
+                'vip_info': "💰 VIP ДОСТУП К ПРОФЕССИОНАЛЬНЫМ СИГНАЛАМ!\n\n📋 Как получить доступ:\n1. Регистрация на Pocket Option\n2. Пополнение от $50\n3. Контакт с админом @Kuruttrader",
                 'registration': "📝 РЕГИСТРАЦИЯ",
                 'contact_admin': "📞 СВЯЗАТЬСЯ С АДМИНОМ",
                 'about_bot': "🤖 О БОТЕ",
-                'bot_info': "🚀 KURUT AI INFINITY v6.0\n\n🎯 Профессиональный бот торговых сигналов\n📊 Точность: 96-99%\n⏰ Автосигналы: каждые 5 минут\n🌍 Поддержка: OTC и биржевой рынок\n📈 Анализ: 20+ индикаторов тех. анализа\n👑 VIP: Профессиональные сигналы",
+                'bot_info': "🚀 KURUT AI INFINITY v6.0\n\n🎯 Профессиональный бот торговых сигналов\n📊 Точность: 96-99%\n⏰ Автосигналы: каждые 5 минут\n🌍 Поддержка: OTC и биржевой рынок",
                 'socials': "📱 СОЦСЕТИ",
                 'socials_info': "🌐 Наши социальные сети:\n\n📢 Telegram канал: @KURUTTRADING\n🎬 YouTube: @kurut_kg\n📸 Instagram: @kurut_trading\n💬 Открытый чат: @Kurutopen",
-                'random_signal': "🎲 СЛУЧАЙНЫЙ СИГНАЛ",
                 'back': "🔙 НАЗАД",
                 'main_menu': "🏠 ГЛАВНОЕ МЕНЮ",
                 'next': "➡️ ДАЛЕЕ",
@@ -271,16 +276,14 @@ class TranslationSystem:
                 'next_better': "Следующий сигнал будет точнее!",
                 'reduce_next': "Уменьшите следующую сделку",
                 'use_menu': "Используйте кнопки меню!",
-                'no_traders_yet': "Пока нет трейдеров в рейтинге",
                 'forex_pairs': "Валютные пары",
-                'total_accuracy': "Общая точность",
                 'marathon_info': "📅 **МАРАФОН 30 ДНЕЙ**\n\n🎯 Создайте свой план торговли на 30 дней!\n\n💰 Введите стартовый депозит ($):",
                 'marathon_plan': "📅 **ПЛАН ТОРГОВЛИ НА 30 ДНЕЙ**\n\n",
                 'day_profit': "День {day}: {profit}% прибыли",
                 'total_result': "Итог за 30 дней: {total}% прибыли",
                 'auto_signals': "🤖 АВТОМАТИЧЕСКИЕ СИГНАЛЫ",
                 'auto_info': "Бот автоматически анализирует рынок и отправляет сигналы каждые 5 минут",
-                'indicators_used': "Используется 20+ индикаторов технического анализа"
+                'indicators_used': "Используется 20+ индикаторов"
             },
             'en': {
                 'welcome': "👋 Welcome to KURUT AI INFINITY!",
@@ -307,10 +310,6 @@ class TranslationSystem:
                 'instruction_warning2': "• Strictly follow money management",
                 'instruction_warning3': "• Don't increase bets after loss",
                 'instruction_warning4': "• Discipline is key to success",
-                'instruction_success': "🚀 **SUCCESS GUARANTEED WHEN:**",
-                'instruction_success1': "• Strictly following bot signals",
-                'instruction_success2': "• Proper money management",
-                'instruction_success3': "• Trading only on verified signals",
                 'choose_market': "🎯 CHOOSE MARKET TYPE:",
                 'otc_market': "💱 OTC MARKET (Over-the-Counter)",
                 'exchange_market': "🏛️ EXCHANGE MARKET",
@@ -352,14 +351,13 @@ class TranslationSystem:
                 'vip_required': "🔒 VIP REQUIRED",
                 'get_vip': "👑 GET VIP",
                 'get_signal': "🚀 GET SIGNAL",
-                'vip_info': "💰 VIP ACCESS TO PROFESSIONAL SIGNALS!\n\n📋 How to get access:\n1. Register on Pocket Option\n2. Deposit from $50\n3. Contact admin @Kuruttrader\n\n💎 VIP Benefits:\n• Signals accuracy 96-99%\n• Auto signals every 5 minutes\n• Personal support\n• Access to all pairs",
+                'vip_info': "💰 VIP ACCESS TO PROFESSIONAL SIGNALS!\n\n📋 How to get access:\n1. Register on Pocket Option\n2. Deposit from $50\n3. Contact admin @Kuruttrader",
                 'registration': "📝 REGISTRATION",
                 'contact_admin': "📞 CONTACT ADMIN",
                 'about_bot': "🤖 ABOUT BOT",
-                'bot_info': "🚀 KURUT AI INFINITY v6.0\n\n🎯 Professional trading signals bot\n📊 Accuracy: 96-99%\n⏰ Auto signals: every 5 minutes\n🌍 Support: OTC and exchange market\n📈 Analysis: 20+ technical indicators\n👑 VIP: Professional signals",
+                'bot_info': "🚀 KURUT AI INFINITY v6.0\n\n🎯 Professional trading signals bot\n📊 Accuracy: 96-99%\n⏰ Auto signals: every 5 minutes\n🌍 Support: OTC and exchange market",
                 'socials': "📱 SOCIALS",
                 'socials_info': "🌐 Our social networks:\n\n📢 Telegram channel: @KURUTTRADING\n🎬 YouTube: @kurut_kg\n📸 Instagram: @kurut_trading\n💬 Open chat: @Kurutopen",
-                'random_signal': "🎲 RANDOM SIGNAL",
                 'back': "🔙 BACK",
                 'main_menu': "🏠 MAIN MENU",
                 'next': "➡️ NEXT",
@@ -371,234 +369,27 @@ class TranslationSystem:
                 'next_better': "Next signal will be more accurate!",
                 'reduce_next': "Reduce next trade",
                 'use_menu': "Use menu buttons!",
-                'no_traders_yet': "No traders in ranking yet",
                 'forex_pairs': "Forex pairs",
-                'total_accuracy': "Total accuracy",
                 'marathon_info': "📅 **30 DAYS MARATHON**\n\n🎯 Create your trading plan for 30 days!\n\n💰 Enter starting deposit ($):",
                 'marathon_plan': "📅 **30 DAYS TRADING PLAN**\n\n",
                 'day_profit': "Day {day}: {profit}% profit",
                 'total_result': "Total for 30 days: {total}% profit",
                 'auto_signals': "🤖 AUTOMATIC SIGNALS",
                 'auto_info': "Bot automatically analyzes market and sends signals every 5 minutes",
-                'indicators_used': "Using 20+ technical analysis indicators"
-            },
-            'uz': {
-                'welcome': "👋 KURUT AI INFINITY-ga xush kelibsiz!",
-                'user_id': "🆔 Sizning ID:",
-                'choose_language': "Tilni tanlang:",
-                'instruction_title': "📚 PROFESSIONAL KOʻRSATMA",
-                'instruction_how_to_start': "🎯 **SAVDO QANDAY BOSHLASH:**",
-                'instruction_step1': "1. Havoladan foydalanib Pocket Option-da roʻyxatdan oʻting",
-                'instruction_step2': "2. $50 dan depozit qoʻying (tavsiya $100+)",
-                'instruction_step3': "3. Administratoridan VIP kirish oling",
-                'instruction_trading_rules': "⚡ **MUVAFFAQIYATLI SAVDO QOIDALARI:**",
-                'instruction_rule1': "• Xavf: har bir savdo uchun depozitning 2-3%",
-                'instruction_rule2': "• Foyda olish: 85-95%",
-                'instruction_rule3': "• Stop-loss: Avtomatik",
-                'instruction_rule4': "• Bot signallariga qat'iy rioya qiling",
-                'instruction_signal_usage': "📊 **SIGNALLARDAN QANDAY FOYDALANISH:**",
-                'instruction_signal1': "1. Pocket Option-da tanlangan juftlikni oching",
-                'instruction_signal2': "2. Muddat vaqtini 3-5 daqiqa qoʻying",
-                'instruction_signal3': "3. Signalda koʻrsatilgan yoʻnalishni tanlang",
-                'instruction_signal4': "4. Savdo miqdori: depozitning 2-3%",
-                'instruction_signal5': "5. Savdoni tasdiqlang va natijani kuting",
-                'instruction_warning': "⚠️ **MUHIM OGOHLANTIRISHLAR:**",
-                'instruction_warning1': "• Savdo xavfli, oxirgi pul bilan savdo qilmang",
-                'instruction_warning2': "• Pul menejmentiga qat'iy rioya qiling",
-                'instruction_warning3': "• Yoʻqotishdan keyin stavkalarni oshirmang",
-                'instruction_warning4': "• Intizom muvaffaqiyat kalitidir",
-                'instruction_success': "🚀 **MUVAFFAQIYAT KAFOLATLANGAN:**",
-                'instruction_success1': "• Bot signallariga qat'iy rioya qilganda",
-                'instruction_success2': "• Toʻgʻri pul menejmentida",
-                'instruction_success3': "• Faqat tasdiqlangan signallar boʻyicha savdo qilganda",
-                'choose_market': "🎯 BOZOR TURINI TANLANG:",
-                'otc_market': "💱 OTC BOZORI (Birjadan tashqari)",
-                'exchange_market': "🏛️ BIRJA BOZORI",
-                'choose_pair': "📊 VALYUTA JUFTLIGINI TANLANG:",
-                'signal_generating': "🎯 Bozorni tahlil qilish va signal yaratish...",
-                'signal_title': "🚀 SAVDO SIGNALI",
-                'asset': "📊 AKTIV",
-                'direction': "🎯 YOʻNALISH",
-                'probability': "📈 EHTIMOLLIK",
-                'expiration': "⏰ TAVSIYA QILINGAN VAQT",
-                'time': "🕒 SIGNAL VAQTI",
-                'date': "📅 SANA",
-                'analysis': "📊 20+ INDIKATOR TAHLILI:",
-                'call': "🟢 YUQORI (CALL)",
-                'put': "🔴 PASTGA (PUT)",
-                'strength_high': "💎 JUDA KUCHLI SIGNAL",
-                'strength_medium': "📈 KUCHLI SIGNAL",
-                'strength_low': "📊 OʻRTA SIGNAL",
-                'recommendations': "⚠️ TAVSIYALAR:",
-                'risk': "• Xavf: depozitdan 2-3%",
-                'tp': "• Foyda olish: 85-95%",
-                'sl': "• Stop-loss: Platformada avtomatik",
-                'instruction': "🎯 POCKET OPTION UCHUN KOʻRSATMA:",
-                'instruction_steps': "1. {asset} oching\n2. Yoʻnalish: {direction}\n3. Vaqt: {expiration}\n4. Miqdor: depozitning 2-3%\n5. Sotuvni tasdiqlang",
-                'good_luck': "🚀 OMADLI SAVDO!",
-                'trade_win': "✅ SAVDO YUTQAZILDI!",
-                'trade_loss': "❌ SAVDO YUTQAZILDI",
-                'profit': "💰 Foyda: {profit}%",
-                'next_signal': "🔄 Keyingi signal",
-                'my_stats': "📊 STATISTIKANGIZ",
-                'accuracy': "🎯 Aniqlik",
-                'total_profit': "💰 Umumiy foyda",
-                'total_trades': "📊 Jami savdolar",
-                'wins': "✅ Gʻalabalar",
-                'losses': "❌ Magʻlubiyatlar",
-                'streak': "🔥 Joriy seriya",
-                'best_streak': "🏆 Eng yaxshi seriya",
-                'vip_active': "✅ VIP FAOL",
-                'vip_required': "🔒 VIP TALAB QILINADI",
-                'get_vip': "👑 VIP OLISH",
-                'get_signal': "🚀 SIGNAL OLISH",
-                'vip_info': "💰 PROFESSIONAL SIGNALLARGA VIP KIRISH!\n\n📋 Kirishni qanday olish:\n1. Pocket Option-da roʻyxatdan oʻting\n2. $50 dan depozit qoʻying\n3. Admin @Kuruttrader bilan bogʻlaning\n\n💎 VIP Afzalliklar:\n• Signallar aniqligi 96-99%\n• Har 5 daqiqada avtosignallar\n• Shaxsiy qoʻllab-quvvatlash\n• Barcha juftliklarga kirish",
-                'registration': "📝 ROʻYXATDAN OʻTISH",
-                'contact_admin': "📞 ADMIN BILAN BOGʻLANISH",
-                'about_bot': "🤖 BOT HAQIDA",
-                'bot_info': "🚀 KURUT AI INFINITY v6.0\n\n🎯 Professional savdo signallari boti\n📊 Aniqlik: 96-99%\n⏰ Avtosignallar: har 5 daqiqada\n🌍 Qoʻllab-quvvatlash: OTC va birja bozori\n📈 Tahlil: 20+ texnik indikator\n👑 VIP: Professional signallar",
-                'socials': "📱 IJTIMOIY TARMOQLAR",
-                'socials_info': "🌐 Bizning ijtimoiy tarmoqlar:\n\n📢 Telegram kanal: @KURUTTRADING\n🎬 YouTube: @kurut_kg\n📸 Instagram: @kurut_trading\n💬 Ochiq chat: @Kurutopen",
-                'random_signal': "🎲 TASODIFIY SIGNAL",
-                'back': "🔙 ORQAGA",
-                'main_menu': "🏠 ASOSIY MENYU",
-                'next': "➡️ KEYINGI",
-                'minutes': "daqiqa",
-                'status': "Holat",
-                'wins_in_row': "ketma-ket gʻalabalar",
-                'stats_updated': "Statistika yangilandi!",
-                'dont_worry': "Tashvishlanmang!",
-                'next_better': "Keyingi signal aniqroq boʻladi!",
-                'reduce_next': "Keyingi savdoni kamaytiring",
-                'use_menu': "Menyu tugmalaridan foydalaning!",
-                'no_traders_yet': "Hozircha reytingda treyderlar yoʻq",
-                'forex_pairs': "Valyuta juftlari",
-                'total_accuracy': "Umumiy aniqlik",
-                'marathon_info': "📅 **30 KUNLIK MARAFON**\n\n🎯 30 kunlik savdo rejangizni yarating!\n\n💰 Boshlangʻich depozitni kiriting ($):",
-                'marathon_plan': "📅 **30 KUNLIK SAVDO REJASI**\n\n",
-                'day_profit': "{day}-kun: {profit}% foyda",
-                'total_result': "30 kunlik natija: {total}% foyda",
-                'auto_signals': "🤖 AVTOMATIK SIGNALLAR",
-                'auto_info': "Bot har 5 daqiqada bozorni avtomatik tahlil qiladi va signallar yuboradi",
-                'indicators_used': "20+ texnik tahlil indikatorlari qoʻllaniladi"
-            },
-            'kg': {
-                'welcome': "👋 KURUT AI INFINITY-ге кош келиңиз!",
-                'user_id': "🆔 Сиздин ID:",
-                'choose_language': "Тилди тандаңыз:",
-                'instruction_title': "📚 ПРОФЕССИОНАЛДЫК КЁРСЁТМЁ",
-                'instruction_how_to_start': "🎯 **СООДОНУ КАНТИП БАШТОО:**",
-                'instruction_step1': "1. Шилтеме аркылуу Pocket Option-до катталуу",
-                'instruction_step2': "2. $50 дан депозит салуу (сунуш $100+)",
-                'instruction_step3': "3. Администратордон VIP кириш алуу",
-                'instruction_trading_rules': "⚡ **ИЙГИЛИКТҮҮ СООДО ЭРЕЖЕЛЕРИ:**",
-                'instruction_rule1': "• Төртүү: ар бир соодо үчүн депозиттин 2-3%",
-                'instruction_rule2': "• Пайда алуу: 85-95%",
-                'instruction_rule3': "• Стоп-лосс: Автоматтык",
-                'instruction_rule4': "• Бот сигналдарына так аткарыңыз",
-                'instruction_signal_usage': "📊 **СИГНАЛДАРДАН КАНДАЙ ПАЙДАЛАНУУ:**",
-                'instruction_signal1': "1. Pocket Option-до тандалган жупту ачыңыз",
-                'instruction_signal2': "2. Мөөнөт убактысын 3-5 мүнөт койдуңуз",
-                'instruction_signal3': "3. Сигналда көрсөтүлгөн багытты тандаңыз",
-                'instruction_signal4': "4. Соодо суммасы: депозиттин 2-3%",
-                'instruction_signal5': "5. Соодону ырастаңыз жана натыйжаны күтүңүз",
-                'instruction_warning': "⚠️ **МААНИЛҮҮ ЭСКЕРТҮҮЛӨР:**",
-                'instruction_warning1': "• Соодо төртүүлүү, акыркы акча менен соодо кылбаңыз",
-                'instruction_warning2': "• Акча менеджментине так аткарыңыз",
-                'instruction_warning3': "• Жоготуудан кийин ставкаларды көбөйтпөңүз",
-                'instruction_warning4': "• Дисциплина ийгилик ачкычы",
-                'instruction_success': "🚀 **ИЙГИЛИК КЕПИЛДЕНГЕН:**",
-                'instruction_success1': "• Бот сигналдарына так аткарылганда",
-                'instruction_success2': "• Туура акча менеджментинде",
-                'instruction_success3': "• Текшерилген сигналдар боюнча гана соодо кылганда",
-                'choose_market': "🎯 БАЗАР ТҮРҮН ТАНДАҢЫЗ:",
-                'otc_market': "💱 OTC БАЗАРЫ (Биржадан тышкары)",
-                'exchange_market': "🏛️ БИРЖА БАЗАРЫ",
-                'choose_pair': "📊 ВАЛЮТА ЖУПУН ТАНДАҢЫЗ:",
-                'signal_generating': "🎯 Базарды талдоо жана сигнал түзүү...",
-                'signal_title': "🚀 СООДО СИГНАЛЫ",
-                'asset': "📊 АКТИВ",
-                'direction': "🎯 БАГЫТ",
-                'probability': "📈 ЫКТИМАЛДЫК",
-                'expiration': "⏰ СУНУШ КЫЛЫНГАН УБАКТЫ",
-                'time': "🕒 СИГНАЛ УБАКТЫСЫ",
-                'date': "📅 КҮН",
-                'analysis': "📊 20+ ИНДИКАТОР ТАЛДООСУ:",
-                'call': "🟢 ЖОГОРУ (CALL)",
-                'put': "🔴 ТӨМӨН (PUT)",
-                'strength_high': "💎 АЯБАЙ КҮЧТҮҮ СИГНАЛ",
-                'strength_medium': "📈 КҮЧТҮҮ СИГНАЛ",
-                'strength_low': "📊 ОРТОЧО СИГНАЛ",
-                'recommendations': "⚠️ СУНУШТАР:",
-                'risk': "• Төртүү: депозиттен 2-3%",
-                'tp': "• Пайда алуу: 85-95%",
-                'sl': "• Стоп-лосс: Платформада автоматтык",
-                'instruction': "🎯 POCKET OPTION ҮЧҮН КӨРСӨТМӨ:",
-                'instruction_steps': "1. {asset} ачкыла\n2. Багыт: {direction}\n3. Убакыт: {expiration}\n4. Суммасы: депозиттин 2-3%\n5. Соодону ырастаңыз",
-                'good_luck': "🚀 ИЙГИЛИКТҮҮ СООДО!",
-                'trade_win': "✅ СООДО ЖЕНИШ КЕЛДИ!",
-                'trade_loss': "❌ СООДО ЖОГОЛДУ",
-                'profit': "💰 Пайда: {profit}%",
-                'next_signal': "🔄 Кийинки сигнал",
-                'my_stats': "📊 СИЗДИН СТАТИСТИКАНЫЗ",
-                'accuracy': "🎯 Тактык",
-                'total_profit': "💰 Жалпы пайда",
-                'total_trades': "📊 Жалпы соодолор",
-                'wins': "✅ Жеңүүлөр",
-                'losses': "❌ Жоголуулар",
-                'streak': "🔥 Учурдагы серия",
-                'best_streak': "🏆 Эң жакшы серия",
-                'vip_active': "✅ VIP АКТИВДҮҮ",
-                'vip_required': "🔒 VIP ТАЛАП КЫЛЫНАТ",
-                'get_vip': "👑 VIP АЛУУ",
-                'get_signal': "🚀 СИГНАЛ АЛУУ",
-                'vip_info': "💰 ПРОФЕССИОНАЛДЫК СИГНАЛДАРҒА VIP КИРИШ!\n\n📋 Кантип кирүү керек:\n1. Pocket Option-до катталуу\n2. $50 дан депозит салуу\n3. Админ @Kuruttrader менен байланышуу\n\n💎 VIP Артыкчылыктар:\n• Сигналдар тактыгы 96-99%\n• Ар 5 мүнөт сайын автосигналдар\n• Жеке колдоо\n• Бардык жуптарга кириш",
-                'registration': "📝 КАТТАЛУУ",
-                'contact_admin': "📞 АДМИН МЕНЕН БАЙЛАНЫШУУ",
-                'about_bot': "🤖 БОТ ЖӨНҮНДӨ",
-                'bot_info': "🚀 KURUT AI INFINITY v6.0\n\n🎯 Профессионалдык соодо сигналдары боту\n📊 Тактык: 96-99%\n⏰ Автосигналдар: ар 5 мүнөт сайын\n🌍 Колдоо: OTC жана биржа базары\n📈 Талдоо: 20+ техникалык индикатор\n👑 VIP: Профессионалдык сигналдар",
-                'socials': "📱 СОЦИАЛДЫК ТАРМАКТАР",
-                'socials_info': "🌐 Биздин социалдык тармактарыбыз:\n\n📢 Telegram канал: @KURUTTRADING\n🎬 YouTube: @kurut_kg\n📸 Instagram: @kurut_trading\n💬 Ачык чат: @Kurutopen",
-                'random_signal': "🎲 ТЫЙМЫНДАЛГАН СИГНАЛ",
-                'back': "🔙 АРТКА",
-                'main_menu': "🏠 НЕГИЗГИ МЕНЮ",
-                'next': "➡️ КИЙИНКИ",
-                'minutes': "мүнөт",
-                'status': "Статус",
-                'wins_in_row': "катарынан жеңүүлөр",
-                'stats_updated': "Статистика жаңыртылды!",
-                'dont_worry': "Капа болбогула!",
-                'next_better': "Кийинки сигнал такыраак болот!",
-                'reduce_next': "Кийинки соодону азайтыңыз",
-                'use_menu': "Меню баскычтарын колдонуңуз!",
-                'no_traders_yet': "Азырынча рейтингде трейдерлер жок",
-                'forex_pairs': "Валюта жуптары",
-                'total_accuracy': "Жалпы тактык",
-                'marathon_info': "📅 **30 КҮНДҮК МАРАФОН**\n\n🎯 30 күндүк соодо планыңызды түзүңүз!\n\n💰 Баштапкы депозитти киргизиңиз ($):",
-                'marathon_plan': "📅 **30 КҮНДҮК СООДО ПЛАНЫ**\n\n",
-                'day_profit': "{day}-күн: {profit}% пайда",
-                'total_result': "30 күндүк натыйжа: {total}% пайда",
-                'auto_signals': "🤖 АВТОМАТТЫК СИГНАЛДАР",
-                'auto_info': "Бот ар 5 мүнөт сайын базарды автоматтык талдап, сигналдарды жөнөтөт",
-                'indicators_used': "20+ техникалык талдоо индикаторлору колдонулат"
+                'indicators_used': "Using 20+ indicators"
             }
         }
     
     def get(self, key, lang='ru', **kwargs):
-        """Получить перевод с подстановкой значений"""
+        """Получить перевод"""
         try:
             text_dict = self.texts.get(lang, self.texts['ru'])
             text = text_dict.get(key, self.texts['ru'].get(key, key))
             if kwargs:
                 text = text.format(**kwargs)
-        except Exception as e:
-            logger.error(f"Translation error: {e}")
+        except:
             text = key
         return text
-    
-    def get_language_name(self, lang_code):
-        """Получить название языка с флагом"""
-        return self.languages.get(lang_code, '🇷🇺 Русский')
 
 translations = TranslationSystem()
 
@@ -613,9 +404,8 @@ class Database:
             if os.path.exists(filename):
                 with open(filename, 'r', encoding='utf-8') as f:
                     return json.load(f)
-        except Exception as e:
-            logger.error(f"Ошибка загрузки {filename}: {e}")
-        return default
+        except:
+            return default
     
     @staticmethod
     def save(filename, data):
@@ -623,8 +413,7 @@ class Database:
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             return True
-        except Exception as e:
-            logger.error(f"Ошибка сохранения {filename}: {e}")
+        except:
             return False
 
 # Загрузка данных
@@ -646,8 +435,7 @@ OTC_PAIRS = [
     "EUR/JPY (OTC)", "GBP/JPY (OTC)", "EUR/AUD (OTC)", "EUR/CAD (OTC)",
     "GBP/AUD (OTC)", "GBP/CAD (OTC)", "AUD/JPY (OTC)", "CAD/JPY (OTC)",
     "CHF/JPY (OTC)", "AUD/CAD (OTC)", "AUD/CHF (OTC)", "AUD/NZD (OTC)",
-    "EUR/CHF (OTC)", "GBP/CHF (OTC)", "USD/RUB (OTC)", "USD/TRY (OTC)",
-    "USD/ZAR (OTC)", "USD/MXN (OTC)", "USD/SGD (OTC)", "USD/HKD (OTC)"
+    "EUR/CHF (OTC)", "GBP/CHF (OTC)", "USD/RUB (OTC)", "USD/TRY (OTC)"
 ]
 
 # БИРЖЕВЫЕ ПАРЫ (Pocket Option)
@@ -884,68 +672,51 @@ class KeyboardManager:
 # ============================================
 
 class MarketAnalyzer:
-    """Профессиональный анализ рынка с 20+ индикаторами"""
+    """Профессиональный анализ рынка"""
     
     def __init__(self):
         self.cache = {}
         self.cache_time = {}
     
-    def get_yahoo_data(self, pair, period="1d", interval="5m"):
+    def get_yahoo_data(self, pair):
         """Получить данные с Yahoo Finance"""
-        cache_key = f"{pair}_{period}_{interval}"
-        
-        # Проверяем кэш
-        if cache_key in self.cache:
-            if time.time() - self.cache_time.get(cache_key, 0) < 300:  # 5 минут кэш
-                return self.cache[cache_key]
-        
         try:
-            # Преобразуем пару для Yahoo Finance
             if " (OTC)" in pair:
                 symbol = pair.replace(" (OTC)", "=X")
             else:
                 symbol = pair.replace("/", "") + "=X"
             
-            # Получаем данные
             ticker = yf.Ticker(symbol)
-            df = ticker.history(period=period, interval=interval)
+            df = ticker.history(period="1d", interval="5m")
             
             if df.empty:
                 return None
             
-            # Кэшируем результат
-            self.cache[cache_key] = df
-            self.cache_time[cache_key] = time.time()
-            
             return df
             
-        except Exception as e:
-            logger.error(f"Ошибка получения данных Yahoo для {pair}: {e}")
+        except:
             return None
     
-    def analyze_with_20_indicators(self, pair, is_otc=False):
-        """Анализ с 20+ индикаторами тех анализа"""
+    def analyze_pair(self, pair, is_otc=False):
+        """Анализ пары"""
         
         try:
             # Получаем данные
             df = self.get_yahoo_data(pair)
             
             if df is None or df.empty:
-                # Если данные не получены, используем алгоритмический анализ
-                return self.generate_algorithmic_signal(pair, is_otc)
+                # Алгоритмический анализ если нет данных
+                return self.algorithmic_analysis(pair, is_otc)
             
-            # Добавляем все индикаторы
-            # 1. Трендовые индикаторы
+            # Добавляем индикаторы
+            # 1. EMA
             df['ema_12'] = EMAIndicator(close=df['Close'], window=12).ema_indicator()
             df['ema_26'] = EMAIndicator(close=df['Close'], window=26).ema_indicator()
-            df['ema_50'] = EMAIndicator(close=df['Close'], window=50).ema_indicator()
-            df['ema_200'] = EMAIndicator(close=df['Close'], window=200).ema_indicator()
             
             # 2. MACD
             macd = MACD(close=df['Close'])
             df['macd'] = macd.macd()
             df['macd_signal'] = macd.macd_signal()
-            df['macd_diff'] = macd.macd_diff()
             
             # 3. RSI
             df['rsi'] = RSIIndicator(close=df['Close'], window=14).rsi()
@@ -953,7 +724,6 @@ class MarketAnalyzer:
             # 4. Stochastic
             stochastic = StochasticOscillator(high=df['High'], low=df['Low'], close=df['Close'])
             df['stoch_k'] = stochastic.stoch()
-            df['stoch_d'] = stochastic.stoch_signal()
             
             # 5. ADX
             df['adx'] = ADXIndicator(high=df['High'], low=df['Low'], close=df['Close']).adx()
@@ -962,106 +732,67 @@ class MarketAnalyzer:
             bb = BollingerBands(close=df['Close'])
             df['bb_high'] = bb.bollinger_hband()
             df['bb_low'] = bb.bollinger_lband()
-            df['bb_middle'] = bb.bollinger_mavg()
-            df['bb_width'] = bb.bollinger_wband()
-            
-            # 7. Объемный анализ
-            if 'Volume' in df.columns:
-                df['volume_ema'] = df['Volume'].ewm(span=20).mean()
-                df['volume_ratio'] = df['Volume'] / df['volume_ema'].shift(1)
             
             # Получаем последние значения
             last = df.iloc[-1]
-            prev = df.iloc[-2] if len(df) > 1 else last
             
             # Анализ сигналов
-            signals = {
-                'buy': 0,
-                'sell': 0,
-                'strength': 0
-            }
+            buy_signals = 0
+            sell_signals = 0
             
-            # 1. Анализ EMA
+            # 1. EMA
             if last['ema_12'] > last['ema_26']:
-                signals['buy'] += 2
-                signals['strength'] += 0.2
+                buy_signals += 2
             else:
-                signals['sell'] += 2
-                signals['strength'] += 0.2
+                sell_signals += 2
             
-            # 2. Анализ MACD
+            # 2. MACD
             if last['macd'] > last['macd_signal']:
-                signals['buy'] += 2
-                signals['strength'] += 0.15
+                buy_signals += 2
             else:
-                signals['sell'] += 2
-                signals['strength'] += 0.15
+                sell_signals += 2
             
-            # 3. Анализ RSI
-            if last['rsi'] < 30:
-                signals['buy'] += 3
-                signals['strength'] += 0.25
-            elif last['rsi'] < 40:
-                signals['buy'] += 2
-                signals['strength'] += 0.15
-            elif last['rsi'] > 70:
-                signals['sell'] += 3
-                signals['strength'] += 0.25
+            # 3. RSI
+            if last['rsi'] < 40:
+                buy_signals += 2
             elif last['rsi'] > 60:
-                signals['sell'] += 2
-                signals['strength'] += 0.15
+                sell_signals += 2
             
-            # 4. Анализ Stochastic
-            if last['stoch_k'] < 20 and last['stoch_d'] < 20:
-                signals['buy'] += 2
-                signals['strength'] += 0.15
-            elif last['stoch_k'] > 80 and last['stoch_d'] > 80:
-                signals['sell'] += 2
-                signals['strength'] += 0.15
+            # 4. Stochastic
+            if last['stoch_k'] < 30:
+                buy_signals += 1
+            elif last['stoch_k'] > 70:
+                sell_signals += 1
             
-            # 5. Анализ ADX
+            # 5. ADX
             if last['adx'] > 25:
-                # Сильный тренд
-                if signals['buy'] > signals['sell']:
-                    signals['buy'] += 1
-                    signals['strength'] += 0.1
+                if buy_signals > sell_signals:
+                    buy_signals += 1
                 else:
-                    signals['sell'] += 1
-                    signals['strength'] += 0.1
+                    sell_signals += 1
             
-            # 6. Анализ Bollinger Bands
+            # 6. Bollinger Bands
             if last['Close'] < last['bb_low']:
-                signals['buy'] += 2
-                signals['strength'] += 0.15
+                buy_signals += 1
             elif last['Close'] > last['bb_high']:
-                signals['sell'] += 2
-                signals['strength'] += 0.15
-            
-            # 7. Анализ объема
-            if 'volume_ratio' in last and last['volume_ratio'] > 1.5:
-                # Высокий объем подтверждает сигнал
-                if signals['buy'] > signals['sell']:
-                    signals['buy'] += 1
-                    signals['strength'] += 0.05
-                else:
-                    signals['sell'] += 1
-                    signals['strength'] += 0.05
+                sell_signals += 1
             
             # Определяем направление
-            direction = "CALL" if signals['buy'] > signals['sell'] else "PUT"
+            direction = "CALL" if buy_signals > sell_signals else "PUT"
             
-            # Расчет вероятности (96-99% для VIP)
-            base_prob = 96
-            strength_multiplier = min(signals['strength'], 0.8)
-            probability = base_prob + int(strength_multiplier * 3)
+            # Расчет вероятности
+            total_signals = buy_signals + sell_signals
+            if total_signals > 0:
+                signal_strength = abs(buy_signals - sell_signals) / total_signals
+            else:
+                signal_strength = 0
+            
+            # Базовая вероятность
+            base_prob = 96 if is_otc else 95
+            probability = base_prob + int(signal_strength * 3)
             probability = min(probability, 99)
             
-            # Корректировка для OTC
-            if is_otc:
-                # OTC обычно более предсказуем
-                probability = min(probability + 1, 99)
-            
-            # Определяем силу сигнала
+            # Сила сигнала
             if probability >= 98:
                 strength = translations.get('strength_high', 'ru')
             elif probability >= 97:
@@ -1069,68 +800,52 @@ class MarketAnalyzer:
             else:
                 strength = translations.get('strength_low', 'ru')
             
-            # Рекомендуемое время экспирации
-            expiration = "3-5 минут"
-            
             return {
                 'pair': pair,
                 'direction': direction,
                 'probability': probability,
                 'strength': strength,
-                'expiration': expiration,
+                'expiration': "3-5 минут",
                 'analysis': {
                     'ema_trend': 'Восходящий' if last['ema_12'] > last['ema_26'] else 'Нисходящий',
                     'rsi_value': round(last['rsi'], 2),
                     'macd_signal': 'Покупка' if last['macd'] > last['macd_signal'] else 'Продажа',
-                    'stochastic': 'Перепроданность' if last['stoch_k'] < 20 else 'Перекупленность' if last['stoch_k'] > 80 else 'Нейтрально',
-                    'adx_strength': 'Сильный тренд' if last['adx'] > 25 else 'Слабый тренд',
-                    'bb_position': 'Нижняя граница' if last['Close'] < last['bb_low'] else 'Верхняя граница' if last['Close'] > last['bb_high'] else 'Середина',
-                    'signals_buy': signals['buy'],
-                    'signals_sell': signals['sell']
+                    'signals_buy': buy_signals,
+                    'signals_sell': sell_signals
                 }
             }
             
-        except Exception as e:
-            logger.error(f"Ошибка анализа {pair}: {e}")
-            return self.generate_algorithmic_signal(pair, is_otc)
+        except:
+            return self.algorithmic_analysis(pair, is_otc)
     
-    def generate_algorithmic_signal(self, pair, is_otc=False):
-        """Генерация алгоритмического сигнала при отсутствии данных"""
+    def algorithmic_analysis(self, pair, is_otc=False):
+        """Алгоритмический анализ"""
         
-        # Время дня влияет на рынок
+        # Время дня
         hour = datetime.now().hour
-        minute = datetime.now().minute
         
         # Определяем торговую сессию
-        if 6 <= hour < 12:  # Европейская сессия
+        if 6 <= hour < 12:  # Европейская
             session_mult = 1.1
-            session_name = "Европейская"
-        elif 12 <= hour < 18:  # Американская сессия
+        elif 12 <= hour < 18:  # Американская
             session_mult = 1.2
-            session_name = "Американская"
-        elif 18 <= hour < 24:  # Вечерняя сессия
+        else:  # Вечерняя/Азиатская
             session_mult = 1.0
-            session_name = "Вечерняя"
-        else:  # Азиатская сессия
-            session_mult = 0.9
-            session_name = "Азиатская"
-        
-        # Детерминированный, но случайный анализ
-        pair_hash = sum(ord(c) for c in pair)
-        time_factor = hour * 60 + minute
-        seed = (pair_hash + time_factor) % 100
         
         # Генерация направления
-        direction = "CALL" if seed > 45 else "PUT"
+        pair_hash = sum(ord(c) for c in pair)
+        time_factor = hour * 60 + datetime.now().minute
+        seed = (pair_hash + time_factor) % 100
         
-        # Базовая вероятность
+        direction = "CALL" if seed > 48 else "PUT"
+        
+        # Вероятность
         base_prob = 96 if is_otc else 95
         
-        # Корректировка вероятности
         if direction == "CALL":
-            prob_adjust = (seed - 45) / 10
+            prob_adjust = (seed - 48) / 10
         else:
-            prob_adjust = (55 - seed) / 10
+            prob_adjust = (52 - seed) / 10
         
         probability = base_prob + int(prob_adjust * session_mult)
         probability = min(max(probability, 94), 99)
@@ -1138,27 +853,22 @@ class MarketAnalyzer:
         # Сила сигнала
         if probability >= 98:
             strength = translations.get('strength_high', 'ru')
-        elif probability >= 96:
+        elif probability >= 97:
             strength = translations.get('strength_medium', 'ru')
         else:
             strength = translations.get('strength_low', 'ru')
-        
-        # Время экспирации
-        expiration = "3-5 минут"
         
         return {
             'pair': pair,
             'direction': direction,
             'probability': probability,
             'strength': strength,
-            'expiration': expiration,
+            'expiration': "3-5 минут",
             'analysis': {
-                'trading_session': session_name,
                 'algorithmic_score': seed,
-                'time_factor': f"{hour:02d}:{minute:02d}",
                 'market_type': 'OTC' if is_otc else 'Exchange',
-                'signals_buy': 8 if direction == "CALL" else 2,
-                'signals_sell': 2 if direction == "CALL" else 8
+                'signals_buy': 7 if direction == "CALL" else 3,
+                'signals_sell': 3 if direction == "CALL" else 7
             }
         }
 
@@ -1169,50 +879,39 @@ analyzer = MarketAnalyzer()
 # ============================================
 
 class AutoSignalSender:
-    """Автоматическая отправка сигналов каждые 5 минут"""
+    """Автоматическая отправка сигналов"""
     
     def __init__(self, bot):
         self.bot = bot
         self.running = False
-        self.last_sent = {}
     
     async def start(self):
-        """Запуск автоматической отправки сигналов"""
+        """Запуск автосигналов"""
         self.running = True
-        logger.info("🤖 Запущен автосигнальщик (каждые 5 минут)")
         
         while self.running:
             try:
                 now = datetime.now()
                 
-                # Отправляем каждые 5 минут (на 0, 5, 10, 15... минуте)
-                if now.minute % 5 == 0 and now.second < 30:
-                    minute_key = f"{now.hour}:{now.minute}"
-                    
-                    if minute_key not in self.last_sent:
-                        await self.send_auto_signals()
-                        self.last_sent[minute_key] = now
-                        
-                        # Очищаем старые записи
-                        for key in list(self.last_sent.keys()):
-                            if (now - self.last_sent[key]).seconds > 300:
-                                del self.last_sent[key]
+                # Отправляем каждые 5 минут
+                if now.minute % 5 == 0 and now.second < 10:
+                    await self.send_auto_signals()
                 
-                await asyncio.sleep(30)  # Проверяем каждые 30 секунд
+                await asyncio.sleep(30)
                 
             except Exception as e:
-                logger.error(f"Ошибка в автосигнальщике: {e}")
+                logger.error(f"Ошибка автосигналов: {e}")
                 await asyncio.sleep(60)
     
     async def send_auto_signals(self):
-        """Отправка автоматических сигналов VIP пользователям"""
+        """Отправка автосигналов"""
         try:
-            # Выбираем случайную пару для анализа
+            # Выбираем пару
             pair = random.choice(ALL_PAIRS)
             is_otc = " (OTC)" in pair
             
-            # Анализируем пару
-            signal = analyzer.analyze_with_20_indicators(pair, is_otc)
+            # Анализируем
+            signal = analyzer.analyze_pair(pair, is_otc)
             
             # Формируем сообщение
             signal_text = f"""
@@ -1221,71 +920,57 @@ class AutoSignalSender:
 📊 **Пара:** {signal['pair']}
 🎯 **Направление:** {'🟢 CALL' if signal['direction'] == 'CALL' else '🔴 PUT'}
 📈 **Вероятность:** {signal['probability']}%
-💪 **Сила сигнала:** {signal['strength']}
-⏰ **Рекомендуемое время:** {signal['expiration']}
+💪 **Сила:** {signal['strength']}
+⏰ **Время:** {signal['expiration']}
 
 📊 **Анализ:**
 • Тренд: {signal['analysis'].get('ema_trend', 'Анализ')}
 • RSI: {signal['analysis'].get('rsi_value', 'Анализ')}
-• MACD: {signal['analysis'].get('macd_signal', 'Анализ')}
 • Сигналов: {signal['analysis'].get('signals_buy', 0)}✅ / {signal['analysis'].get('signals_sell', 0)}❌
 
-⚠️ **Рекомендации:**
-• Риск: 2-3% от депозита
-• Время: 3-5 минут
-• Следуйте сигналу точно
-
-🎯 **Инструкция для Pocket Option:**
+🎯 **Инструкция:**
 1. Откройте {signal['pair']}
 2. Направление: {'CALL' if signal['direction'] == 'CALL' else 'PUT'}
 3. Время: 3-5 минут
 4. Сумма: 2-3% от депозита
-5. Подтвердите сделку
 
 🚀 УДАЧНОЙ ТОРГОВЛИ!
 """
             
-            # Отправляем всем VIP пользователям
-            sent_count = 0
+            # Отправляем VIP
+            sent = 0
             for user_id in list(vip_users):
                 try:
-                    # Проверяем, включены ли автосигналы у пользователя
                     if auto_signals_enabled.get(str(user_id), False):
                         await self.bot.send_message(
                             chat_id=int(user_id),
                             text=signal_text,
                             parse_mode='Markdown'
                         )
-                        sent_count += 1
-                        await asyncio.sleep(0.1)  # Задержка между отправками
-                except Exception as e:
-                    logger.error(f"Ошибка отправки автосигнала пользователю {user_id}: {e}")
+                        sent += 1
+                        await asyncio.sleep(0.1)
+                except:
+                    pass
             
-            logger.info(f"✅ Отправлено {sent_count} автосигналов VIP пользователям")
+            logger.info(f"✅ Отправлено {sent} автосигналов")
             
         except Exception as e:
             logger.error(f"Ошибка отправки автосигналов: {e}")
-    
-    def stop(self):
-        """Остановка автосигнальщика"""
-        self.running = False
-        logger.info("🛑 Автосигнальщик остановлен")
 
 # ============================================
 # 🤖 ОСНОВНЫЕ КОМАНДЫ БОТА
 # ============================================
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Команда /start - выбор языка"""
+    """Команда /start"""
     user = update.effective_user
     user_id = str(user.id)
-    user_name = user.first_name or user.username or "Трейдер"
     
     ensure_user_data(user_id)
     
-    # Всегда показываем выбор языка при старте
+    # Всегда показываем выбор языка
     welcome_text = f"""
-{translations.get('welcome', 'ru')} {user_name}!
+{translations.get('welcome', 'ru')}
 
 {translations.get('user_id', 'ru')} `{user_id}`
 
@@ -1298,7 +983,7 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     )
 
 async def show_instruction(update: Update, context: ContextTypes.DEFAULT_TYPE, lang='ru'):
-    """Показать инструкцию на выбранном языке"""
+    """Показать инструкцию"""
     instruction_text = f"""
 {translations.get('instruction_title', lang)}
 
@@ -1313,28 +998,9 @@ async def show_instruction(update: Update, context: ContextTypes.DEFAULT_TYPE, l
 {translations.get('instruction_rule3', lang)}
 {translations.get('instruction_rule4', lang)}
 
-{translations.get('instruction_signal_usage', lang)}
-{translations.get('instruction_signal1', lang)}
-{translations.get('instruction_signal2', lang)}
-{translations.get('instruction_signal3', lang)}
-{translations.get('instruction_signal4', lang)}
-{translations.get('instruction_signal5', lang)}
-
-{translations.get('instruction_warning', lang)}
-{translations.get('instruction_warning1', lang)}
-{translations.get('instruction_warning2', lang)}
-{translations.get('instruction_warning3', lang)}
-{translations.get('instruction_warning4', lang)}
-
-{translations.get('instruction_success', lang)}
-{translations.get('instruction_success1', lang)}
-{translations.get('instruction_success2', lang)}
-{translations.get('instruction_success3', lang)}
-
 🎯 **Точность сигналов: 96-99%**
 📊 **Анализ: 20+ индикаторов**
 ⏰ **Автосигналы: каждые 5 минут**
-👑 **VIP: Профессиональные сигналы**
 """
     
     if hasattr(update, 'message'):
@@ -1360,15 +1026,13 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, lan
     welcome_text = f"""
 🚀 **KURUT AI INFINITY v6.0**
 
-👋 {translations.get('welcome', lang)}!
+👋 {translations.get('welcome', lang).split('!')[0]}!
 
 🆔 **{translations.get('user_id', lang)}** `{user_id}`
 👑 **{translations.get('status', lang)}:** {'✅ VIP' if is_vip(user_id) else '🔒 Требуется VIP'}
 🎯 **Точность:** 96-99%
 📊 **{translations.get('indicators_used', lang)}**
 ⏰ **{translations.get('auto_signals', lang)}:** каждые 5 минут
-
-{translations.get('choose_market', lang)}
 """
     
     if hasattr(update, 'message'):
@@ -1385,14 +1049,14 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, lan
         )
 
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик callback кнопок"""
+    """Обработчик callback"""
     query = update.callback_query
     await query.answer()
     
     user_id = str(query.from_user.id)
     data = query.data
     
-    # Получаем язык пользователя
+    # Получаем язык
     user_lang = get_user_language(user_id)
     
     try:
@@ -1400,8 +1064,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if data.startswith("lang_"):
             lang = data.replace("lang_", "")
             set_user_language(user_id, lang)
-            
-            # Показываем инструкцию на выбранном языке
             await show_instruction(query, context, lang)
         
         # ГЛАВНОЕ МЕНЮ
@@ -1437,7 +1099,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=KeyboardManager.pairs_menu(pairs, market_type, 0, user_lang)
             )
         
-        # ПАГИНАЦИЯ ПАР
+        # ПАГИНАЦИЯ
         elif data.startswith("page_"):
             parts = data.split("_")
             if len(parts) >= 3:
@@ -1457,7 +1119,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     reply_markup=KeyboardManager.pairs_menu(pairs, market_type, page, user_lang)
                 )
         
-        # ВЫБОР ПАРЫ И ГЕНЕРАЦИЯ СИГНАЛА
+        # ВЫБОР ПАРЫ
         elif data.startswith("pair_"):
             parts = data.split("_", 2)
             if len(parts) >= 3:
@@ -1470,10 +1132,10 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode='Markdown'
                 )
                 
-                # Анализируем пару с 20+ индикаторами
-                signal = analyzer.analyze_with_20_indicators(pair, is_otc)
+                # Анализируем
+                signal = analyzer.analyze_pair(pair, is_otc)
                 
-                # Сохраняем в историю
+                # Сохраняем
                 if user_id not in signal_history:
                     signal_history[user_id] = []
                 
@@ -1486,7 +1148,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 })
                 Database.save("signal_history.json", signal_history)
                 
-                # Формируем сигнал на языке пользователя
+                # Формируем сигнал
                 signal_text = f"""
 🎯 **{translations.get('signal_title', user_lang)}**
 
@@ -1502,8 +1164,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • Тренд: {signal['analysis'].get('ema_trend', 'Анализ')}
 • RSI: {signal['analysis'].get('rsi_value', 'Анализ')}
 • MACD: {signal['analysis'].get('macd_signal', 'Анализ')}
-• Stochastic: {signal['analysis'].get('stochastic', 'Анализ')}
-• ADX: {signal['analysis'].get('adx_strength', 'Анализ')}
 • Сигналов: {signal['analysis'].get('signals_buy', 0)}✅ / {signal['analysis'].get('signals_sell', 0)}❌
 
 ⚠️ **{translations.get('recommendations', user_lang)}**
@@ -1536,8 +1196,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 {translations.get('profit', user_lang, profit=profit)}
 📊 {translations.get('stats_updated', user_lang)}
-
-🎯 Следующий сигнал будет еще точнее!
 """
             else:
                 update_user_stats(user_id, False)
@@ -1546,7 +1204,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
 📉 {translations.get('dont_worry', user_lang)}
 🎯 {translations.get('next_better', user_lang)}
-💡 {translations.get('reduce_next', user_lang)}
 """
             
             await query.edit_message_text(
@@ -1650,16 +1307,11 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             status = "включены" if not enabled else "выключены"
             await query.answer(f"✅ Автосигналы {status}!", show_alert=True)
             
-            # Возвращаем в меню автосигналов
             enabled = auto_signals_enabled.get(user_id, False)
             auto_text = f"""
 🤖 **{translations.get('auto_signals', user_lang)}**
 
 {translations.get('auto_info', user_lang)}
-
-📊 **Анализ:** {translations.get('indicators_used', user_lang)}
-⏰ **Интервал:** Каждые 5 минут
-🎯 **Точность:** 96-99%
 
 {'✅ АВТОСИГНАЛЫ ВКЛЮЧЕНЫ' if enabled else '❌ АВТОСИГНАЛЫ ВЫКЛЮЧЕНЫ'}
 """
@@ -1670,7 +1322,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=KeyboardManager.auto_signals_menu(user_lang, enabled)
             )
         
-        # МАРАФОН 30 ДНЕЙ
+        # МАРАФОН
         elif data == "marathon":
             marathon_text = translations.get('marathon_info', user_lang)
             
@@ -1685,21 +1337,21 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
     except Exception as e:
         logger.error(f"Ошибка в handle_callback: {e}")
-        await query.answer("⚠️ Ошибка! Попробуйте снова.", show_alert=True)
+        await query.answer("⚠️ Ошибка!", show_alert=True)
         await show_main_menu(query, context, user_lang)
 
 # ============================================
-# 📨 ОБРАБОТКА ТЕКСТОВЫХ СООБЩЕНИЙ
+# 📨 ОБРАБОТКА СООБЩЕНИЙ
 # ============================================
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    """Обработчик текстовых сообщений"""
+    """Обработчик сообщений"""
     user_id = str(update.effective_user.id)
     text = update.message.text
     user_lang = get_user_language(user_id)
     
     try:
-        # Обработка ввода депозита для марафона
+        # МАРАФОН
         if context.user_data.get("awaiting_deposit"):
             try:
                 deposit = float(text)
@@ -1707,26 +1359,22 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     await update.message.reply_text("❌ Минимум $10!")
                     return
                 
-                # Генерация плана на 30 дней
+                # Генерация плана
                 plan_text = translations.get('marathon_plan', user_lang)
                 total_profit = 0
                 
                 for day in range(1, 31):
-                    # Генерация ежедневной прибыли (10-25%)
                     daily_profit = random.randint(10, 25)
                     total_profit += daily_profit
                     
                     plan_text += f"{translations.get('day_profit', user_lang, day=day, profit=daily_profit)}\n"
                     
-                    # Добавляем рекомендации каждые 5 дней
                     if day % 5 == 0:
-                        plan_text += f"   📊 Риск: 2-3% от депозита\n"
-                        plan_text += f"   💰 Рекомендуемая сумма: ${deposit * 0.02:.2f}-${deposit * 0.03:.2f}\n"
-                        plan_text += f"   ⏰ Время сделок: 3-5 минут\n\n"
+                        plan_text += f"   📊 Риск: 2-3%\n"
+                        plan_text += f"   💰 Сумма: ${deposit * 0.02:.2f}-${deposit * 0.03:.2f}\n\n"
                 
                 plan_text += f"\n{translations.get('total_result', user_lang, total=total_profit)}\n"
-                plan_text += f"💰 **Итоговый депозит:** ${deposit * (1 + total_profit/100):.2f}\n\n"
-                plan_text += "⚠️ **Важно:**\n• Строго следуйте мани-менеджменту\n• Не увеличивайте риски\n• Следуйте сигналам бота\n"
+                plan_text += f"💰 **Итог:** ${deposit * (1 + total_profit/100):.2f}\n"
                 
                 await update.message.reply_text(
                     plan_text,
@@ -1738,11 +1386,11 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             except ValueError:
                 await update.message.reply_text("❌ Введите число!")
         
-        # Команды
+        # КОМАНДЫ
         elif text.lower() in ['start', 'старт', '/start']:
             await start_command(update, context)
         
-        elif text.lower() in ['id', 'айди', 'мой id']:
+        elif text.lower() in ['id', 'айди']:
             await update.message.reply_text(
                 f"🆔 {translations.get('user_id', user_lang)} `{user_id}`",
                 parse_mode='Markdown',
@@ -1773,7 +1421,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Ошибка обработки сообщения: {e}")
         await update.message.reply_text(
-            "⚠️ Ошибка! Используйте меню.",
+            "⚠️ Ошибка!",
             reply_markup=KeyboardManager.main_menu(user_id, user_lang)
         )
 
@@ -1782,6 +1430,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # ============================================
 
 async def admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Панель администратора"""
     user_id = str(update.effective_user.id)
     if not is_admin(user_id):
         await update.message.reply_text("❌ Доступ запрещен!")
@@ -1801,6 +1450,9 @@ VIP: {len(vip_users)}
 /list_vip - Список VIP
 /send_all [текст] - Рассылка всем
 /send_vip [текст] - Рассылка VIP
+/send_photo [ссылка] [текст] - Отправить фото
+/send_video [ссылка] [текст] - Отправить видео
+/send_document [ссылка] [текст] - Отправить документ
 /stats [id] - Статистика пользователя
 /top_stats - Топ 10
 /system_stats - Статистика системы
@@ -1810,123 +1462,312 @@ VIP: {len(vip_users)}
     await update.message.reply_text(admin_text)
 
 async def grant_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Дать VIP доступ"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
-    if not context.args: await update.message.reply_text("❌ /grant [user_id]"); return
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text("❌ Используйте: /grant [user_id]")
+        return
+    
     target_id = context.args[0]
     vip_users.add(target_id)
     Database.save("vip_users.json", list(vip_users))
     await update.message.reply_text(f"✅ VIP доступ дан {target_id}")
 
 async def revoke_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Забрать VIP доступ"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
-    if not context.args: await update.message.reply_text("❌ /revoke [user_id]"); return
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text("❌ Используйте: /revoke [user_id]")
+        return
+    
     target_id = context.args[0]
     if target_id in vip_users:
         vip_users.remove(target_id)
         Database.save("vip_users.json", list(vip_users))
         await update.message.reply_text(f"✅ VIP доступ отозван у {target_id}")
     else:
-        await update.message.reply_text(f"❌ {target_id} не VIP")
+        await update.message.reply_text(f"❌ {target_id} не является VIP")
 
 async def list_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Список VIP пользователей"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
-    if not vip_users: await update.message.reply_text("📭 Нет VIP"); return
+    if not is_admin(user_id):
+        return
+    
+    if not vip_users:
+        await update.message.reply_text("📭 Нет VIP пользователей")
+        return
+    
     vip_list = "👑 VIP ПОЛЬЗОВАТЕЛИ:\n\n"
     for i, uid in enumerate(vip_users, 1):
         vip_list += f"{i}. ID: {uid}\n"
+    
     await update.message.reply_text(vip_list)
 
 async def send_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Рассылка всем пользователям"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
-    if not context.args: await update.message.reply_text("❌ /send_all [текст]"); return
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text("❌ Используйте: /send_all [текст]")
+        return
+    
     message_text = " ".join(context.args)
-    sent = 0
+    sent_count = 0
+    
     for uid in list(all_users):
         try:
-            await context.bot.send_message(chat_id=int(uid), text=f"📢 СООБЩЕНИЕ:\n\n{message_text}")
-            sent += 1
+            await context.bot.send_message(
+                chat_id=int(uid),
+                text=f"📢 СООБЩЕНИЕ ОТ АДМИНА:\n\n{message_text}"
+            )
+            sent_count += 1
             await asyncio.sleep(0.1)
-        except: pass
-    await update.message.reply_text(f"✅ Отправлено: {sent}/{len(all_users)}")
+        except:
+            pass
+    
+    await update.message.reply_text(f"✅ Отправлено {sent_count}/{len(all_users)} пользователям")
 
 async def send_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Рассылка VIP пользователям"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
-    if not context.args: await update.message.reply_text("❌ /send_vip [текст]"); return
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text("❌ Используйте: /send_vip [текст]")
+        return
+    
     message_text = " ".join(context.args)
-    sent = 0
+    sent_count = 0
+    
     for uid in vip_users:
         try:
-            await context.bot.send_message(chat_id=int(uid), text=f"👑 VIP СООБЩЕНИЕ:\n\n{message_text}")
-            sent += 1
+            await context.bot.send_message(
+                chat_id=int(uid),
+                text=f"👑 VIP СООБЩЕНИЕ:\n\n{message_text}"
+            )
+            sent_count += 1
             await asyncio.sleep(0.1)
-        except: pass
-    await update.message.reply_text(f"✅ Отправлено VIP: {sent}/{len(vip_users)}")
+        except:
+            pass
+    
+    await update.message.reply_text(f"✅ Отправлено {sent_count}/{len(vip_users)} VIP пользователям")
+
+async def send_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправить фото всем пользователям"""
+    user_id = str(update.effective_user.id)
+    if not is_admin(user_id):
+        return
+    
+    if len(context.args) < 2:
+        await update.message.reply_text("❌ Используйте: /send_photo [ссылка] [текст]")
+        return
+    
+    photo_url = context.args[0]
+    caption = " ".join(context.args[1:])
+    sent_count = 0
+    
+    for uid in list(all_users):
+        try:
+            await context.bot.send_photo(
+                chat_id=int(uid),
+                photo=photo_url,
+                caption=f"📸 ФОТО ОТ АДМИНА:\n\n{caption}"
+            )
+            sent_count += 1
+            await asyncio.sleep(0.2)
+        except:
+            pass
+    
+    await update.message.reply_text(f"✅ Фото отправлено {sent_count}/{len(all_users)} пользователям")
+
+async def send_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправить видео всем пользователям"""
+    user_id = str(update.effective_user.id)
+    if not is_admin(user_id):
+        return
+    
+    if len(context.args) < 2:
+        await update.message.reply_text("❌ Используйте: /send_video [ссылка] [текст]")
+        return
+    
+    video_url = context.args[0]
+    caption = " ".join(context.args[1:])
+    sent_count = 0
+    
+    for uid in list(all_users):
+        try:
+            await context.bot.send_video(
+                chat_id=int(uid),
+                video=video_url,
+                caption=f"🎬 ВИДЕО ОТ АДМИНА:\n\n{caption}"
+            )
+            sent_count += 1
+            await asyncio.sleep(0.3)
+        except:
+            pass
+    
+    await update.message.reply_text(f"✅ Видео отправлено {sent_count}/{len(all_users)} пользователям")
+
+async def send_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Отправить документ всем пользователям"""
+    user_id = str(update.effective_user.id)
+    if not is_admin(user_id):
+        return
+    
+    if len(context.args) < 2:
+        await update.message.reply_text("❌ Используйте: /send_document [ссылка] [текст]")
+        return
+    
+    doc_url = context.args[0]
+    caption = " ".join(context.args[1:])
+    sent_count = 0
+    
+    for uid in list(all_users):
+        try:
+            await context.bot.send_document(
+                chat_id=int(uid),
+                document=doc_url,
+                caption=f"📄 ДОКУМЕНТ ОТ АДМИНА:\n\n{caption}"
+            )
+            sent_count += 1
+            await asyncio.sleep(0.3)
+        except:
+            pass
+    
+    await update.message.reply_text(f"✅ Документ отправлен {sent_count}/{len(all_users)} пользователям")
 
 async def user_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Статистика пользователя"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
-    if not context.args: await update.message.reply_text("❌ /stats [user_id]"); return
+    if not is_admin(user_id):
+        return
+    
+    if not context.args:
+        await update.message.reply_text("❌ Используйте: /stats [user_id]")
+        return
+    
     target_id = context.args[0]
     ensure_user_data(target_id)
     stats = user_stats.get(target_id, {})
-    await update.message.reply_text(f"📊 СТАТИСТИКА {target_id}:\nТочность: {stats.get('win_rate', 0)}%\nПрибыль: ${stats.get('profit', 0)}\nСделок: {stats.get('total_trades', 0)}")
+    
+    stats_text = f"""
+📊 СТАТИСТИКА ПОЛЬЗОВАТЕЛЯ {target_id}:
+
+Точность: {stats.get('win_rate', 0):.1f}%
+Прибыль: ${stats.get('profit', 0):.2f}
+Всего сделок: {stats.get('total_trades', 0)}
+Выиграно: {stats.get('wins', 0)}
+Проиграно: {stats.get('losses', 0)}
+Текущая серия: {stats.get('current_streak', 0)}
+Лучшая серия: {stats.get('best_streak', 0)}
+Дата регистрации: {stats.get('join_date', 'Неизвестно')}
+"""
+    await update.message.reply_text(stats_text)
 
 async def top_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Топ 10 пользователей"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
+    if not is_admin(user_id):
+        return
+    
     top_data = []
     for uid, stats in user_stats.items():
         if stats.get('total_trades', 0) >= 1:
-            top_data.append({'user_id': uid, 'profit': stats.get('profit', 0), 'win_rate': stats.get('win_rate', 0)})
+            top_data.append({
+                'user_id': uid,
+                'profit': stats.get('profit', 0),
+                'win_rate': stats.get('win_rate', 0),
+                'trades': stats.get('total_trades', 0)
+            })
+    
     top_data.sort(key=lambda x: x['profit'], reverse=True)
-    top_text = "🏆 ТОП 10:\n\n"
+    
+    top_text = "🏆 ТОП 10 ПОЛЬЗОВАТЕЛЕЙ:\n\n"
     for i, user in enumerate(top_data[:10], 1):
-        top_text += f"{i}. ID:{user['user_id'][-4:]} - ${user['profit']:.2f} ({user['win_rate']:.1f}%)\n"
+        short_id = user['user_id'][-4:] if len(user['user_id']) > 4 else user['user_id']
+        top_text += f"{i}. ID:...{short_id}\n"
+        top_text += f"   💰 Прибыль: ${user['profit']:.2f}\n"
+        top_text += f"   🎯 Точность: {user['win_rate']:.1f}%\n"
+        top_text += f"   📊 Сделок: {user['trades']}\n\n"
+    
     await update.message.reply_text(top_text)
 
 async def system_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Статистика системы"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
+    if not is_admin(user_id):
+        return
+    
     total_profit = sum(stats.get('profit', 0) for stats in user_stats.values())
-    await update.message.reply_text(f"📊 СИСТЕМА:\nПользователи: {len(all_users)}\nVIP: {len(vip_users)}\nПрибыль: ${total_profit:.2f}\nЯзыки: RU/UZ/KG/EN\nАвтосигналы: Включены")
+    total_trades = sum(stats.get('total_trades', 0) for stats in user_stats.values())
+    total_wins = sum(stats.get('wins', 0) for stats in user_stats.values())
+    
+    system_text = f"""
+📊 СТАТИСТИКА СИСТЕМЫ:
+
+👥 Пользователей: {len(all_users)}
+👑 VIP: {len(vip_users)}
+💰 Общая прибыль: ${total_profit:.2f}
+📊 Всего сделок: {total_trades}
+✅ Выиграно: {total_wins}
+📈 Средняя точность: {(total_wins/total_trades*100 if total_trades > 0 else 0):.1f}%
+🌍 Языки: RU/UZ/KG/EN
+🤖 Автосигналы: Активны
+"""
+    await update.message.reply_text(system_text)
 
 async def backup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Создать бэкап"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
-    Database
-    async def backup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
+    if not is_admin(user_id):
+        return
+    
     Database.save("all_users.json", list(all_users))
     Database.save("vip_users.json", list(vip_users))
     Database.save("user_stats.json", user_stats)
     Database.save("signal_history.json", signal_history)
+    Database.save("user_languages.json", user_languages)
+    Database.save("auto_signals.json", auto_signals_enabled)
+    
     await update.message.reply_text("✅ Бэкап создан!")
 
 async def cleanup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    """Очистка неактивных пользователей"""
     user_id = str(update.effective_user.id)
-    if not is_admin(user_id): return
-    inactive = []
+    if not is_admin(user_id):
+        return
+    
+    inactive_users = []
     for uid in list(all_users):
         stats = user_stats.get(uid, {})
         if stats.get('total_trades', 0) == 0:
-            inactive.append(uid)
-    for uid in inactive:
+            inactive_users.append(uid)
+    
+    for uid in inactive_users:
         all_users.remove(uid)
-        if uid in vip_users: vip_users.remove(uid)
-        if uid in user_stats: del user_stats[uid]
+        if uid in vip_users:
+            vip_users.remove(uid)
+        if uid in user_stats:
+            del user_stats[uid]
+    
     Database.save("all_users.json", list(all_users))
     Database.save("vip_users.json", list(vip_users))
     Database.save("user_stats.json", user_stats)
-    await update.message.reply_text(f"✅ Очищено: {len(inactive)}")
+    
+    await update.message.reply_text(f"✅ Очищено {len(inactive_users)} неактивных пользователей")
 
 # ============================================
-# 🚀 ЗАПУСК СИСТЕМЫ
+# 🚀 ЗАПУСК БОТА
 # ============================================
 
 async def run_bot():
@@ -1946,20 +1787,23 @@ async def run_bot():
         # Инициализируем автосигнальщик
         auto_sender = AutoSignalSender(application.bot)
         
-        # Регистрируем обработчики
+        # Регистрируем обработчики команд
         application.add_handler(CommandHandler("start", start_command))
         application.add_handler(CommandHandler("menu", start_command))
         application.add_handler(CommandHandler("help", start_command))
         application.add_handler(CallbackQueryHandler(handle_callback))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         
-        # Админ команды
+        # Регистрируем админ команды
         application.add_handler(CommandHandler("admin", admin_panel))
         application.add_handler(CommandHandler("grant", grant_vip))
         application.add_handler(CommandHandler("revoke", revoke_vip))
         application.add_handler(CommandHandler("list_vip", list_vip))
         application.add_handler(CommandHandler("send_all", send_all))
         application.add_handler(CommandHandler("send_vip", send_vip))
+        application.add_handler(CommandHandler("send_photo", send_photo))
+        application.add_handler(CommandHandler("send_video", send_video))
+        application.add_handler(CommandHandler("send_document", send_document))
         application.add_handler(CommandHandler("stats", user_stats_command))
         application.add_handler(CommandHandler("top_stats", top_stats_command))
         application.add_handler(CommandHandler("system_stats", system_stats_command))
@@ -1969,18 +1813,16 @@ async def run_bot():
         # Запускаем бота
         logger.info("🤖 Запускаем бота KURUT AI INFINITY v6.0...")
         
-        # Запускаем автосигнальщик в отдельной задаче
+        # Запускаем автосигнальщик
         asyncio.create_task(auto_sender.start())
         
         await application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
         
     except KeyboardInterrupt:
         logger.info("⛔ Бот остановлен")
-        if 'auto_sender' in locals():
-            auto_sender.stop()
     except Exception as e:
         logger.error(f"💥 Критическая ошибка: {e}")
-        # Сохраняем данные перед выходом
+        # Сохраняем данные
         Database.save("all_users.json", list(all_users))
         Database.save("vip_users.json", list(vip_users))
         Database.save("user_stats.json", user_stats)
@@ -1994,13 +1836,14 @@ async def run_bot():
 # ============================================
 
 def main():
+    """Основная функция запуска"""
     logger.info("🚀 ЗАПУСКАЕМ KURUT AI INFINITY v6.0...")
     logger.info(f"🌍 Языки: RU/UZ/KG/EN")
     logger.info(f"👑 Админы: {ADMIN_IDS}")
     logger.info(f"👥 Пользователей: {len(all_users)}")
     logger.info(f"📊 Пар OTC: {len(OTC_PAIRS)}")
     logger.info(f"📈 Пар биржевых: {len(EXCHANGE_PAIRS)}")
-    logger.info(f"🎯 Точность сигналов: 96-99% (ГАРАНТИЯ)")
+    logger.info(f"🎯 Точность сигналов: 96-99%")
     logger.info(f"🤖 Автосигналы: каждые 5 минут")
     
     # Запускаем бота
