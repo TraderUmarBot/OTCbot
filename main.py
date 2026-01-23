@@ -169,7 +169,7 @@ def run_web_server():
 # ⚙️ КОНФИГУРАЦИЯ БОТА
 # ============================================
 
-TOKEN = "8578509228:AAHXaUiCbIsum-0xBoKrL6rcAh380lpsuHQ"
+TOKEN = "8578509228:AAGKU80aAtYG1MgS8r92_FruBVr70hmCzEM"
 ADMIN_IDS = {6117198446, 7079260196}
 ADMIN_USER = "@Kuruttrader"
 ADMIN_LINK = "https://t.me/Kuruttrader"
