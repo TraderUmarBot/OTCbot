@@ -170,7 +170,7 @@ def run_web_server():
 # ⚙️ КОНФИГУРАЦИЯ БОТА
 # ============================================
 
-TOKEN = "8370902012:AAEGdKwLSa0KV8seJV_jQSYmwwJvKwd779g"
+TOKEN = "8578509228:AAFrXSuv5WV8oWWvZkVZL_i9E4kB7LDQBu0"
 ADMIN_IDS = {6117198446, 7079260196}
 ADMIN_USER = "@Kuruttrader"
 ADMIN_LINK = "https://t.me/Kuruttrader"
@@ -2178,14 +2178,12 @@ async def main():
         logger.info(f"🤖 Автосигналы: каждые 5 минут")
         logger.info(f"🌍 Языки: RU/UZ/KG/EN")
         
-        # Запускаем бота
-        await application.initialize()
-        await application.start()
-        logger.info("✅ Бот успешно запущен!")
-        
-        # Ждем сигнала остановки
-        await asyncio.Event().wait()
-        
+       # Запускаем бота (POLLING)
+logger.info("🚀 Запуск polling...")
+await application.run_polling(
+    allowed_updates=Update.ALL_TYPES,
+    close_loop=False
+)
     except KeyboardInterrupt:
         logger.info("⛔ Бот остановлен пользователем")
     except Exception as e:
