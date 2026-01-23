@@ -2178,88 +2178,121 @@ async def main():
         logger.info(f"🤖 Автосигналы: каждые 5 минут")
         logger.info(f"🌍 Языки: RU/UZ/KG/EN")
         
-try:
-    logger.info("🚀 Запуск бота...")
+# ============================================
+# 🚀 ЗАПУСК БОТА (ИСПРАВЛЕННЫЙ)
+# ============================================
+
+async def main():
+    """Основная функция запуска бота"""
+    # Запускаем Flask сервер в отдельном потоке
+    flask_thread = Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+    logger.info("🌐 Flask сервер запущен на порту 8080")
     
-    # Инициализируем приложение
-    await application.initialize()
+    # Запускаем автопинг
+    pinger = AutoPinger()
+    pinger.start()
+    logger.info("🔄 Автопинг запущен (каждые 3 минуты)")
     
-    # Запускаем бота
-    await application.start()
+    # Создаем приложение бота
+    application = Application.builder().token(TOKEN).build()
     
-    logger.info("✅ Бот успешно запущен!")
+    # Создаем и запускаем систему автосигналов
+    auto_sender = AdvancedAutoSignalSender(application.bot)
+    asyncio.create_task(auto_sender.start())
+    logger.info("🤖 Автосигналы запущены (каждые 5 минут)")
     
-    # Основной цикл работы
-    await application.updater.start_polling(
-        allowed_updates=Update.ALL_TYPES,
-        drop_pending_updates=True
-    )
+    # Добавляем обработчики команд
+    application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(CommandHandler("menu", start_command))
+    application.add_handler(CommandHandler("help", start_command))
     
-    # Бесконечный цикл для поддержания работы
-    idle_event = asyncio.Event()
-    await idle_event.wait()
+    # Добавляем обработчики callback
+    application.add_handler(CallbackQueryHandler(handle_callback))
     
-except KeyboardInterrupt:
-    logger.info("⛔️ Бот остановлен пользователем")
+    # Добавляем обработчики сообщений
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
     
-except Exception as e:
-    logger.error(f"💥 Критическая ошибка: {e}")
-    logger.exception("Детали ошибки:")
+    # Добавляем админ команды
+    application.add_handler(CommandHandler("admin", show_admin_panel))
+    application.add_handler(CommandHandler("grant", grant_vip))
+    application.add_handler(CommandHandler("revoke", revoke_vip))
+    application.add_handler(CommandHandler("list_vip", list_vip))
+    application.add_handler(CommandHandler("send_all", send_all))
+    application.add_handler(CommandHandler("send_vip", send_vip))
+    application.add_handler(CommandHandler("stats", user_stats_command))
+    application.add_handler(CommandHandler("top_stats", top_stats_command))
+    application.add_handler(CommandHandler("system_stats", system_stats_command))
+    application.add_handler(CommandHandler("backup", backup_command))
+    application.add_handler(CommandHandler("cleanup", cleanup_command))
     
-finally:
-    # Корректное завершение
+    # Логируем запуск
+    logger.info("🚀 ЗАПУСКАЕМ KURUT AI INFINITY v9.1")
+    logger.info(f"👑 Админы: {ADMIN_IDS}")
+    logger.info(f"👥 Пользователей: {len(all_users)}")
+    logger.info(f"📊 Пар OTC: {len(OTC_PAIRS)}")
+    logger.info(f"📈 Пар биржевых: {len(EXCHANGE_PAIRS)}")
+    logger.info(f"🎯 Точность: 96-99%")
+    logger.info(f"📈 Индикаторы: 20+")
+    logger.info(f"🤖 Автосигналы: каждые 5 минут")
+    logger.info(f"🌍 Языки: RU/UZ/KG/EN")
+    
     try:
-        if application.updater:
-            await application.updater.stop()
-        if application:
-            await application.stop()
-            await application.shutdown()
-        logger.info("🔄 Бот корректно остановлен")
-    except Exception as e:
-        logger.error(f"Ошибка при остановке: {e}")
+        # Запускаем бота
+        logger.info("🔄 Инициализация бота...")
+        await application.initialize()
+        await application.start()
+        logger.info("✅ Бот успешно запущен!")
         
-# Сохраняем данные перед выходом
-        try:
-            Database.save("all_users.json", list(all_users))
-            Database.save("vip_users.json", list(vip_users))
-            Database.save("user_stats.json", user_stats)
-            Database.save("signal_history.json", signal_history)
-            Database.save("user_languages.json", user_languages)
-            Database.save("auto_signals.json", auto_signals_enabled)
-            logger.info("💾 Данные сохранены перед выходом")
-        except Exception as save_error:
-            logger.error(f"Ошибка сохранения данных: {save_error}")
-    
+        # Основной цикл работы
+        logger.info("🔄 Запуск polling...")
+        await application.updater.start_polling(
+            drop_pending_updates=True
+        )
+        
+        # Ожидаем остановки
+        stop_event = asyncio.Event()
+        await stop_event.wait()
+        
+    except KeyboardInterrupt:
+        logger.info("⛔ Бот остановлен пользователем")
+    except Exception as e:
+        logger.error(f"💥 Ошибка запуска: {e}")
     finally:
-        # Останавливаем приложение
+        # Корректное завершение
         try:
-            if 'application' in locals():
+            logger.info("🔄 Остановка бота...")
+            if application.updater and application.updater.running:
+                await application.updater.stop()
+            if application.running:
                 await application.stop()
-                await application.shutdown()
-                logger.info("✅ Бот корректно остановлен")
+            await application.shutdown()
+            logger.info("✅ Бот корректно остановлен")
         except Exception as e:
-            logger.error(f"Ошибка при остановке бота: {e}")
+            logger.error(f"⚠️ Ошибка при остановке: {e}")
+
+def run_bot():
+    """Запуск бота с обработкой ошибок"""
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("⛔ Программа завершена")
+    except Exception as e:
+        logger.error(f"💥 Фатальная ошибка: {e}")
 
 if __name__ == '__main__':
     # Создаем requirements.txt если его нет
-    requirements = """python-telegram-bot==20.7
+    try:
+        with open("requirements.txt", "w", encoding="utf-8") as f:
+            f.write("""python-telegram-bot==20.7
 flask==3.0.0
 waitress==3.0.1
 numpy==1.24.3
 pandas==2.1.4
-"""
-    
-    try:
-        with open("requirements.txt", "w", encoding="utf-8") as f:
-            f.write(requirements)
+""")
         logger.info("📋 Файл requirements.txt создан")
     except:
         pass
     
     # Запускаем бота
-    try:
-        asyncio.run(main())
-    except KeyboardInterrupt:
-        logger.info("⛔ Бот остановлен")
-    except Exception as e:
-        logger.error(f"💥 Фатальная ошибка: {e}")
+    run_bot()
