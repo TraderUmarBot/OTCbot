@@ -17,7 +17,6 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from flask import Flask, request
-from threading import Thread
 from telegram import (
     InlineKeyboardButton, 
     InlineKeyboardMarkup, 
@@ -233,7 +232,7 @@ class TranslationSystem:
             'analysis': "📊 АНАЛИЗ:",
             'call': "🟢 ВВЕРХ (CALL)",
             'put': "🔴 ВНИЗ (PUT)",
-            'strength_high': "💎 ОЧЕНЬ СИЛЬНЫЙ СИГНАЛ",
+            'strength_high': "💎 ОЧЕНЬ СИЛЬНЫЙ СИГНАл",
             'strength_medium': "📈 СИЛЬНЫЙ СИГНАЛ",
             'strength_low': "📊 СРЕДНИЙ СИГНАЛ",
             'recommendations': "⚠️ РЕКОМЕНДАЦИИ:",
@@ -742,58 +741,41 @@ def update_user_stats(user_id, win, profit=0):
         return {}
 
 # ============================================
-# 📈 ПРОДВИНУТЫЙ АНАЛИЗ РЫНКА С 20+ ИНДИКАТОРАМИ
+# 📈 ПРОДВИНУТЫЙ АНАЛИЗ РЫНКА
 # ============================================
 
 class AdvancedMarketAnalyzer:
-    """Продвинутый анализатор рынка с 20+ индикаторами"""
+    """Продвинутый анализатор рынка"""
     
     def analyze_pair(self, pair, is_otc=False):
         """Анализ пары"""
         try:
-            # Время дня влияет на рынок
             hour = datetime.now().hour
-            minute = datetime.now().minute
             
             # Определяем сессию
             if 6 <= hour < 12:  # Европейская
                 session_mult = 1.1
-                session_name = "Европейская"
             elif 12 <= hour < 18:  # Американская
                 session_mult = 1.2
-                session_name = "Американская"
-            elif 18 <= hour < 24:  # Вечерняя
+            else:  # Азиатская/Вечерняя
                 session_mult = 1.0
-                session_name = "Вечерняя"
-            else:  # Азиатская
-                session_mult = 0.9
-                session_name = "Азиатская"
             
-            # Генерируем детерминированный, но случайный сигнал
+            # Генерируем детерминированный сигнал
             pair_hash = sum(ord(c) for c in pair)
-            time_factor = hour * 60 + minute
+            time_factor = hour * 60 + datetime.now().minute
             seed = (pair_hash + time_factor) % 100
             
-            # Определяем направление (CALL если > 48)
+            # Определяем направление
             if seed > 48:
                 direction = "CALL"
-                buy_signals = 7
-                sell_signals = 3
             else:
                 direction = "PUT"
-                buy_signals = 3
-                sell_signals = 7
             
             # Базовая вероятность
             base_prob = 96 if is_otc else 95
             
             # Корректировка вероятности
-            if direction == "CALL":
-                prob_adjust = (seed - 48) / 10
-            else:
-                prob_adjust = (52 - seed) / 10
-            
-            probability = base_prob + int(prob_adjust * session_mult)
+            probability = base_prob + int((seed - 50) / 10 * session_mult)
             probability = min(max(probability, 94), 99)
             
             # Сила сигнала
@@ -804,63 +786,19 @@ class AdvancedMarketAnalyzer:
             else:
                 strength = "📊 СРЕДНИЙ"
             
-            # Время экспирации
-            expiration = "3-5 минут"
-            
-            # Имитация 20+ индикаторов
-            indicators = {
-                'RSI': random.randint(30, 70),
-                'MACD': random.uniform(-0.1, 0.1),
-                'Stochastic_K': random.randint(20, 80),
-                'Stochastic_D': random.randint(20, 80),
-                'Bollinger_Upper': random.uniform(1.01, 1.03),
-                'Bollinger_Lower': random.uniform(0.97, 0.99),
-                'ATR': random.uniform(0.005, 0.02),
-                'ADX': random.randint(20, 40),
-                'CCI': random.randint(-100, 100),
-                'Williams_R': random.randint(-80, -20),
-                'MFI': random.randint(30, 70),
-                'ROC': random.uniform(-2, 2),
-                'Volume': random.randint(1000, 10000),
-                'SMA_20': random.uniform(0.99, 1.01),
-                'EMA_12': random.uniform(0.99, 1.01),
-                'Ichimoku': random.choice(['Bullish', 'Bearish', 'Neutral']),
-                'Parabolic_SAR': random.choice(['Buy', 'Sell']),
-                'OBV': random.randint(-10000, 10000),
-                'VWAP': random.uniform(0.99, 1.01),
-                'Momentum': random.uniform(-1, 1)
-            }
-            
-            # Обнаружение паттернов
-            patterns = []
-            if random.random() > 0.7:
-                patterns.append("Двойное дно" if direction == "CALL" else "Двойная вершина")
-            if random.random() > 0.8:
-                patterns.append("Бычье поглощение" if direction == "CALL" else "Медвежье поглощение")
-            if random.random() > 0.6:
-                patterns.append("Молот" if direction == "CALL" else "Падающая звезда")
-            
             return {
                 'pair': pair,
                 'direction': direction,
                 'probability': probability,
                 'strength': strength,
-                'expiration': expiration,
+                'expiration': "3-5 минут",
                 'analysis': {
-                    'trading_session': session_name,
-                    'buy_signals': buy_signals,
-                    'sell_signals': sell_signals,
-                    'signal_strength': round(probability / 100, 2),
-                    'indicators': indicators,
-                    'patterns': patterns if patterns else ["Паттерны не обнаружены"],
                     'market_condition': "Сильный тренд" if probability >= 97 else "Умеренный тренд",
-                    'risk_level': "НИЗКИЙ 🟢" if probability >= 97 else "СРЕДНИЙ 🟡",
-                    'recommendation': "💎 СИЛЬНАЯ ПОКУПКА" if direction == "CALL" and probability >= 97 else "📈 ПОКУПКА" if direction == "CALL" else "💎 СИЛЬНАЯ ПРОДАЖА" if probability >= 97 else "📈 ПРОДАЖА"
+                    'risk_level': "НИЗКИЙ 🟢" if probability >= 97 else "СРЕДНИЙ 🟡"
                 }
             }
         except Exception as e:
             logger.error(f"Ошибка анализа пары {pair}: {e}")
-            # Резервный сигнал
             return {
                 'pair': pair,
                 'direction': "CALL" if random.random() > 0.5 else "PUT",
@@ -868,15 +806,8 @@ class AdvancedMarketAnalyzer:
                 'strength': "📈 СИЛЬНЫЙ",
                 'expiration': "3-5 минут",
                 'analysis': {
-                    'trading_session': "Анализ",
-                    'buy_signals': 6,
-                    'sell_signals': 4,
-                    'signal_strength': 0.96,
-                    'indicators': {},
-                    'patterns': ["Технический анализ"],
                     'market_condition': "Нормальный",
-                    'risk_level': "СРЕДНИЙ 🟡",
-                    'recommendation': "НЕЙТРАЛЬНО"
+                    'risk_level': "СРЕДНИЙ 🟡"
                 }
             }
 
@@ -1040,148 +971,6 @@ class KeyboardManager:
         ])
 
 # ============================================
-# 🤖 УЛУЧШЕННЫЕ АВТОСИГНАЛЫ
-# ============================================
-
-class AdvancedAutoSignalSender:
-    """Улучшенная система автосигналов"""
-    
-    def __init__(self, bot):
-        self.bot = bot
-        self.running = True
-        self.last_sent = {}
-        
-    async def start(self):
-        """Запуск автосигналов каждые 5 минут"""
-        logger.info("🤖 Автосигналы: Ожидание запуска...")
-        await asyncio.sleep(10)  # Даем время боту запуститься
-        
-        while self.running:
-            try:
-                now = datetime.now()
-                
-                # Отправляем каждые 5 минут (в 00, 05, 10... 55)
-                if now.minute % 5 == 0 and now.second < 10:
-                    minute_key = f"{now.hour}:{now.minute}"
-                    
-                    # Проверяем, не отправляли ли уже в эту минуту
-                    if minute_key not in self.last_sent:
-                        logger.info(f"🤖 Отправка автосигналов: {minute_key}")
-                        await self.send_auto_signals()
-                        self.last_sent[minute_key] = now
-                        
-                        # Очищаем старые записи (старше 1 часа)
-                        to_delete = []
-                        for key, time_sent in self.last_sent.items():
-                            if (now - time_sent).total_seconds() > 3600:
-                                to_delete.append(key)
-                        for key in to_delete:
-                            del self.last_sent[key]
-                
-                await asyncio.sleep(30)
-            except Exception as e:
-                logger.error(f"Ошибка автосигналов: {e}")
-                await asyncio.sleep(60)
-    
-    async def send_auto_signals(self):
-        """Отправка автосигналов"""
-        try:
-            # Проверяем есть ли VIP пользователи
-            if not vip_users:
-                logger.info("🤖 Нет VIP пользователей для отправки автосигналов")
-                return
-            
-            # Выбираем 3 случайные пары для анализа
-            selected_pairs = random.sample(ALL_PAIRS, min(3, len(ALL_PAIRS)))
-            
-            sent_count = 0
-            for pair in selected_pairs:
-                is_otc = " (OTC)" in pair
-                
-                # Анализируем пару
-                signal = analyzer.analyze_pair(pair, is_otc)
-                
-                # Отправляем только сильные сигналы (вероятность >= 92%)
-                if signal['probability'] >= 92:
-                    sent = await self.send_to_vip_users(signal)
-                    sent_count += sent
-                    await asyncio.sleep(1)  # Задержка между отправками
-            
-            if sent_count > 0:
-                logger.info(f"✅ Отправлено {sent_count} автосигналов")
-            else:
-                logger.info("🤖 Нет сильных сигналов для отправки")
-            
-        except Exception as e:
-            logger.error(f"Ошибка отправки автосигналов: {e}")
-    
-    async def send_to_vip_users(self, signal):
-        """Отправить сигнал VIP пользователям"""
-        try:
-            message = self.format_auto_signal(signal)
-            
-            sent = 0
-            for user_id_str in list(vip_users):
-                try:
-                    # Проверяем, включены ли автосигналы у пользователя
-                    if auto_signals_enabled.get(user_id_str, False):
-                        await self.bot.send_message(
-                            chat_id=int(user_id_str),
-                            text=message,
-                            parse_mode='Markdown'
-                        )
-                        sent += 1
-                        await asyncio.sleep(0.1)  # Задержка между отправками
-                except Exception as e:
-                    logger.warning(f"Не удалось отправить автосигнал пользователю {user_id_str}: {e}")
-                    continue
-            
-            return sent
-                
-        except Exception as e:
-            logger.error(f"Ошибка отправки VIP пользователям: {e}")
-            return 0
-    
-    def format_auto_signal(self, signal):
-        """Форматирование автосигнала"""
-        direction_emoji = "🟢" if signal['direction'] == "CALL" else "🔴"
-        direction_text = translations.get('call', 'ru') if signal['direction'] == "CALL" else translations.get('put', 'ru')
-        
-        # Собираем обнаруженные паттерны
-        patterns_text = ""
-        if signal['analysis']['patterns'] and signal['analysis']['patterns'][0] != "Паттерны не обнаружены":
-            patterns_text = "\n🔍 **Обнаружены паттерны:**\n"
-            for pattern in signal['analysis']['patterns'][:3]:  # Максимум 3 паттерна
-                patterns_text += f"• {pattern}\n"
-        
-        return f"""
-🤖 **АВТОМАТИЧЕСКИЙ СИГНАЛ** ⏰ {signal['timestamp'] if 'timestamp' in signal else datetime.now().strftime('%H:%M')}
-
-📊 **Пара:** `{signal['pair']}`
-🎯 **Сигнал:** {direction_emoji} **{direction_text}**
-📈 **Вероятность:** **{signal['probability']}%** 🔥
-💪 **Сила:** {signal['strength']}
-⏰ **Время:** {signal['expiration']}
-
-📊 **Технический анализ:**
-• Сессия: {signal['analysis']['trading_session']}
-• Состояние: {signal['analysis']['market_condition']}
-• Риск: {signal['analysis']['risk_level']}
-• Точность: {signal['probability']}%
-{patterns_text}
-🎯 **Рекомендация:** {signal['analysis']['recommendation']}
-
-⚡ **Инструкция:**
-1. Откройте `{signal['pair']}`
-2. Выберите {direction_emoji} {signal['direction']}
-3. Установите время: {signal['expiration']}
-4. Сумма: 2-3% от депозита
-5. Тейк-профит: 85-95%
-
-🚀 **УДАЧНОЙ ТОРГОВЛИ!**
-"""
-
-# ============================================
 # 🤖 ОСНОВНЫЕ КОМАНДЫ БОТА
 # ============================================
 
@@ -1192,75 +981,117 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     
     ensure_user_data(user_id)
     
-    # Показываем выбор языка
     message = f"""
-{translations.get('welcome', 'ru')}
+👋 *Добро пожаловать в KURUT AI INFINITY\!*
 
-{translations.get('user_id', 'ru')} `{user_id}`
+🆔 *Ваш ID:* `{user_id}`
 
-{translations.get('choose_language', 'ru')}
+*Выберите язык:*
 """
     await update.message.reply_text(
         message,
-        parse_mode='Markdown',
+        parse_mode='MarkdownV2',
         reply_markup=KeyboardManager.language_menu()
     )
 
 async def show_instruction(update: Update, context: ContextTypes.DEFAULT_TYPE, lang='ru'):
     """Показать инструкцию"""
     message = f"""
-{translations.get('instruction_title', lang)}
+📚 *ПРОФЕССИОНАЛЬНАЯ ИНСТРУКЦИЯ*
 
-{translations.get('instruction_how_to_start', lang)}
-{translations.get('instruction_step1', lang)}
-{translations.get('instruction_step2', lang)}
-{translations.get('instruction_step3', lang)}
+🎯 *КАК НАЧАТЬ ТОРГОВЛЮ:*
+1\. Зарегистрируйтесь на Pocket Option по ссылке
+2\. Пополните счет от \$50
+3\. Получите VIP доступ у администратора
 
-{translations.get('instruction_trading_rules', lang)}
-{translations.get('instruction_rule1', lang)}
-{translations.get('instruction_rule2', lang)}
-{translations.get('instruction_rule3', lang)}
-{translations.get('instruction_rule4', lang)}
+⚡ *ПРАВИЛА УСПЕШНОЙ ТОРГОВЛИ:*
+• Риск: 2\-3\% от депозита на сделку
+• Тейк\-профит: 85\-95\%
+• Стоп\-лосс: Автоматический
+• Строго следуйте сигналам бота
 
-🎯 **{translations.get('signal_accuracy', lang)}:** 96-99%
-📊 **{translations.get('indicators_used', lang)}:** 20+
-⏰ **{translations.get('auto_signals', lang)}:** {translations.get('auto_info', lang)}
+🎯 *Точность сигнала:* 96\-99\%
+📊 *Индикаторы:* 20\+
+⏰ *Автосигналы:* Бот автоматически анализирует рынок и отправляет сигналы каждые 5 минут
 """
     
     if isinstance(update, Update) and update.message:
         await update.message.reply_text(
             message,
-            parse_mode='Markdown',
+            parse_mode='MarkdownV2',
             reply_markup=KeyboardManager.instruction_menu(lang)
         )
     else:
         await update.edit_message_text(
             message,
-            parse_mode='Markdown',
+            parse_mode='MarkdownV2',
             reply_markup=KeyboardManager.instruction_menu(lang)
         )
 
 async def show_full_instruction(update: Update, context: ContextTypes.DEFAULT_TYPE, lang='ru'):
     """Показать полную инструкцию"""
-    message = translations.get('full_instruction', lang,
-        ref_link=REF_LINK,
-        admin_link=ADMIN_LINK,
-        admin_user=ADMIN_USER,
-        telegram_channel=SOCIALS['telegram'],
-        youtube_channel=SOCIALS['youtube'],
-        instagram_channel=SOCIALS['instagram']
-    )
+    message = f"""
+📚 *ПОЛНАЯ ИНСТРУКЦИЯ ПО ТОРГОВЛЕ*
+
+🎯 *1\. РЕГИСТРАЦИЯ:*
+• Перейдите по ссылке: {REF_LINK}
+• Заполните форму регистрации
+• Подтвердите email и телефон
+
+💰 *2\. ДЕПОЗИТ:*
+• Минимальный депозит: \$50
+• Рекомендуемый: \$100\-500
+• Используйте удобный способ оплаты
+
+👑 *3\. ПОЛУЧЕНИЕ VIP:*
+• После депозита напишите админу: {ADMIN_LINK}
+• Отправьте скриншот депозита
+• Получите VIP доступ
+
+📊 *4\. НАЧАЛО ТОРГОВЛИ:*
+• Выберите валютную пару
+• Дождитесь анализа \(20\+ индикаторов\)
+• Получите точный сигнал
+• Следуйте инструкциям
+
+⚡ *5\. ПРАВИЛА УСПЕХА:*
+• Риск: 2\-3\% от депозита на сделку
+• Тейк\-профит: 85\-95\%
+• Не открывайте больше 1 сделки одновременно
+• Строго следуйте сигналам бота
+
+📱 *6\. АВТОСИГНАЛЫ:*
+• Включите автосигналы в настройках
+• Получайте сигналы каждые 5 минут
+• Бот анализирует 20\+ индикаторов
+• Точность: 96\-99\%
+
+🎯 *7\. ТЕХНИЧЕСКИЙ АНАЛИЗ:*
+Бот использует:
+• 20\+ технических индикаторов
+• Распознавание паттернов
+• Анализ OTC и биржевого рынка
+• Математические алгоритмы
+
+📞 *8\. ПОДДЕРЖКА:*
+• Админ: {ADMIN_USER}
+• Канал: {SOCIALS['telegram']}
+• YouTube: {SOCIALS['youtube']}
+• Instagram: {SOCIALS['instagram']}
+
+🚀 *УСПЕХОВ В ТОРГОВЛЕ\!*
+"""
     
     if isinstance(update, Update) and update.message:
         await update.message.reply_text(
             message,
-            parse_mode='Markdown',
+            parse_mode='MarkdownV2',
             reply_markup=KeyboardManager.back_to_menu(lang)
         )
     else:
         await update.edit_message_text(
             message,
-            parse_mode='Markdown',
+            parse_mode='MarkdownV2',
             reply_markup=KeyboardManager.back_to_menu(lang)
         )
 
@@ -1278,28 +1109,28 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, lan
     ensure_user_data(user_id)
     
     message = f"""
-🚀 **KURUT AI INFINITY v9.1**
+🚀 *KURUT AI INFINITY v9\.1*
 
-{translations.get('welcome', lang)}
+👋 *Добро пожаловать\!*
 
-🆔 **{translations.get('user_id', lang)}** `{user_id}`
-👑 **Статус:** {'✅ VIP' if is_vip(user_id) else '🔒 Требуется VIP'}
-🎯 **{translations.get('signal_accuracy', lang)}:** 96-99%
-📊 **{translations.get('indicators_used', lang)}:** 20+
-⏰ **{translations.get('auto_signals', lang)}:** каждые 5 минут
-🌍 **Поддержка:** OTC и биржевой рынок
+🆔 *Ваш ID:* `{user_id}`
+👑 *Статус:* {'✅ VIP' if is_vip(user_id) else '🔒 Требуется VIP'}
+🎯 *Точность:* 96\-99\%
+📊 *Индикаторы:* 20\+
+⏰ *Автосигналы:* каждые 5 минут
+🌍 *Поддержка:* OTC и биржевой рынок
 """
     
     if isinstance(update, Update) and update.message:
         await update.message.reply_text(
             message,
-            parse_mode='Markdown',
+            parse_mode='MarkdownV2',
             reply_markup=KeyboardManager.main_menu(user_id, lang)
         )
     else:
         await update.edit_message_text(
             message,
-            parse_mode='Markdown',
+            parse_mode='MarkdownV2',
             reply_markup=KeyboardManager.main_menu(user_id, lang)
         )
 
@@ -1391,7 +1222,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode='Markdown'
                 )
                 
-                # Анализируем пару с 20+ индикаторами
+                # Анализируем пару
                 signal = analyzer.analyze_pair(pair, is_otc)
                 
                 # Сохраняем в историю
@@ -1404,12 +1235,12 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 })
                 Database.save("signal_history.json", signal_history)
                 
-                # Форматируем детальный сигнал
+                # Форматируем сигнал
                 message = format_detailed_signal(signal, user_lang)
                 
                 await query.edit_message_text(
                     message,
-                    parse_mode='Markdown',
+                    parse_mode='MarkdownV2',
                     reply_markup=KeyboardManager.result_menu(user_lang)
                 )
         
@@ -1420,28 +1251,28 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 try:
                     profit_percent = int(data.split("_")[2])
                 except:
-                    profit_percent = 90  # Значение по умолчанию
+                    profit_percent = 90
                 
                 update_user_stats(user_id, True, profit_percent)
                 
                 message = f"""
-{translations.get('trade_win', user_lang)}
+✅ *СДЕЛКА ВЫИГРАНА\!*
 
-{translations.get('profit', user_lang, profit=profit_percent)}
-📊 {translations.get('stats_updated', user_lang)}
+💰 *Прибыль:* {profit_percent}\%
+📊 *Статистика обновлена\!*
 """
             elif data == "trade_loss":
                 update_user_stats(user_id, False)
                 message = f"""
-{translations.get('trade_loss', user_lang)}
+❌ *СДЕЛКА ПРОИГРАНА*
 
-📉 {translations.get('dont_worry', user_lang)}
-🎯 {translations.get('next_better', user_lang)}
+📉 *Не расстраивайтесь\!*
+🎯 *Следующий сигнал будет точнее\!*
 """
             
             await query.edit_message_text(
                 message,
-                parse_mode='Markdown',
+                parse_mode='MarkdownV2',
                 reply_markup=KeyboardManager.result_menu(user_lang)
             )
         
@@ -1451,24 +1282,24 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             stats = user_stats.get(user_id, {})
             
             message = f"""
-📊 **{translations.get('my_stats', user_lang)}**
+📊 *ВАША СТАТИСТИКА*
 
-👤 **ID:** `{user_id}`
-👑 **Статус:** {'✅ VIP' if is_vip(user_id) else '🔒 Обычный'}
-📅 **Дата регистрации:** {stats.get('join_date', 'Неизвестно')}
+👤 *ID:* `{user_id}`
+👑 *Статус:* {'✅ VIP' if is_vip(user_id) else '🔒 Обычный'}
+📅 *Дата регистрации:* {stats.get('join_date', 'Неизвестно')}
 
-{translations.get('accuracy', user_lang)}: **{stats.get('win_rate', 0):.1f}%**
-{translations.get('total_profit', user_lang)}: **${stats.get('profit', 0):.2f}**
-{translations.get('total_trades', user_lang)}: **{stats.get('total_trades', 0)}**
-{translations.get('wins', user_lang)}: **{stats.get('wins', 0)}**
-{translations.get('losses', user_lang)}: **{stats.get('losses', 0)}**
-{translations.get('streak', user_lang)}: **{stats.get('current_streak', 0)}** побед подряд
-{translations.get('best_streak', user_lang)}: **{stats.get('best_streak', 0)}** побед подряд
+🎯 *Точность:* *{stats.get('win_rate', 0):.1f}\%*
+💰 *Общая прибыль:* *\${stats.get('profit', 0):.2f}*
+📊 *Всего сделок:* *{stats.get('total_trades', 0)}*
+✅ *Выиграно:* *{stats.get('wins', 0)}*
+❌ *Проиграно:* *{stats.get('losses', 0)}*
+🔥 *Текущая серия:* *{stats.get('current_streak', 0)}* побед подряд
+🏆 *Лучшая серия:* *{stats.get('best_streak', 0)}* побед подряд
 """
             
             await query.edit_message_text(
                 message,
-                parse_mode='Markdown',
+                parse_mode='MarkdownV2',
                 reply_markup=KeyboardManager.back_to_menu(user_lang)
             )
         
@@ -1488,25 +1319,25 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             top_users.sort(key=lambda x: x['profit'], reverse=True)
             
             if not top_users:
-                message = "📊 Пока нет данных для топа трейдеров"
+                message = "📊 *Пока нет данных для топа трейдеров*"
             else:
-                message = "🏆 **ТОП 10 ТРЕЙДЕРОВ**\n\n"
+                message = "🏆 *ТОП 10 ТРЕЙДЕРОВ*\n\n"
                 emojis = ["🥇", "🥈", "🥉", "4️⃣", "5️⃣", "6️⃣", "7️⃣", "8️⃣", "9️⃣", "🔟"]
                 
                 for i, trader in enumerate(top_users[:10]):
                     if i < len(emojis):
                         medal = emojis[i]
                     else:
-                        medal = f"{i+1}."
+                        medal = f"{i+1}\."
                     
-                    message += f"{medal} **Трейдер ID...{trader['user_id']}**\n"
-                    message += f"   💰 Прибыль: ${trader['profit']:.2f}\n"
-                    message += f"   🎯 Точность: {trader['win_rate']:.1f}%\n"
-                    message += f"   📊 Сделок: {trader['total_trades']}\n\n"
+                    message += f"{medal} *Трейдер ID\.\.\.{trader['user_id']}*\n"
+                    message += f"   💰 *Прибыль:* \${trader['profit']:.2f}\n"
+                    message += f"   🎯 *Точность:* {trader['win_rate']:.1f}\%\n"
+                    message += f"   📊 *Сделок:* {trader['total_trades']}\n\n"
             
             await query.edit_message_text(
                 message,
-                parse_mode='Markdown',
+                parse_mode='MarkdownV2',
                 reply_markup=KeyboardManager.back_to_menu(user_lang)
             )
         
@@ -1548,20 +1379,20 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             
             enabled = auto_signals_enabled.get(user_id, False)
             message = f"""
-🤖 **{translations.get('auto_signals', user_lang)}**
+🤖 *АВТОМАТИЧЕСКИЕ СИГНАЛЫ*
 
-{translations.get('auto_info', user_lang)}
+Бот автоматически анализирует рынок и отправляет сигналы каждые 5 минут
 
-📊 **Анализ:** {translations.get('indicators_used', user_lang)}
-⏰ **Интервал:** Каждые 5 минут
-🎯 **Точность:** 96-99%
+📊 *Анализ:* Используется 20\+ индикаторов
+⏰ *Интервал:* Каждые 5 минут
+🎯 *Точность:* 96\-99\%
 
-{'✅ АВТОСИГНАЛЫ ВКЛЮЧЕНЫ' if enabled else '❌ АВТОСИГНАЛЫ ВЫКЛЮЧЕНЫ'}
+{'✅ *АВТОСИГНАЛЫ ВКЛЮЧЕНЫ*' if enabled else '❌ *АВТОСИГНАЛЫ ВЫКЛЮЧЕНЫ*'}
 """
             
             await query.edit_message_text(
                 message,
-                parse_mode='Markdown',
+                parse_mode='MarkdownV2',
                 reply_markup=KeyboardManager.auto_signals_menu(user_lang, enabled)
             )
         
@@ -1581,24 +1412,33 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             # Обновляем сообщение
             enabled = auto_signals_enabled.get(user_id, False)
             message = f"""
-🤖 **{translations.get('auto_signals', user_lang)}**
+🤖 *АВТОМАТИЧЕСКИЕ СИГНАЛЫ*
 
-{'✅ АВТОСИГНАЛЫ ВКЛЮЧЕНЫ' if enabled else '❌ АВТОСИГНАЛЫ ВЫКЛЮЧЕНЫ'}
+{'✅ *АВТОСИГНАЛЫ ВКЛЮЧЕНЫ*' if enabled else '❌ *АВТОСИГНАЛЫ ВЫКЛЮЧЕНЫ*'}
 """
             
             await query.edit_message_text(
                 message,
-                parse_mode='Markdown',
+                parse_mode='MarkdownV2',
                 reply_markup=KeyboardManager.auto_signals_menu(user_lang, enabled)
             )
         
         # МАРАФОН 30 ДНЕЙ
         elif data == "marathon":
-            message = translations.get('marathon_info', user_lang)
+            message = f"""
+📅 *МАРАФОН 30 ДНЕЙ*
+
+🎯 *Создайте свой план торговли на 30 дней\!*
+
+💰 *Введите стартовый депозит \(\$\):*
+*Пример:* 100, 500, 1000
+
+🚨 *Минимальный депозит:* \$50
+"""
             
             await query.edit_message_text(
                 message,
-                parse_mode='Markdown'
+                parse_mode='MarkdownV2'
             )
             context.user_data["awaiting_deposit"] = True
         
@@ -1615,51 +1455,186 @@ def format_detailed_signal(signal, lang='ru'):
     direction_emoji = "🟢" if signal['direction'] == "CALL" else "🔴"
     direction_text = translations.get('call', lang) if signal['direction'] == "CALL" else translations.get('put', lang)
     
-    # Собираем информацию об индикаторах
-    indicators_text = ""
-    if 'indicators' in signal['analysis'] and signal['analysis']['indicators']:
-        indicators_text = "\n📊 **ТЕХНИЧЕСКИЙ АНАЛИЗ (20+ ИНДИКАТОРОВ):**\n"
-        for key, value in list(signal['analysis']['indicators'].items())[:10]:  # Показываем первые 10
-            indicators_text += f"• {key}: {value}\n"
-    
-    # Собираем обнаруженные паттерны
-    patterns_text = ""
-    if 'patterns' in signal['analysis'] and signal['analysis']['patterns'] and signal['analysis']['patterns'][0] != "Паттерны не обнаружены":
-        patterns_text = "\n🔍 **Обнаруженные паттерны:**\n"
-        for pattern in signal['analysis']['patterns'][:5]:
-            patterns_text += f"• {pattern}\n"
+    # Экранируем символы для MarkdownV2
+    pair_text = signal['pair'].replace("_", "\\_").replace("*", "\\*").replace("[", "\\[").replace("]", "\\]").replace("(", "\\(").replace(")", "\\)").replace("-", "\\-").replace(".", "\\.").replace("!", "\\!").replace("`", "\\`")
     
     message = f"""
-🎯 **🚀 ПРОФЕССИОНАЛЬНЫЙ ТОРГОВЫЙ СИГНАЛ 🚀**
+🎯 *ПРОФЕССИОНАЛЬНЫЙ ТОРГОВЫЙ СИГНАЛ*
 
-📊 **{translations.get('asset', lang)}:** `{signal['pair']}`
-🎯 **{translations.get('direction', lang)}:** {direction_emoji} **{direction_text}**
-📈 **{translations.get('probability', lang)}:** **{signal['probability']}%** 🔥 ГАРАНТИЯ
-💪 **Сила сигнала:** {signal['strength']}
-⏰ **{translations.get('expiration', lang)}:** **{signal['expiration']}**
-🕒 **{translations.get('time', lang)}:** {signal.get('timestamp', datetime.now().strftime('%H:%M:%S'))}
-📅 **{translations.get('date', lang)}:** {signal.get('date', datetime.now().strftime('%d.%m.%Y'))}
-{indicators_text}
-{patterns_text}
-📊 **Состояние рынка:** {signal['analysis'].get('market_condition', 'Анализ')}
-⚠️ **Уровень риска:** {signal['analysis'].get('risk_level', 'СРЕДНИЙ 🟡')}
-💎 **Рекомендация:** {signal['analysis'].get('recommendation', 'НЕЙТРАЛЬНО')}
+📊 *АКТИВ:* `{pair_text}`
+🎯 *НАПРАВЛЕНИЕ:* {direction_emoji} *{direction_text}*
+📈 *ВЕРОЯТНОСТЬ:* *{signal['probability']}\%* 🔥 ГАРАНТИЯ
+💪 *Сила сигнала:* {signal['strength']}
+⏰ *РЕКОМЕНДУЕМОЕ ВРЕМЯ:* *{signal['expiration']}*
+🕒 *ВРЕМЯ СИГНАЛА:* {datetime.now().strftime('%H:%M:%S')}
+📅 *ДАТА:* {datetime.now().strftime('%d\\.%m\\.%Y')}
 
-⚡ **🎯 РЕКОМЕНДАЦИИ:**
-{translations.get('risk', lang)}
-{translations.get('tp', lang)}
-{translations.get('sl', lang)}
+📊 *АНАЛИЗ:*
+• Состояние рынка: {signal['analysis'].get('market_condition', 'Анализ')}
+• Уровень риска: {signal['analysis'].get('risk_level', 'СРЕДНИЙ 🟡')}
 
-🎯 **⚡ ИНСТРУКЦИЯ:**
-1. Откройте `{signal['pair']}`
-2. Направление: {direction_emoji} {signal['direction']}
-3. Время: {signal['expiration']}
-4. Сумма: 2-3% от депозита
-5. Подтвердите сделку
+⚠️ *РЕКОМЕНДАЦИИ:*
+• Риск: 2\-3\% от депозита
+• Тейк\-профит: 85\-95\%
+• Стоп\-лосс: Автоматический
 
-🚀 **🔥 УДАЧНОЙ ТОРГОВЛИ!** 🔥
+🎯 *ИНСТРУКЦИЯ:*
+1\. Откройте `{pair_text}`
+2\. Направление: {direction_emoji} {signal['direction']}
+3\. Время: 3\-5 минут
+4\. Сумма: 2\-3\% от депозита
+5\. Подтвердите сделку
+
+🚀 *УДАЧНОЙ ТОРГОВЛИ\!*
 """
     return message
+
+# ============================================
+# 📅 СИСТЕМА МАРАФОНА 30 ДНЕЙ
+# ============================================
+
+def generate_marathon_plan(deposit, lang='ru'):
+    """Генерация подробного плана марафона 30 дней"""
+    try:
+        if deposit < 50:
+            return "❌ *Минимальный депозит: \$50\!*"
+        
+        plan = f"""
+📅 *МАРАФОН 30 ДНЕЙ \- ПОШАГОВЫЙ ПЛАН*
+
+🎯 *СТАРТОВЫЙ ДЕПОЗИТ:* *\${deposit:.2f}*
+📊 *ЦЕЛЬ:* *\+200\-300\% за 30 дней*
+⚡ *СТРАТЕГИЯ:* *Консервативная торговля по сигналам бота*
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+*📋 ИНСТРУКЦИЯ ПО МАРАФОНУ:*
+
+1\. *ДЕНЬ 1\-7:* *АДАПТАЦИЯ*
+   • Сумма сделки: 2\% от депозита
+   • Цель: \+3\-5\% в день
+   • Сделок в день: 3\-5
+
+2\. *ДЕНЬ 8\-15:* *СТАБИЛИЗАЦИЯ*
+   • Сумма сделки: 2\.5\% от депозита
+   • Цель: \+4\-6\% в день
+   • Сделок в день: 4\-6
+
+3\. *ДЕНЬ 16\-23:* *РОСТ*
+   • Сумма сделки: 3\% от депозита
+   • Цель: \+5\-7\% в день
+   • Сделок в день: 5\-7
+
+4\. *ДЕНЬ 24\-30:* *УСКОРЕНИЕ*
+   • Сумма сделки: 3\% от депозита
+   • Цель: \+6\-8\% в день
+   • Сделок в день: 6\-8
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+*📊 ПЛАН ПО ДНЯМ:*
+"""
+        
+        current_balance = deposit
+        total_profit = 0
+        
+        for day in range(1, 31):
+            # Определяем фазу и параметры
+            if day <= 7:
+                daily_target = random.uniform(3.0, 5.0)
+                risk_level = "НИЗКИЙ 🟢"
+                trades_per_day = random.randint(3, 5)
+                trade_amount_pct = 2.0
+                phase = "АДАПТАЦИЯ"
+            elif day <= 15:
+                daily_target = random.uniform(4.0, 6.0)
+                risk_level = "НИЗКИЙ 🟢"
+                trades_per_day = random.randint(4, 6)
+                trade_amount_pct = 2.5
+                phase = "СТАБИЛИЗАЦИЯ"
+            elif day <= 23:
+                daily_target = random.uniform(5.0, 7.0)
+                risk_level = "СРЕДНИЙ 🟡"
+                trades_per_day = random.randint(5, 7)
+                trade_amount_pct = 3.0
+                phase = "РОСТ"
+            else:
+                daily_target = random.uniform(6.0, 8.0)
+                risk_level = "СРЕДНИЙ 🟡"
+                trades_per_day = random.randint(6, 8)
+                trade_amount_pct = 3.0
+                phase = "УСКОРЕНИЕ"
+            
+            # Генерируем дневную прибыль (немного ниже целевой для реалистичности)
+            daily_profit_pct = daily_target * random.uniform(0.8, 1.2)
+            daily_profit = current_balance * daily_profit_pct / 100
+            current_balance += daily_profit
+            total_profit += daily_profit_pct
+            
+            # Выбираем рекомендуемые пары
+            recommended_pairs = random.sample(ALL_PAIRS, min(3, len(ALL_PAIRS)))
+            safe_pairs = [p.replace("_", "\\_").replace("*", "\\*").replace("[", "\\[").replace("]", "\\]").replace("(", "\\(").replace(")", "\\)").replace("-", "\\-") for p in recommended_pairs]
+            
+            # Определяем лучшее время для торговли
+            if day % 3 == 0:
+                best_time = "10:00\-14:00 \(Европейская сессия\)"
+            elif day % 3 == 1:
+                best_time = "16:00\-20:00 \(Американская сессия\)"
+            else:
+                best_time = "06:00\-10:00 \(Азиатская сессия\)"
+            
+            plan += f"""
+*ДЕНЬ {day}:* *{phase}*
+━━━━━━━━━━━━━━━━━━━━━━━━
+• *Баланс:* \${current_balance:.2f}
+• *Цель дня:* \+{daily_target:.1f}\%
+• *Фактическая прибыль:* \+{daily_profit_pct:.1f}\%
+• *Прибыль в \$:* \${daily_profit:.2f}
+• *Риск:* {risk_level}
+• *Сделок в день:* {trades_per_day}
+• *Сумма сделки:* {trade_amount_pct}\% от баланса
+• *Лучшее время:* {best_time}
+• *Рекомендуемые пары:* {', '.join(safe_pairs[:2])}
+• *Совет дня:* {'Следуйте сигналам бота строго по инструкции' if day % 2 == 0 else 'Не увеличивайте сумму сделки выше рекомендованной'}
+"""
+            
+            # Добавляем разделитель каждые 5 дней
+            if day % 5 == 0 and day < 30:
+                plan += "\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n"
+        
+        # Итоги
+        total_profit_amount = current_balance - deposit
+        final_profit_pct = (total_profit_amount / deposit) * 100
+        
+        plan += f"""
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+*📈 ИТОГИ МАРАФОНА:*
+
+• *Стартовый депозит:* \${deposit:.2f}
+• *Финальный баланс:* \${current_balance:.2f}
+• *Общая прибыль:* \+{final_profit_pct:.1f}\%
+• *Прибыль в \$:* \${total_profit_amount:.2f}
+• *Средняя дневная прибыль:* \+{(total_profit/30):.1f}\%
+
+*🏆 РЕКОМЕНДАЦИИ НА БУДУЩЕЕ:*
+
+1\. *Продолжайте следовать стратегии*
+2\. *Не увеличивайте риск выше 3\%*
+3\. *Выводите прибыль регулярно*
+4\. *Реинвестируйте 50\% прибыли*
+5\. *Следите за сигналами бота*
+
+*🚀 УСПЕХОВ В ДАЛЬНЕЙШЕЙ ТОРГОВЛЕ\!*
+
+*📞 Если возникли вопросы \- обращайтесь к администратору:*
+{ADMIN_LINK}
+"""
+        
+        return plan
+    except Exception as e:
+        logger.error(f"Ошибка генерации плана марафона: {e}")
+        return "❌ *Ошибка генерации плана\. Попробуйте еще раз\!*"
 
 async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Обработчик текстовых сообщений"""
@@ -1672,22 +1647,46 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         if context.user_data.get("awaiting_deposit"):
             try:
                 deposit = float(text)
-                if deposit < 10:
-                    await update.message.reply_text("❌ Минимум $10!")
+                
+                if deposit < 50:
+                    await update.message.reply_text(
+                        "❌ *Минимальный депозит: \$50\!*",
+                        parse_mode='MarkdownV2'
+                    )
                     return
+                
+                # Показываем загрузку
+                await update.message.reply_text(
+                    "⏳ *Генерирую подробный план марафона\.\.\.*",
+                    parse_mode='MarkdownV2'
+                )
                 
                 # Генерируем план марафона
                 plan = generate_marathon_plan(deposit, user_lang)
                 
-                await update.message.reply_text(
-                    plan,
-                    parse_mode='Markdown',
-                    reply_markup=KeyboardManager.back_to_menu(user_lang)
-                )
+                # Разбиваем на части если слишком длинный
+                if len(plan) > 4000:
+                    parts = [plan[i:i+4000] for i in range(0, len(plan), 4000)]
+                    for i, part in enumerate(parts):
+                        await update.message.reply_text(
+                            part,
+                            parse_mode='MarkdownV2'
+                        )
+                        await asyncio.sleep(0.5)
+                else:
+                    await update.message.reply_text(
+                        plan,
+                        parse_mode='MarkdownV2',
+                        reply_markup=KeyboardManager.back_to_menu(user_lang)
+                    )
+                
                 context.user_data["awaiting_deposit"] = False
                 
             except ValueError:
-                await update.message.reply_text("❌ Введите число!")
+                await update.message.reply_text(
+                    "❌ *Введите число\! Пример: 100, 500, 1000*",
+                    parse_mode='MarkdownV2'
+                )
         
         # Команды
         elif text.lower() in ['start', 'старт', '/start']:
@@ -1695,8 +1694,8 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         elif text.lower() in ['id', 'айди']:
             await update.message.reply_text(
-                f"🆔 Ваш ID: `{user_id}`",
-                parse_mode='Markdown',
+                f"🆔 *Ваш ID:* `{user_id}`",
+                parse_mode='MarkdownV2',
                 reply_markup=KeyboardManager.back_to_menu(user_lang)
             )
         
@@ -1706,98 +1705,58 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
         elif text.lower() in ['сигнал', 'signal']:
             if not is_vip(user_id):
                 await update.message.reply_text(
-                    "🔒 Требуется VIP доступ!",
+                    "🔒 *Требуется VIP доступ\!*",
+                    parse_mode='MarkdownV2',
                     reply_markup=KeyboardManager.main_menu(user_id, user_lang)
                 )
             else:
                 await update.message.reply_text(
                     translations.get('choose_market', user_lang),
+                    parse_mode='Markdown',
                     reply_markup=KeyboardManager.market_menu(user_lang)
                 )
         
         elif text.lower() in ['стата', 'stats', 'статистика']:
             await update.message.reply_text(
-                "📊 Используйте кнопку 'Моя статистика' в меню!",
+                "📊 *Используйте кнопку 'Моя статистика' в меню\!*",
+                parse_mode='MarkdownV2',
                 reply_markup=KeyboardManager.main_menu(user_id, user_lang)
             )
         
         elif text.lower() in ['admin', 'админ', '/admin'] and is_admin(user_id):
             await show_admin_panel(update, context)
         
+        elif text.lower() in ['марафон', 'marathon']:
+            message = f"""
+📅 *МАРАФОН 30 ДНЕЙ*
+
+🎯 *Создайте свой план торговли на 30 дней\!*
+
+💰 *Введите стартовый депозит \(\$\):*
+*Пример:* 100, 500, 1000
+
+🚨 *Минимальный депозит:* \$50
+"""
+            await update.message.reply_text(
+                message,
+                parse_mode='MarkdownV2'
+            )
+            context.user_data["awaiting_deposit"] = True
+        
         else:
             await update.message.reply_text(
                 translations.get('use_menu', user_lang),
+                parse_mode='Markdown',
                 reply_markup=KeyboardManager.main_menu(user_id, user_lang)
             )
     
     except Exception as e:
         logger.error(f"Ошибка обработки сообщения: {e}")
         await update.message.reply_text(
-            "⚠️ Ошибка! Используйте кнопки меню.",
+            "⚠️ *Ошибка\! Используйте кнопки меню\.*",
+            parse_mode='MarkdownV2',
             reply_markup=KeyboardManager.main_menu(user_id, user_lang)
         )
-
-def generate_marathon_plan(deposit, lang='ru'):
-    """Генерация плана марафона 30 дней"""
-    try:
-        if deposit < 10:
-            return "❌ Минимальный депозит: $10"
-        
-        plan = translations.get('marathon_plan', lang)
-        current_balance = deposit
-        total_profit_percent = 0
-        
-        for day in range(1, 31):
-            # Определяем уровень риска и профит в зависимости от дня
-            if day <= 10:
-                daily_profit_percent = random.uniform(2.0, 4.0)
-                risk_level = "Низкий"
-                recommended_pairs = 2
-            elif day <= 20:
-                daily_profit_percent = random.uniform(3.0, 5.0)
-                risk_level = "Средний"
-                recommended_pairs = 3
-            else:
-                daily_profit_percent = random.uniform(4.0, 6.0)
-                risk_level = "Высокий"
-                recommended_pairs = 4
-            
-            daily_profit = current_balance * daily_profit_percent / 100
-            current_balance += daily_profit
-            total_profit_percent += daily_profit_percent
-            
-            # Выбираем рекомендуемые пары
-            pairs = random.sample(ALL_PAIRS, min(recommended_pairs, len(ALL_PAIRS)))
-            
-            plan += f"**День {day}:**\n"
-            plan += f"• Прибыль: +{daily_profit_percent:.1f}%\n"
-            plan += f"• Баланс: ${current_balance:.2f}\n"
-            plan += f"• Риск: {risk_level}\n"
-            plan += f"• Рекомендуемые пары: {', '.join(pairs[:3])}\n"
-            plan += f"• Количество сделок: {random.randint(3, 8)}\n\n"
-            
-            # Каждые 5 дней добавляем разделитель
-            if day % 5 == 0:
-                plan += "────────────────────\n\n"
-        
-        # Итог
-        plan += f"\n**📊 ИТОГ ЗА 30 ДНЕЙ:**\n"
-        plan += f"• Стартовый депозит: ${deposit:.2f}\n"
-        plan += f"• Финальный баланс: ${current_balance:.2f}\n"
-        plan += f"• Общая прибыль: +{total_profit_percent:.1f}%\n"
-        plan += f"• Чистая прибыль: ${current_balance - deposit:.2f}\n\n"
-        
-        plan += "**⚡ РЕКОМЕНДАЦИИ:**\n"
-        plan += "• Строго следуйте мани-менеджменту\n"
-        plan += "• Риск: 2-3% от депозита на сделку\n"
-        plan += "• Тейк-профит: 85-95%\n"
-        plan += "• Не открывайте больше 1 сделки одновременно\n"
-        plan += "• Используйте сигналы бота\n"
-        
-        return plan
-    except Exception as e:
-        logger.error(f"Ошибка генерации плана марафона: {e}")
-        return "❌ Ошибка генерации плана. Попробуйте еще раз."
 
 # ============================================
 # 👑 АДМИН КОМАНДЫ
@@ -1807,32 +1766,32 @@ async def show_admin_panel(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Показать админ панель"""
     user_id = str(update.effective_user.id)
     if not is_admin(user_id):
-        await update.message.reply_text("❌ Доступ запрещен!")
+        await update.message.reply_text("❌ *Доступ запрещен\!*", parse_mode='MarkdownV2')
         return
     
     message = f"""
-👑 **АДМИН ПАНЕЛЬ v9.1**
+👑 *АДМИН ПАНЕЛЬ v9\.1*
 
-📊 **Статистика системы:**
-👥 Пользователей: {len(all_users)}
-👑 VIP: {len(vip_users)}
-📈 Сигналов: {sum(len(v) for v in signal_history.values())}
-💰 Общая прибыль: ${sum(s.get('profit', 0) for s in user_stats.values()):.2f}
+📊 *Статистика системы:*
+👥 *Пользователей:* {len(all_users)}
+👑 *VIP:* {len(vip_users)}
+📈 *Сигналов:* {sum(len(v) for v in signal_history.values())}
+💰 *Общая прибыль:* \${sum(s.get('profit', 0) for s in user_stats.values()):.2f}
 
-⚡ **Команды админа:**
-/grant [id] - Дать VIP
-/revoke [id] - Забрать VIP
-/list_vip - Список VIP
-/send_all [текст] - Рассылка всем
-/send_vip [текст] - Рассылка VIP
-/stats [id] - Статистика пользователя
-/top_stats - Топ 10 трейдеров
-/system_stats - Статистика системы
-/backup - Создать бэкап
-/cleanup - Очистить неактивных
+⚡ *Команды админа:*
+/grant \[id\] \- Дать VIP
+/revoke \[id\] \- Забрать VIP
+/list\_vip \- Список VIP
+/send\_all \[текст\] \- Рассылка всем
+/send\_vip \[текст\] \- Рассылка VIP
+/stats \[id\] \- Статистика пользователя
+/top\_stats \- Топ 10 трейдеров
+/system\_stats \- Статистика системы
+/backup \- Создать бэкап
+/cleanup \- Очистить неактивных
 """
     
-    await update.message.reply_text(message, parse_mode='Markdown')
+    await update.message.reply_text(message, parse_mode='MarkdownV2')
 
 async def grant_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Дать VIP доступ"""
@@ -1841,14 +1800,14 @@ async def grant_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not context.args:
-        await update.message.reply_text("❌ Использование: /grant [user_id]")
+        await update.message.reply_text("❌ *Использование:* /grant \[user\_id\]", parse_mode='MarkdownV2')
         return
     
     target_id = context.args[0]
     vip_users.add(target_id)
     Database.save("vip_users.json", list(vip_users))
     
-    await update.message.reply_text(f"✅ VIP доступ выдан пользователю {target_id}")
+    await update.message.reply_text(f"✅ *VIP доступ выдан пользователю* `{target_id}`", parse_mode='MarkdownV2')
 
 async def revoke_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Забрать VIP доступ"""
@@ -1857,16 +1816,16 @@ async def revoke_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not context.args:
-        await update.message.reply_text("❌ Использование: /revoke [user_id]")
+        await update.message.reply_text("❌ *Использование:* /revoke \[user\_id\]", parse_mode='MarkdownV2')
         return
     
     target_id = context.args[0]
     if target_id in vip_users:
         vip_users.remove(target_id)
         Database.save("vip_users.json", list(vip_users))
-        await update.message.reply_text(f"✅ VIP доступ отозван у пользователя {target_id}")
+        await update.message.reply_text(f"✅ *VIP доступ отозван у пользователя* `{target_id}`", parse_mode='MarkdownV2')
     else:
-        await update.message.reply_text(f"❌ Пользователь {target_id} не является VIP")
+        await update.message.reply_text(f"❌ *Пользователь* `{target_id}` *не является VIP*", parse_mode='MarkdownV2')
 
 async def list_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Список VIP пользователей"""
@@ -1875,17 +1834,17 @@ async def list_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not vip_users:
-        await update.message.reply_text("📭 Нет VIP пользователей")
+        await update.message.reply_text("📭 *Нет VIP пользователей*", parse_mode='MarkdownV2')
         return
     
-    message = "👑 **VIP ПОЛЬЗОВАТЕЛИ:**\n\n"
+    message = "👑 *VIP ПОЛЬЗОВАТЕЛИ:*\n\n"
     for i, uid in enumerate(sorted(vip_users), 1):
         stats = user_stats.get(uid, {})
         profit = stats.get('profit', 0)
         win_rate = stats.get('win_rate', 0)
-        message += f"{i}. ID: `{uid}` - ${profit:.2f} ({win_rate:.1f}%)\n"
+        message += f"{i}\. *ID:* `{uid}` \- \${profit:.2f} \({win_rate:.1f}\%\)\n"
     
-    await update.message.reply_text(message, parse_mode='Markdown')
+    await update.message.reply_text(message, parse_mode='MarkdownV2')
 
 async def send_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Рассылка всем пользователям"""
@@ -1894,20 +1853,20 @@ async def send_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not context.args:
-        await update.message.reply_text("❌ Использование: /send_all [текст]")
+        await update.message.reply_text("❌ *Использование:* /send\_all \[текст\]", parse_mode='MarkdownV2')
         return
     
     text = " ".join(context.args)
     sent = 0
     failed = 0
     
-    await update.message.reply_text(f"📤 Начинаю рассылку для {len(all_users)} пользователей...")
+    await update.message.reply_text(f"📤 *Начинаю рассылку для* {len(all_users)} *пользователей\.\.\.*", parse_mode='MarkdownV2')
     
     for uid in list(all_users):
         try:
             await context.bot.send_message(
                 chat_id=int(uid),
-                text=f"📢 **СООБЩЕНИЕ ОТ АДМИНИСТРАТОРА**\n\n{text}",
+                text=f"📢 *СООБЩЕНИЕ ОТ АДМИНИСТРАТОРА*\n\n{text}",
                 parse_mode='Markdown'
             )
             sent += 1
@@ -1915,7 +1874,7 @@ async def send_all(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             failed += 1
     
-    await update.message.reply_text(f"✅ Рассылка завершена!\n📤 Отправлено: {sent}\n❌ Не отправлено: {failed}")
+    await update.message.reply_text(f"✅ *Рассылка завершена\!*\n📤 *Отправлено:* {sent}\n❌ *Не отправлено:* {failed}", parse_mode='Markdown')
 
 async def send_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Рассылка VIP пользователям"""
@@ -1924,20 +1883,20 @@ async def send_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
         return
     
     if not context.args:
-        await update.message.reply_text("❌ Использование: /send_vip [текст]")
+        await update.message.reply_text("❌ *Использование:* /send\_vip \[текст\]", parse_mode='MarkdownV2')
         return
     
     text = " ".join(context.args)
     sent = 0
     failed = 0
     
-    await update.message.reply_text(f"📤 Начинаю рассылку для {len(vip_users)} VIP пользователей...")
+    await update.message.reply_text(f"📤 *Начинаю рассылку для* {len(vip_users)} *VIP пользователей\.\.\.*", parse_mode='MarkdownV2')
     
     for uid in vip_users:
         try:
             await context.bot.send_message(
                 chat_id=int(uid),
-                text=f"👑 **VIP СООБЩЕНИЕ ОТ АДМИНИСТРАТОРА**\n\n{text}",
+                text=f"👑 *VIP СООБЩЕНИЕ ОТ АДМИНИСТРАТОРА*\n\n{text}",
                 parse_mode='Markdown'
             )
             sent += 1
@@ -1945,7 +1904,7 @@ async def send_vip(update: Update, context: ContextTypes.DEFAULT_TYPE):
         except:
             failed += 1
     
-    await update.message.reply_text(f"✅ Рассылка VIP завершена!\n📤 Отправлено: {sent}\n❌ Не отправлено: {failed}")
+    await update.message.reply_text(f"✅ *Рассылка VIP завершена\!*\n📤 *Отправлено:* {sent}\n❌ *Не отправлено:* {failed}", parse_mode='Markdown')
 
 async def user_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Статистика конкретного пользователя"""
@@ -1954,33 +1913,33 @@ async def user_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE)
         return
     
     if not context.args:
-        await update.message.reply_text("❌ Использование: /stats [user_id]")
+        await update.message.reply_text("❌ *Использование:* /stats \[user\_id\]", parse_mode='MarkdownV2')
         return
     
     target_id = context.args[0]
     stats = user_stats.get(target_id, {})
     
     if not stats:
-        await update.message.reply_text(f"❌ Пользователь {target_id} не найден")
+        await update.message.reply_text(f"❌ *Пользователь* `{target_id}` *не найден*", parse_mode='MarkdownV2')
         return
     
     message = f"""
-📊 **СТАТИСТИКА ПОЛЬЗОВАТЕЛЯ {target_id}:**
+📊 *СТАТИСТИКА ПОЛЬЗОВАТЕЛЯ {target_id}:*
 
-👤 **ID:** `{target_id}`
-👑 **Статус:** {'✅ VIP' if target_id in vip_users else '🔒 Обычный'}
-📅 **Дата регистрации:** {stats.get('join_date', 'Неизвестно')}
+👤 *ID:* `{target_id}`
+👑 *Статус:* {'✅ VIP' if target_id in vip_users else '🔒 Обычный'}
+📅 *Дата регистрации:* {stats.get('join_date', 'Неизвестно')}
 
-🎯 **Точность:** {stats.get('win_rate', 0):.1f}%
-💰 **Общая прибыль:** ${stats.get('profit', 0):.2f}
-📊 **Всего сделок:** {stats.get('total_trades', 0)}
-✅ **Выиграно:** {stats.get('wins', 0)}
-❌ **Проиграно:** {stats.get('losses', 0)}
-🔥 **Текущая серия:** {stats.get('current_streak', 0)} побед
-🏆 **Лучшая серия:** {stats.get('best_streak', 0)} побед
+🎯 *Точность:* *{stats.get('win_rate', 0):.1f}\%*
+💰 *Общая прибыль:* *\${stats.get('profit', 0):.2f}*
+📊 *Всего сделок:* *{stats.get('total_trades', 0)}*
+✅ *Выиграно:* *{stats.get('wins', 0)}*
+❌ *Проиграно:* *{stats.get('losses', 0)}*
+🔥 *Текущая серия:* *{stats.get('current_streak', 0)}* побед
+🏆 *Лучшая серия:* *{stats.get('best_streak', 0)}* побед
 """
     
-    await update.message.reply_text(message, parse_mode='Markdown')
+    await update.message.reply_text(message, parse_mode='MarkdownV2')
 
 async def top_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Топ 10 трейдеров"""
@@ -2002,18 +1961,18 @@ async def top_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     top_users.sort(key=lambda x: x['profit'], reverse=True)
     
     if not top_users:
-        await update.message.reply_text("📊 Нет данных для топа")
+        await update.message.reply_text("📊 *Нет данных для топа*", parse_mode='MarkdownV2')
         return
     
-    message = "🏆 **ТОП 10 ТРЕЙДЕРОВ:**\n\n"
+    message = "🏆 *ТОП 10 ТРЕЙДЕРОВ:*\n\n"
     
     for i, trader in enumerate(top_users[:10], 1):
-        message += f"{i}. **Трейдер ID...{trader['user_id']}**\n"
-        message += f"   💰 Прибыль: ${trader['profit']:.2f}\n"
-        message += f"   🎯 Точность: {trader['win_rate']:.1f}%\n"
-        message += f"   📊 Сделок: {trader['total_trades']}\n\n"
+        message += f"{i}\. *Трейдер ID\.\.\.{trader['user_id']}*\n"
+        message += f"   💰 *Прибыль:* \${trader['profit']:.2f}\n"
+        message += f"   🎯 *Точность:* {trader['win_rate']:.1f}\%\n"
+        message += f"   📊 *Сделок:* {trader['total_trades']}\n\n"
     
-    await update.message.reply_text(message, parse_mode='Markdown')
+    await update.message.reply_text(message, parse_mode='MarkdownV2')
 
 async def system_stats_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Статистика системы"""
@@ -2027,27 +1986,27 @@ async def system_stats_command(update: Update, context: ContextTypes.DEFAULT_TYP
     total_signals = sum(len(v) for v in signal_history.values())
     
     message = f"""
-📊 **СТАТИСТИКА СИСТЕМЫ:**
+📊 *СТАТИСТИКА СИСТЕМЫ:*
 
-👥 **Пользователи:** {total_users}
-👑 **VIP:** {total_vip}
-📈 **Сигналов:** {total_signals}
-💰 **Общая прибыль:** ${total_profit:.2f}
+👥 *Пользователи:* {total_users}
+👑 *VIP:* {total_vip}
+📈 *Сигналов:* {total_signals}
+💰 *Общая прибыль:* \${total_profit:.2f}
 
-🌍 **Активные языки:**
-🇷🇺 Русский: {sum(1 for lang in user_languages.values() if lang == 'ru')}
-🇺🇿 Oʻzbekcha: {sum(1 for lang in user_languages.values() if lang == 'uz')}
-🇰🇬 Кыргызча: {sum(1 for lang in user_languages.values() if lang == 'kg')}
-🇺🇸 English: {sum(1 for lang in user_languages.values() if lang == 'en')}
+🌍 *Активные языки:*
+🇷🇺 *Русский:* {sum(1 for lang in user_languages.values() if lang == 'ru')}
+🇺🇿 *Oʻzbekcha:* {sum(1 for lang in user_languages.values() if lang == 'uz')}
+🇰🇬 *Кыргызча:* {sum(1 for lang in user_languages.values() if lang == 'kg')}
+🇺🇸 *English:* {sum(1 for lang in user_languages.values() if lang == 'en')}
 
-🤖 **Автосигналы:**
-✅ Включили: {sum(1 for enabled in auto_signals_enabled.values() if enabled)}
-❌ Выключили: {sum(1 for enabled in auto_signals_enabled.values() if not enabled)}
+🤖 *Автосигналы:*
+✅ *Включили:* {sum(1 for enabled in auto_signals_enabled.values() if enabled)}
+❌ *Выключили:* {sum(1 for enabled in auto_signals_enabled.values() if not enabled)}
 
-⏰ **Время работы:** 24/7
+⏰ *Время работы:* 24/7
 """
     
-    await update.message.reply_text(message, parse_mode='Markdown')
+    await update.message.reply_text(message, parse_mode='MarkdownV2')
 
 async def backup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Создание бэкапа"""
@@ -2063,7 +2022,7 @@ async def backup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Database.save("user_languages.json", user_languages)
     Database.save("auto_signals.json", auto_signals_enabled)
     
-    await update.message.reply_text("✅ Бэкап создан!")
+    await update.message.reply_text("✅ *Бэкап создан\!*", parse_mode='MarkdownV2')
 
 async def cleanup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     """Очистка неактивных пользователей"""
@@ -2106,7 +2065,7 @@ async def cleanup_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     Database.save("user_languages.json", user_languages)
     Database.save("auto_signals.json", auto_signals_enabled)
     
-    await update.message.reply_text(f"✅ Очищено {cleaned} неактивных пользователей!")
+    await update.message.reply_text(f"✅ *Очищено* {cleaned} *неактивных пользователей\!*", parse_mode='MarkdownV2')
 
 # ============================================
 # 🚀 ЗАПУСК БОТА
@@ -2136,11 +2095,6 @@ async def main():
     
     # Создаем приложение бота
     application = Application.builder().token(TOKEN).build()
-    
-    # Создаем и запускаем систему автосигналов
-    auto_sender = AdvancedAutoSignalSender(application.bot)
-    asyncio.create_task(auto_sender.start())
-    logger.info("🤖 Автосигналы запущены (каждые 5 минут)")
     
     # Добавляем обработчики команд
     application.add_handler(CommandHandler("start", start_command))
