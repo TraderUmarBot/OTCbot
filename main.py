@@ -282,7 +282,6 @@ user_languages: Dict = Database.load("data/user_languages.json", {})
 banned_users: Set[str] = set(Database.load("data/banned_users.json", []))
 auto_signals: Dict = Database.load("data/auto_signals.json", {})
 admin_logs: List = Database.load("data/admin_logs.json", [])
-user_messages: Dict = Database.load("data/user_messages.json", {})
 
 # ============================================
 # 📊 УЛУЧШЕННЫЙ МАТЕМАТИЧЕСКИЙ АНАЛИЗ РЫНКА
@@ -1421,9 +1420,35 @@ async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     message += f"<b>{t(user_id, 'total_users')}</b> <b>{len(all_users)}</b>\n"
     message += f"<b>{t(user_id, 'vip_users')}</b> <b>{len(vip_users)}</b>\n"
     message += f"<b>{t(user_id, 'banned_users')}</b> <b>{len(banned_users)}</b>\n"
-    message += f"<b>📊 Сигналов сегодня:</b> <b>{sum(len(v) for v in signal_history.values())}</b>\n"
+    
+    # Подсчет сигналов сегодня
+    today = datetime.now().date()
+    today_signals = 0
+    for user_signals in signal_history.values():
+        for signal in user_signals:
+            if isinstance(signal, dict):
+                signal_timestamp = signal.get('timestamp')
+                if signal_timestamp:
+                    try:
+                        if isinstance(signal_timestamp, str):
+                            signal_date = datetime.fromisoformat(signal_timestamp).date()
+                        else:
+                            signal_date = datetime.fromtimestamp(signal_timestamp).date()
+                        
+                        if signal_date == today:
+                            today_signals += 1
+                    except:
+                        pass
+    
+    message += f"<b>📊 Сигналов сегодня:</b> <b>{today_signals}</b>\n"
     message += f"<b>🤖 Автосигналы:</b> <b>{sum(1 for v in auto_signals.values() if v)}</b> активны\n"
-    message += f"<b>⏰ Последний автопинг:</b> <b>{ping_system.last_ping.strftime('%H:%M:%S') if ping_system and ping_system.last_ping else 'Не было'}</b>"
+    
+    # Проверка наличия ping_system
+    ping_info = 'Не было'
+    if 'ping_system' in globals() and ping_system and ping_system.last_ping:
+        ping_info = ping_system.last_ping.strftime('%H:%M:%S')
+    
+    message += f"<b>⏰ Последний автопинг:</b> <b>{ping_info}</b>"
     
     await query.edit_message_text(
         message,
@@ -1444,6 +1469,8 @@ async def admin_stats_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     # Статистика за сегодня
     today = datetime.now().date()
     today_signals = 0
+    new_users_today = 0
+    
     for user_signals in signal_history.values():
         for signal in user_signals:
             if isinstance(signal, dict):
@@ -1460,15 +1487,40 @@ async def admin_stats_callback(update: Update, context: ContextTypes.DEFAULT_TYP
                     except:
                         pass
     
+    # Подсчет новых пользователей за сегодня
+    for uid in all_users:
+        user_stat = user_stats.get(uid, {})
+        join_date_str = user_stat.get('join_date', '2000-01-01 00:00:00')
+        try:
+            join_date = datetime.strptime(join_date_str, '%Y-%m-%d %H:%M:%S').date()
+            if join_date == today:
+                new_users_today += 1
+        except:
+            pass
+    
+    # Подсчет средней точности
+    win_rates = []
+    for stats in user_stats.values():
+        if stats.get('total_trades', 0) > 0:
+            win_rates.append(stats.get('win_rate', 0))
+    
+    avg_accuracy = np.mean(win_rates) if win_rates else 0
+    
     message = f"<b>{t(user_id, 'admin_stats')}</b>\n\n"
     message += f"<b>👥 Всего пользователей:</b> <b>{len(all_users)}</b>\n"
     message += f"<b>👑 VIP пользователей:</b> <b>{len(vip_users)}</b>\n"
     message += f"<b>⛔ Заблокированных:</b> <b>{len(banned_users)}</b>\n"
-    message += f"<b>📊 Новых за сегодня:</b> <b>{len([uid for uid in all_users if datetime.now().date() == datetime.strptime(user_stats.get(uid, {}).get('join_date', '2000-01-01'), '%Y-%m-%d %H:%M:%S').date()])}</b>\n"
+    message += f"<b>📊 Новых за сегодня:</b> <b>{new_users_today}</b>\n"
     message += f"<b>🎯 Сигналов сегодня:</b> <b>{today_signals}</b>\n"
     message += f"<b>🤖 Автосигналы активны:</b> <b>{sum(1 for v in auto_signals.values() if v)}</b>\n"
-    message += f"<b>⏰ Автопинг:</b> <b>Каждые 3 минуты ({ping_system.ping_count if ping_system else 0} раз)</b>\n"
-    message += f"<b>📈 Средняя точность:</b> <b>{np.mean([stats.get('win_rate', 0) for stats in user_stats.values()]):.1f}%</b>"
+    
+    # Проверка наличия ping_system
+    ping_count = 0
+    if 'ping_system' in globals() and ping_system:
+        ping_count = ping_system.ping_count
+    
+    message += f"<b>⏰ Автопинг:</b> <b>Каждые 3 минуты ({ping_count} раз)</b>\n"
+    message += f"<b>📈 Средняя точность:</b> <b>{avg_accuracy:.1f}%</b>"
     
     await query.edit_message_text(
         message,
@@ -1479,19 +1531,6 @@ async def admin_stats_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     )
 
 async def admin_grant_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    query = update.callback_query
-    await query.answer()
-    
-    user_id = str(query.from_user.id)
-    
-    if not is_admin(int(user_id)):
-        await query.answer("⛔ Только для администраторов!", show_alert=True)
-        return
-    
-    await query.edit_message_text(
-        f"<b>{t(user_id, 'grant')}</b>\n\n"
-        f"{t(user_id
-    async def admin_grant_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
     
@@ -1964,6 +2003,7 @@ async def process_admin_action(update: Update, context: ContextTypes.DEFAULT_TYP
             if target_id not in all_users:
                 all_users.add(target_id)
                 Database.save("data/all_users.json", list(all_users))
+                ensure_user_data(target_id)
             
             add_admin_log("grant_vip", user_id, target_id)
             
