@@ -71,7 +71,7 @@ SOCIALS = {
 }
 
 # ============================================
-# 🌐 FLASK СЕРВЕР ДЛЯ 24/7
+# 🌐 FLASK СЕРВЕР ДЛЯ 24/7 + АВТОПИНГ
 # ============================================
 
 app = Flask(__name__)
@@ -104,6 +104,7 @@ def home():
                 <p>🤖 Telegram Bot: ACTIVE</p>
                 <p>🎯 Signal Accuracy: 94-97%</p>
                 <p>⏰ Auto Signals: Every 2-3 minutes</p>
+                <p>⏱️ Auto Ping: Every 3 minutes</p>
                 <p>📊 Pairs: OTC & Exchange</p>
                 <p>📈 Indicators: 20+ Technical Indicators</p>
             </div>
@@ -118,6 +119,65 @@ def run_flask():
         serve(app, host="0.0.0.0", port=8080)
     except:
         app.run(host="0.0.0.0", port=8080, debug=False, threaded=True)
+
+# ============================================
+# ⏰ СИСТЕМА АВТОПИНГА КАЖДЫЕ 3 МИНУТЫ
+# ============================================
+
+class AutoPingSystem:
+    def __init__(self, application):
+        self.application = application
+        self.running = False
+        self.ping_task = None
+        self.last_ping = None
+    
+    async def start(self):
+        """Запуск системы автопинга"""
+        self.running = True
+        self.ping_task = asyncio.create_task(self.ping_loop())
+        logger.info("⏰ Система автопинга ЗАПУЩЕНА (каждые 3 минуты)")
+    
+    async def stop(self):
+        """Остановка системы автопинга"""
+        self.running = False
+        if self.ping_task:
+            self.ping_task.cancel()
+            try:
+                await self.ping_task
+            except asyncio.CancelledError:
+                pass
+        logger.info("⏰ Система автопинга ОСТАНОВЛЕНА")
+    
+    async def ping_loop(self):
+        """Основной цикл автопинга - каждые 3 минуты"""
+        while self.running:
+            try:
+                # Ждем 3 минуты
+                await asyncio.sleep(180)  # 3 минуты = 180 секунд
+                
+                # Отправляем пинг всем администраторам
+                for admin_id in ADMIN_IDS:
+                    try:
+                        await self.application.bot.send_message(
+                            chat_id=admin_id,
+                            text=f"✅ <b>АВТОПИНГ: Бот активен</b>\n\n"
+                                 f"⏰ Время: {datetime.now().strftime('%H:%M:%S')}\n"
+                                 f"📅 Дата: {datetime.now().strftime('%d.%m.%Y')}\n"
+                                 f"👥 Пользователей: {len(all_users)}\n"
+                                 f"👑 VIP: {len(vip_users)}\n"
+                                 f"🤖 Автосигналы: {sum(1 for v in auto_signals.values() if v)} активны\n"
+                                 f"🎯 Сигналов сегодня: {sum(len(v) for v in signal_history.values())}",
+                            parse_mode='HTML'
+                        )
+                        logger.info(f"✅ Автопинг отправлен администратору {admin_id}")
+                    except Exception as e:
+                        logger.error(f"Ошибка отправки автопинга {admin_id}: {e}")
+                
+                self.last_ping = datetime.now()
+                
+            except Exception as e:
+                logger.error(f"Ошибка в цикле автопинга: {e}")
+                await asyncio.sleep(60)
 
 # ============================================
 # 💾 СИСТЕМА БАЗ ДАННЫХ
@@ -577,6 +637,7 @@ TEXTS = {
         'require_vip': "🔒 Требуется VIP",
         'accuracy': "🎯 Точность: 94-97%",
         'auto_signals': "⏰ Автосигналы: каждые 2-3 минуты",
+        'auto_ping': "⏱️ Автопинг: каждые 3 минуты",
         
         'choose_market': "🎯 ВЫБЕРИТЕ ТИП РЫНКА:",
         'otc_market': "💱 OTC РЫНОК",
@@ -631,11 +692,15 @@ TEXTS = {
         'unban': "✅ Разблокировка",
         'broadcast': "📢 Рассылка",
         'send_message': "💬 Отправить сообщение",
+        'send_photo': "📸 Отправить фото",
+        'send_video': "🎥 Отправить видео",
+        'send_document': "📎 Отправить документ",
         'enter_user_id': "Введите ID пользователя:",
         'enter_message': "Введите сообщение:",
         'enter_photo': "Отправьте фото:",
         'enter_video': "Отправьте видео:",
         'enter_link': "Отправьте ссылку:",
+        'enter_document': "Отправьте документ:",
         
         'back': "🔙 Назад",
         'main_menu_btn': "🏠 Главное меню",
@@ -647,7 +712,120 @@ TEXTS = {
         'photo_sent': "📸 Фото отправлено",
         'video_sent': "🎥 Видео отправлено",
         'link_sent': "🔗 Ссылка отправлена",
+        'document_sent': "📎 Документ отправлен",
         'message_sent': "💬 Сообщение отправлено",
+        'user_not_found': "❌ Пользователь не найден",
+        'user_banned': "⛔ Пользователь заблокирован",
+        'user_unbanned': "✅ Пользователь разблокирован",
+        'vip_granted': "✅ VIP выдан",
+        'vip_revoked': "❌ VIP отозван",
+        'broadcast_start': "⏳ Начинаю рассылку...",
+        'broadcast_complete': "✅ Рассылка завершена",
+        'sent_to': "📤 Отправлено:",
+        'failed_to': "❌ Не отправлено:",
+        'admin_stats': "📊 Статистика админа",
+        'admin_logs': "📝 Логи администратора",
+        'ping_sent': "⏰ Автопинг отправлен",
+    },
+    'en': {
+        'welcome': "👋 Welcome to KURUT AI INFINITY!",
+        'choose_lang': "Choose language:",
+        'main_menu': "🚀 KURUT AI INFINITY v12.0",
+        'your_id': "🆔 Your ID:",
+        'status': "👑 Status:",
+        'vip': "✅ VIP",
+        'require_vip': "🔒 VIP Required",
+        'accuracy': "🎯 Accuracy: 94-97%",
+        'auto_signals': "⏰ Auto signals: every 2-3 minutes",
+        'auto_ping': "⏱️ Auto ping: every 3 minutes",
+        
+        'choose_market': "🎯 CHOOSE MARKET TYPE:",
+        'otc_market': "💱 OTC MARKET",
+        'exchange_market': "🏛️ EXCHANGE MARKET",
+        'choose_pair': "📊 CHOOSE CURRENCY PAIR:",
+        'analyzing': "🔍 Analyzing market with 20+ indicators...",
+        'signal_title': "🎯 PROFESSIONAL SIGNAL",
+        'pair': "📊 Pair:",
+        'direction': "🎯 Direction:",
+        'probability': "📈 Probability:",
+        'strength': "💪 Strength:",
+        'expiration': "⏰ Expiration:",
+        'exact_time': "🕒 Exact time:",
+        'entry_time': "⏱️ Entry time:",
+        'time': "⏱️ Signal time:",
+        'date': "📅 Date:",
+        'analysis': "📊 ANALYSIS WITH 20+ INDICATORS:",
+        'market_sentiment': "Market sentiment:",
+        'sentiment_score': "Sentiment score:",
+        'risk_level': "Risk level:",
+        'buy_signals': "Buy signals:",
+        'sell_signals': "Sell signals:",
+        'confidence': "Confidence:",
+        'stop_loss': "Stop loss:",
+        'take_profit': "Take profit:",
+        'key_indicators': "Key indicators:",
+        'reasons': "📋 Signal reasons:",
+        'recommendations': "⚠️ RECOMMENDATIONS:",
+        'risk': "• Risk: 2-3% of deposit",
+        'entry': "• Entry: market price",
+        'expiration_time': "• Expiration:",
+        'good_luck': "🚀 Good luck trading!",
+        
+        'auto_signal': "🤖 AUTOMATIC SIGNAL",
+        'auto_enabled': "✅ Auto signals ENABLED",
+        'auto_disabled': "❌ Auto signals DISABLED",
+        'toggle_on': "✅ ENABLE",
+        'toggle_off': "❌ DISABLE",
+        
+        'marathon': "📅 30 DAYS MARATHON",
+        'enter_deposit': "💰 Enter starting deposit ($):",
+        'min_deposit': "🚨 Minimum deposit: $50",
+        'generating': "⏳ Generating plan...",
+        
+        'admin_panel': "⚡ ADMIN PANEL",
+        'total_users': "👥 Total users:",
+        'vip_users': "👑 VIP users:",
+        'banned_users': "⛔ Banned users:",
+        'grant': "➕ Grant VIP",
+        'revoke': "➖ Revoke VIP",
+        'ban': "⛔ Ban",
+        'unban': "✅ Unban",
+        'broadcast': "📢 Broadcast",
+        'send_message': "💬 Send message",
+        'send_photo': "📸 Send photo",
+        'send_video': "🎥 Send video",
+        'send_document': "📎 Send document",
+        'enter_user_id': "Enter user ID:",
+        'enter_message': "Enter message:",
+        'enter_photo': "Send photo:",
+        'enter_video': "Send video:",
+        'enter_link': "Send link:",
+        'enter_document': "Send document:",
+        
+        'back': "🔙 Back",
+        'main_menu_btn': "🏠 Main Menu",
+        'contact_admin': "📞 Contact admin",
+        'processing': "⏳ Processing...",
+        'error': "⚠️ Error!",
+        'success': "✅ Success!",
+        'use_buttons': "Use buttons!",
+        'photo_sent': "📸 Photo sent",
+        'video_sent': "🎥 Video sent",
+        'link_sent': "🔗 Link sent",
+        'document_sent': "📎 Document sent",
+        'message_sent': "💬 Message sent",
+        'user_not_found': "❌ User not found",
+        'user_banned': "⛔ User banned",
+        'user_unbanned': "✅ User unbanned",
+        'vip_granted': "✅ VIP granted",
+        'vip_revoked': "❌ VIP revoked",
+        'broadcast_start': "⏳ Starting broadcast...",
+        'broadcast_complete': "✅ Broadcast complete",
+        'sent_to': "📤 Sent to:",
+        'failed_to': "❌ Failed to:",
+        'admin_stats': "📊 Admin statistics",
+        'admin_logs': "📝 Admin logs",
+        'ping_sent': "⏰ Auto ping sent",
     }
 }
 
@@ -741,10 +919,6 @@ class KeyboardManager:
             [
                 InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
                 InlineKeyboardButton("🇺🇸 English", callback_data="lang_en")
-            ],
-            [
-                InlineKeyboardButton("🇺🇿 Oʻzbekcha", callback_data="lang_uz"),
-                InlineKeyboardButton("🇰🇬 Кыргызча", callback_data="lang_kg")
             ]
         ])
     
@@ -754,73 +928,148 @@ class KeyboardManager:
         keyboard = []
         
         if is_vip(user_id):
-            keyboard.append([InlineKeyboardButton("🚀 Получить сигнал", callback_data="get_signal")])
-            keyboard.append([
-                InlineKeyboardButton("🤖 Автосигналы", callback_data="auto_signals_menu"),
-                InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
-            ])
-            keyboard.append([
-                InlineKeyboardButton("📅 Марафон", callback_data="marathon_menu"),
-                InlineKeyboardButton("🏆 Топ", callback_data="top_traders")
-            ])
+            if lang == 'ru':
+                keyboard.append([InlineKeyboardButton("🚀 Получить сигнал", callback_data="get_signal")])
+                keyboard.append([
+                    InlineKeyboardButton("🤖 Автосигналы", callback_data="auto_signals_menu"),
+                    InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
+                ])
+                keyboard.append([
+                    InlineKeyboardButton("📅 Марафон", callback_data="marathon_menu"),
+                    InlineKeyboardButton("🏆 Топ", callback_data="top_traders")
+                ])
+            elif lang == 'en':
+                keyboard.append([InlineKeyboardButton("🚀 Get Signal", callback_data="get_signal")])
+                keyboard.append([
+                    InlineKeyboardButton("🤖 Auto Signals", callback_data="auto_signals_menu"),
+                    InlineKeyboardButton("📊 Statistics", callback_data="my_stats")
+                ])
+                keyboard.append([
+                    InlineKeyboardButton("📅 Marathon", callback_data="marathon_menu"),
+                    InlineKeyboardButton("🏆 Top", callback_data="top_traders")
+                ])
         else:
-            keyboard.append([
-                InlineKeyboardButton("📝 Регистрация", url=REF_LINK),
-                InlineKeyboardButton("👑 Получить VIP", callback_data="get_vip")
-            ])
-            keyboard.append([
-                InlineKeyboardButton("💎 О боте", callback_data="about"),
-                InlineKeyboardButton("📱 Соцсети", callback_data="socials")
-            ])
+            if lang == 'ru':
+                keyboard.append([
+                    InlineKeyboardButton("📝 Регистрация", url=REF_LINK),
+                    InlineKeyboardButton("👑 Получить VIP", callback_data="get_vip")
+                ])
+                keyboard.append([
+                    InlineKeyboardButton("💎 О боте", callback_data="about"),
+                    InlineKeyboardButton("📱 Соцсети", callback_data="socials")
+                ])
+            elif lang == 'en':
+                keyboard.append([
+                    InlineKeyboardButton("📝 Register", url=REF_LINK),
+                    InlineKeyboardButton("👑 Get VIP", callback_data="get_vip")
+                ])
+                keyboard.append([
+                    InlineKeyboardButton("💎 About", callback_data="about"),
+                    InlineKeyboardButton("📱 Socials", callback_data="socials")
+                ])
         
         # Админ панель
-        if is_admin(user_id):
-            keyboard.append([InlineKeyboardButton("⚡ Админ Панель", callback_data="admin_panel")])
+        if is_admin(int(user_id) if user_id.isdigit() else 0):
+            if lang == 'ru':
+                keyboard.append([InlineKeyboardButton("⚡ Админ Панель", callback_data="admin_panel")])
+            elif lang == 'en':
+                keyboard.append([InlineKeyboardButton("⚡ Admin Panel", callback_data="admin_panel")])
         
         # Контакт админа
-        keyboard.append([InlineKeyboardButton("📞 Связаться с админом", url=ADMIN_LINK)])
+        if lang == 'ru':
+            keyboard.append([InlineKeyboardButton("📞 Связаться с админом", url=ADMIN_LINK)])
+        elif lang == 'en':
+            keyboard.append([InlineKeyboardButton("📞 Contact Admin", url=ADMIN_LINK)])
         
         return InlineKeyboardMarkup(keyboard)
     
     @staticmethod
-    def admin_panel() -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("📊 Статистика", callback_data="admin_stats"),
-                InlineKeyboardButton("👥 Пользователи", callback_data="admin_users")
-            ],
-            [
-                InlineKeyboardButton("➕ Выдать VIP", callback_data="admin_grant"),
-                InlineKeyboardButton("➖ Забрать VIP", callback_data="admin_revoke")
-            ],
-            [
-                InlineKeyboardButton("⛔ Блокировка", callback_data="admin_ban"),
-                InlineKeyboardButton("✅ Разблокировка", callback_data="admin_unban")
-            ],
-            [
-                InlineKeyboardButton("📢 Рассылка", callback_data="admin_broadcast"),
-                InlineKeyboardButton("💬 Сообщение", callback_data="admin_message")
-            ],
-            [
-                InlineKeyboardButton("📸 Отправить фото", callback_data="admin_photo"),
-                InlineKeyboardButton("🎥 Отправить видео", callback_data="admin_video")
-            ],
-            [
-                InlineKeyboardButton("🔗 Отправить ссылку", callback_data="admin_link"),
-                InlineKeyboardButton("📝 Логи", callback_data="admin_logs")
-            ],
-            [
-                InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
-            ]
-        ])
+    def admin_panel(user_id: str) -> InlineKeyboardMarkup:
+        lang = get_user_language(user_id)
+        if lang == 'ru':
+            return InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("📊 Статистика", callback_data="admin_stats"),
+                    InlineKeyboardButton("👥 Пользователи", callback_data="admin_users")
+                ],
+                [
+                    InlineKeyboardButton("➕ Выдать VIP", callback_data="admin_grant"),
+                    InlineKeyboardButton("➖ Забрать VIP", callback_data="admin_revoke")
+                ],
+                [
+                    InlineKeyboardButton("⛔ Блокировка", callback_data="admin_ban"),
+                    InlineKeyboardButton("✅ Разблокировка", callback_data="admin_unban")
+                ],
+                [
+                    InlineKeyboardButton("📢 Рассылка", callback_data="admin_broadcast"),
+                    InlineKeyboardButton("💬 Сообщение", callback_data="admin_message")
+                ],
+                [
+                    InlineKeyboardButton("📸 Отправить фото", callback_data="admin_photo"),
+                    InlineKeyboardButton("🎥 Отправить видео", callback_data="admin_video")
+                ],
+                [
+                    InlineKeyboardButton("🔗 Отправить ссылку", callback_data="admin_link"),
+                    InlineKeyboardButton("📎 Отправить файл", callback_data="admin_document")
+                ],
+                [
+                    InlineKeyboardButton("📝 Логи", callback_data="admin_logs_view"),
+                    InlineKeyboardButton("⏰ Пинг", callback_data="admin_ping")
+                ],
+                [
+                    InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+                ]
+            ])
+        else:
+            return InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("📊 Stats", callback_data="admin_stats"),
+                    InlineKeyboardButton("👥 Users", callback_data="admin_users")
+                ],
+                [
+                    InlineKeyboardButton("➕ Grant VIP", callback_data="admin_grant"),
+                    InlineKeyboardButton("➖ Revoke VIP", callback_data="admin_revoke")
+                ],
+                [
+                    InlineKeyboardButton("⛔ Ban", callback_data="admin_ban"),
+                    InlineKeyboardButton("✅ Unban", callback_data="admin_unban")
+                ],
+                [
+                    InlineKeyboardButton("📢 Broadcast", callback_data="admin_broadcast"),
+                    InlineKeyboardButton("💬 Message", callback_data="admin_message")
+                ],
+                [
+                    InlineKeyboardButton("📸 Send Photo", callback_data="admin_photo"),
+                    InlineKeyboardButton("🎥 Send Video", callback_data="admin_video")
+                ],
+                [
+                    InlineKeyboardButton("🔗 Send Link", callback_data="admin_link"),
+                    InlineKeyboardButton("📎 Send File", callback_data="admin_document")
+                ],
+                [
+                    InlineKeyboardButton("📝 Logs", callback_data="admin_logs_view"),
+                    InlineKeyboardButton("⏰ Ping", callback_data="admin_ping")
+                ],
+                [
+                    InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")
+                ]
+            ])
     
     @staticmethod
     def market_menu(user_id: str) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup([
-            [InlineKeyboardButton("💱 OTC РЫНОК", callback_data="market_otc")],
-            [InlineKeyboardButton("🏛️ БИРЖЕВОЙ РЫНОК", callback_data="market_exchange")],
-            [InlineKeyboardButton("🔙 Назад", callback_data="main_menu")]
-        ])
+        lang = get_user_language(user_id)
+        if lang == 'ru':
+            return InlineKeyboardMarkup([
+                [InlineKeyboardButton("💱 OTC РЫНОК", callback_data="market_otc")],
+                [InlineKeyboardButton("🏛️ БИРЖЕВОЙ РЫНОК", callback_data="market_exchange")],
+                [InlineKeyboardButton("🔙 Назад", callback_data="main_menu")]
+            ])
+        else:
+            return InlineKeyboardMarkup([
+                [InlineKeyboardButton("💱 OTC MARKET", callback_data="market_otc")],
+                [InlineKeyboardButton("🏛️ EXCHANGE MARKET", callback_data="market_exchange")],
+                [InlineKeyboardButton("🔙 Back", callback_data="main_menu")]
+            ])
     
     @staticmethod
     def pairs_menu(pairs: List[str], market_type: str, page: int = 0, user_id: str = None) -> InlineKeyboardMarkup:
@@ -839,59 +1088,107 @@ class KeyboardManager:
                 keyboard.append(row)
         
         nav_buttons = []
+        lang = get_user_language(user_id) if user_id else 'ru'
         
         if page > 0:
-            nav_buttons.append(InlineKeyboardButton("⬅️ Назад", callback_data=f"page_{market_type}_{page-1}"))
+            nav_buttons.append(InlineKeyboardButton(
+                "⬅️ Назад" if lang == 'ru' else "⬅️ Back",
+                callback_data=f"page_{market_type}_{page-1}"
+            ))
         
         if end < len(pairs):
-            nav_buttons.append(InlineKeyboardButton("Далее ➡️", callback_data=f"page_{market_type}_{page+1}"))
+            nav_buttons.append(InlineKeyboardButton(
+                "Далее ➡️" if lang == 'ru' else "Next ➡️",
+                callback_data=f"page_{market_type}_{page+1}"
+            ))
         
         if nav_buttons:
             keyboard.append(nav_buttons)
         
         keyboard.append([
-            InlineKeyboardButton("🔙 Назад", callback_data="get_signal"),
-            InlineKeyboardButton("🏠 Главное", callback_data="main_menu")
+            InlineKeyboardButton(
+                "🔙 Назад" if lang == 'ru' else "🔙 Back",
+                callback_data="get_signal"
+            ),
+            InlineKeyboardButton(
+                "🏠 Главное" if lang == 'ru' else "🏠 Main",
+                callback_data="main_menu"
+            )
         ])
         
         return InlineKeyboardMarkup(keyboard)
     
     @staticmethod
     def auto_signals_menu(user_id: str) -> InlineKeyboardMarkup:
+        lang = get_user_language(user_id)
         enabled = auto_signals.get(str(user_id), False)
         
-        return InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton(
-                    "❌ ВЫКЛЮЧИТЬ" if enabled else "✅ ВКЛЮЧИТЬ",
-                    callback_data="toggle_auto"
-                )
-            ],
-            [
-                InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
-            ]
-        ])
+        if lang == 'ru':
+            return InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "❌ ВЫКЛЮЧИТЬ" if enabled else "✅ ВКЛЮЧИТЬ",
+                        callback_data="toggle_auto"
+                    )
+                ],
+                [
+                    InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
+                ]
+            ])
+        else:
+            return InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton(
+                        "❌ DISABLE" if enabled else "✅ ENABLE",
+                        callback_data="toggle_auto"
+                    )
+                ],
+                [
+                    InlineKeyboardButton("🔙 Back", callback_data="main_menu")
+                ]
+            ])
     
     @staticmethod
     def result_menu(user_id: str) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("✅ Выиграл +95%", callback_data="trade_win_95"),
-                InlineKeyboardButton("✅ Выиграл +85%", callback_data="trade_win_85")
-            ],
-            [
-                InlineKeyboardButton("❌ Проиграл", callback_data="trade_loss"),
-                InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
-            ],
-            [
-                InlineKeyboardButton("🔄 Новый сигнал", callback_data="get_signal"),
-                InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
-            ]
-        ])
+        lang = get_user_language(user_id)
+        if lang == 'ru':
+            return InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("✅ Выиграл +95%", callback_data="trade_win_95"),
+                    InlineKeyboardButton("✅ Выиграл +85%", callback_data="trade_win_85")
+                ],
+                [
+                    InlineKeyboardButton("❌ Проиграл", callback_data="trade_loss"),
+                    InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
+                ],
+                [
+                    InlineKeyboardButton("🔄 Новый сигнал", callback_data="get_signal"),
+                    InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+                ]
+            ])
+        else:
+            return InlineKeyboardMarkup([
+                [
+                    InlineKeyboardButton("✅ Won +95%", callback_data="trade_win_95"),
+                    InlineKeyboardButton("✅ Won +85%", callback_data="trade_win_85")
+                ],
+                [
+                    InlineKeyboardButton("❌ Lost", callback_data="trade_loss"),
+                    InlineKeyboardButton("📊 Stats", callback_data="my_stats")
+                ],
+                [
+                    InlineKeyboardButton("🔄 New Signal", callback_data="get_signal"),
+                    InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")
+                ]
+            ])
     
     @staticmethod
     def back_to_menu(user_id: str) -> InlineKeyboardMarkup:
-        return InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]])
+        lang = get_user_language(user_id)
+        if lang == 'ru':
+            return InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]])
+        else:
+            return InlineKeyboardMarkup([[InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]])
 
 # ============================================
 # 🚀 ОСНОВНЫЕ КОМАНДЫ БОТА
@@ -946,6 +1243,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     message += f"<b>{t(user_id, 'status')}</b> {'✅ VIP' if is_vip(user_id) else '🔒 ' + t(user_id, 'require_vip')}\n"
     message += f"<b>{t(user_id, 'accuracy')}</b>\n"
     message += f"<b>{t(user_id, 'auto_signals')}</b>\n"
+    message += f"<b>{t(user_id, 'auto_ping')}</b>\n"
     message += f"<b>📈 Индикаторы:</b> 20+ технических индикаторов\n"
     
     if hasattr(update, 'edit_message_text'):
@@ -962,7 +1260,7 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
         )
 
 # ============================================
-# ⚡ АДМИН ФУНКЦИИ
+# ⚡ АДМИН ФУНКЦИИ - ПОЛНОСТЬЮ РАБОТАЮЩИЕ
 # ============================================
 
 async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -971,7 +1269,7 @@ async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
@@ -980,12 +1278,50 @@ async def admin_panel_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     message += f"<b>{t(user_id, 'vip_users')}</b> <b>{len(vip_users)}</b>\n"
     message += f"<b>{t(user_id, 'banned_users')}</b> <b>{len(banned_users)}</b>\n"
     message += f"<b>📊 Сигналов сегодня:</b> <b>{sum(len(v) for v in signal_history.values())}</b>\n"
-    message += f"<b>🤖 Автосигналы:</b> <b>{sum(1 for v in auto_signals.values() if v)}</b> активны"
+    message += f"<b>🤖 Автосигналы:</b> <b>{sum(1 for v in auto_signals.values() if v)}</b> активны\n"
+    message += f"<b>⏰ Последний автопинг:</b> <b>{ping_system.last_ping.strftime('%H:%M:%S') if ping_system.last_ping else 'Не было'}</b>"
     
     await query.edit_message_text(
         message,
         parse_mode='HTML',
-        reply_markup=KeyboardManager.admin_panel()
+        reply_markup=KeyboardManager.admin_panel(user_id)
+    )
+
+async def admin_stats_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = str(query.from_user.id)
+    
+    if not is_admin(int(user_id)):
+        await query.answer("⛔ Только для администраторов!", show_alert=True)
+        return
+    
+    # Статистика за сегодня
+    today = datetime.now().date()
+    today_signals = 0
+    for user_signals in signal_history.values():
+        for signal in user_signals:
+            signal_date = datetime.fromisoformat(signal.get('timestamp', '')).date() if isinstance(signal.get('timestamp'), str) else datetime.fromtimestamp(signal.get('timestamp', 0)).date()
+            if signal_date == today:
+                today_signals += 1
+    
+    message = f"<b>{t(user_id, 'admin_stats')}</b>\n\n"
+    message += f"<b>👥 Всего пользователей:</b> <b>{len(all_users)}</b>\n"
+    message += f"<b>👑 VIP пользователей:</b> <b>{len(vip_users)}</b>\n"
+    message += f"<b>⛔ Заблокированных:</b> <b>{len(banned_users)}</b>\n"
+    message += f"<b>📊 Новых за сегодня:</b> <b>{len([uid for uid in all_users if datetime.now().date() == datetime.strptime(user_stats.get(uid, {}).get('join_date', '2000-01-01'), '%Y-%m-%d %H:%M:%S').date()])}</b>\n"
+    message += f"<b>🎯 Сигналов сегодня:</b> <b>{today_signals}</b>\n"
+    message += f"<b>🤖 Автосигналы активны:</b> <b>{sum(1 for v in auto_signals.values() if v)}</b>\n"
+    message += f"<b>⏰ Автопинг:</b> <b>Каждые 3 минуты</b>\n"
+    message += f"<b>📈 Средняя точность:</b> <b>{np.mean([stats.get('win_rate', 0) for stats in user_stats.values()]):.1f}%</b>"
+    
+    await query.edit_message_text(
+        message,
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Назад" if get_user_language(user_id) == 'ru' else "🔙 Back", callback_data="admin_panel")]
+        ])
     )
 
 async def admin_grant_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -994,7 +1330,7 @@ async def admin_grant_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
@@ -1004,6 +1340,7 @@ async def admin_grant_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         parse_mode='HTML'
     )
     context.user_data["admin_action"] = "grant"
+    context.user_data["admin_step"] = "awaiting_user_id"
 
 async def admin_revoke_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1011,7 +1348,7 @@ async def admin_revoke_callback(update: Update, context: ContextTypes.DEFAULT_TY
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
@@ -1021,6 +1358,7 @@ async def admin_revoke_callback(update: Update, context: ContextTypes.DEFAULT_TY
         parse_mode='HTML'
     )
     context.user_data["admin_action"] = "revoke"
+    context.user_data["admin_step"] = "awaiting_user_id"
 
 async def admin_ban_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1028,7 +1366,7 @@ async def admin_ban_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
@@ -1038,6 +1376,7 @@ async def admin_ban_callback(update: Update, context: ContextTypes.DEFAULT_TYPE)
         parse_mode='HTML'
     )
     context.user_data["admin_action"] = "ban"
+    context.user_data["admin_step"] = "awaiting_user_id"
 
 async def admin_unban_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1045,7 +1384,7 @@ async def admin_unban_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
@@ -1055,6 +1394,7 @@ async def admin_unban_callback(update: Update, context: ContextTypes.DEFAULT_TYP
         parse_mode='HTML'
     )
     context.user_data["admin_action"] = "unban"
+    context.user_data["admin_step"] = "awaiting_user_id"
 
 async def admin_broadcast_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1062,7 +1402,7 @@ async def admin_broadcast_callback(update: Update, context: ContextTypes.DEFAULT
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
@@ -1072,6 +1412,7 @@ async def admin_broadcast_callback(update: Update, context: ContextTypes.DEFAULT
         parse_mode='HTML'
     )
     context.user_data["admin_action"] = "broadcast"
+    context.user_data["admin_step"] = "awaiting_message"
 
 async def admin_message_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
@@ -1079,7 +1420,7 @@ async def admin_message_callback(update: Update, context: ContextTypes.DEFAULT_T
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
@@ -1097,12 +1438,12 @@ async def admin_photo_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
     await query.edit_message_text(
-        f"<b>{t(user_id, 'send_message')}</b>\n\n"
+        f"<b>{t(user_id, 'send_photo')}</b>\n\n"
         f"{t(user_id, 'enter_user_id')}",
         parse_mode='HTML'
     )
@@ -1115,12 +1456,12 @@ async def admin_video_callback(update: Update, context: ContextTypes.DEFAULT_TYP
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
     await query.edit_message_text(
-        f"<b>{t(user_id, 'send_message')}</b>\n\n"
+        f"<b>{t(user_id, 'send_video')}</b>\n\n"
         f"{t(user_id, 'enter_user_id')}",
         parse_mode='HTML'
     )
@@ -1133,7 +1474,7 @@ async def admin_link_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     
     user_id = str(query.from_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         await query.answer("⛔ Только для администраторов!", show_alert=True)
         return
     
@@ -1145,16 +1486,108 @@ async def admin_link_callback(update: Update, context: ContextTypes.DEFAULT_TYPE
     context.user_data["admin_action"] = "send_link"
     context.user_data["admin_step"] = "awaiting_user_id"
 
+async def admin_document_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = str(query.from_user.id)
+    
+    if not is_admin(int(user_id)):
+        await query.answer("⛔ Только для администраторов!", show_alert=True)
+        return
+    
+    await query.edit_message_text(
+        f"<b>{t(user_id, 'send_document')}</b>\n\n"
+        f"{t(user_id, 'enter_user_id')}",
+        parse_mode='HTML'
+    )
+    context.user_data["admin_action"] = "send_document"
+    context.user_data["admin_step"] = "awaiting_user_id"
+
+async def admin_logs_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = str(query.from_user.id)
+    
+    if not is_admin(int(user_id)):
+        await query.answer("⛔ Только для администраторов!", show_alert=True)
+        return
+    
+    # Показываем последние 10 логов
+    recent_logs = admin_logs[-10:] if len(admin_logs) > 10 else admin_logs
+    
+    message = f"<b>{t(user_id, 'admin_logs')}</b>\n\n"
+    
+    if not recent_logs:
+        message += "Логи отсутствуют."
+    else:
+        for i, log in enumerate(reversed(recent_logs), 1):
+            message += f"<b>{i}.</b> <code>{log.get('timestamp', '')[:16]}</code>\n"
+            message += f"   <b>Действие:</b> {log.get('action', '')}\n"
+            if log.get('target_user'):
+                message += f"   <b>Пользователь:</b> {log.get('target_user')}\n"
+            if log.get('details'):
+                message += f"   <b>Детали:</b> {log.get('details')[:50]}...\n"
+            message += "\n"
+    
+    await query.edit_message_text(
+        message,
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Назад" if get_user_language(user_id) == 'ru' else "🔙 Back", callback_data="admin_panel")]
+        ])
+    )
+
+async def admin_ping_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    query = update.callback_query
+    await query.answer()
+    
+    user_id = str(query.from_user.id)
+    
+    if not is_admin(int(user_id)):
+        await query.answer("⛔ Только для администраторов!", show_alert=True)
+        return
+    
+    await query.answer("⏰ Отправляю автопинг...", show_alert=False)
+    
+    # Отправляем пинг всем администраторам
+    for admin_id in ADMIN_IDS:
+        try:
+            await context.bot.send_message(
+                chat_id=admin_id,
+                text=f"✅ <b>РУЧНОЙ ПИНГ: Бот активен</b>\n\n"
+                     f"⏰ Время: {datetime.now().strftime('%H:%M:%S')}\n"
+                     f"📅 Дата: {datetime.now().strftime('%d.%m.%Y')}\n"
+                     f"👥 Пользователей: {len(all_users)}\n"
+                     f"👑 VIP: {len(vip_users)}\n"
+                     f"🤖 Автосигналы: {sum(1 for v in auto_signals.values() if v)} активны\n"
+                     f"🎯 Сигналов сегодня: {sum(len(v) for v in signal_history.values())}",
+                parse_mode='HTML'
+            )
+        except Exception as e:
+            logger.error(f"Ошибка отправки ручного пинга {admin_id}: {e}")
+    
+    await query.edit_message_text(
+        f"✅ <b>{t(user_id, 'ping_sent')}</b>\n\n"
+        f"Пинг отправлен всем администраторам.",
+        parse_mode='HTML',
+        reply_markup=InlineKeyboardMarkup([
+            [InlineKeyboardButton("🔙 Назад" if get_user_language(user_id) == 'ru' else "🔙 Back", callback_data="admin_panel")]
+        ])
+    )
+
 async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     text = update.message.text.strip()
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         return
     
     action = context.user_data.get("admin_action")
+    step = context.user_data.get("admin_step")
     
-    if context.user_data.get("admin_step") == "awaiting_user_id":
+    if step == "awaiting_user_id":
         if not text.isdigit():
             await update.message.reply_text("❌ Неверный ID пользователя! Должен быть числом.")
             return
@@ -1162,7 +1595,10 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
         target_id = text
         context.user_data["target_user"] = target_id
         
-        if action in ["message_user", "send_photo", "send_video", "send_link"]:
+        if action in ["grant", "revoke", "ban", "unban"]:
+            # Немедленное выполнение для простых действий
+            await process_admin_action(update, context, action, target_id)
+        elif action in ["message_user", "send_photo", "send_video", "send_link", "send_document"]:
             context.user_data["admin_step"] = "awaiting_content"
             
             if action == "message_user":
@@ -1173,10 +1609,39 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
                 await update.message.reply_text(f"{t(user_id, 'enter_video')} для пользователя {target_id}:")
             elif action == "send_link":
                 await update.message.reply_text(f"{t(user_id, 'enter_link')} для пользователя {target_id}:")
-        else:
-            await process_admin_action(update, context, action, target_id)
+            elif action == "send_document":
+                await update.message.reply_text(f"{t(user_id, 'enter_document')} для пользователя {target_id}:")
     
-    elif context.user_data.get("admin_step") == "awaiting_content":
+    elif step == "awaiting_message" and action == "broadcast":
+        message = text
+        success = 0
+        failed = 0
+        
+        await update.message.reply_text(f"⏳ {t(user_id, 'broadcast_start')}")
+        
+        for uid in all_users:
+            try:
+                await context.bot.send_message(
+                    chat_id=uid,
+                    text=f"📢 <b>РАССЫЛКА ОТ АДМИНИСТРАТОРА</b>\n\n{message}",
+                    parse_mode='HTML'
+                )
+                success += 1
+                await asyncio.sleep(0.05)  # Пауза чтобы не получить лимит
+            except Exception as e:
+                failed += 1
+        
+        add_admin_log("broadcast", user_id, details=f"success={success}, failed={failed}, message={message[:50]}")
+        
+        await update.message.reply_text(
+            f"✅ {t(user_id, 'broadcast_complete')}!\n\n"
+            f"✅ {t(user_id, 'sent_to')} {success}\n"
+            f"❌ {t(user_id, 'failed_to')} {failed}"
+        )
+        
+        context.user_data.clear()
+    
+    elif step == "awaiting_content":
         target_id = context.user_data.get("target_user")
         action = context.user_data.get("admin_action")
         
@@ -1206,121 +1671,12 @@ async def handle_admin_message(update: Update, context: ContextTypes.DEFAULT_TYP
             except Exception as e:
                 await update.message.reply_text(f"❌ Ошибка отправки: {e}")
         
-        # Для фото и видео нужны специальные обработчики
         context.user_data.clear()
-    
-    else:
-        # Старые действия
-        await process_admin_action(update, context, action, text)
-
-async def process_admin_action(update: Update, context: ContextTypes.DEFAULT_TYPE, action: str, target_id: str):
-    user_id = str(update.effective_user.id)
-    
-    if action == "grant":
-        if not target_id.isdigit():
-            await update.message.reply_text("❌ Неверный ID пользователя!")
-            return
-        
-        if target_id in vip_users:
-            await update.message.reply_text("⚠️ Пользователь уже VIP!")
-        else:
-            vip_users.add(target_id)
-            Database.save("data/vip_users.json", list(vip_users))
-            
-            if target_id not in all_users:
-                all_users.add(target_id)
-                Database.save("data/all_users.json", list(all_users))
-            
-            add_admin_log("grant_vip", user_id, target_id)
-            
-            await update.message.reply_text(f"✅ VIP выдан пользователю {target_id}")
-            
-            try:
-                await context.bot.send_message(
-                    chat_id=target_id,
-                    text="🎉 <b>ПОЗДРАВЛЯЕМ!</b>\n\nВам выдан VIP доступ к профессиональным сигналам!",
-                    parse_mode='HTML'
-                )
-            except:
-                pass
-            
-            context.user_data.pop("admin_action", None)
-    
-    elif action == "revoke":
-        if not target_id.isdigit():
-            await update.message.reply_text("❌ Неверный ID пользователя!")
-            return
-        
-        if target_id not in vip_users:
-            await update.message.reply_text("⚠️ Пользователь не VIP!")
-        else:
-            vip_users.remove(target_id)
-            Database.save("data/vip_users.json", list(vip_users))
-            add_admin_log("revoke_vip", user_id, target_id)
-            await update.message.reply_text(f"❌ VIP отозван у пользователя {target_id}")
-            context.user_data.pop("admin_action", None)
-    
-    elif action == "ban":
-        if not target_id.isdigit():
-            await update.message.reply_text("❌ Неверный ID пользователя!")
-            return
-        
-        if target_id in banned_users:
-            await update.message.reply_text("⚠️ Пользователь уже заблокирован!")
-        else:
-            banned_users.add(target_id)
-            Database.save("data/banned_users.json", list(banned_users))
-            add_admin_log("ban_user", user_id, target_id)
-            await update.message.reply_text(f"⛔ Пользователь {target_id} заблокирован")
-            context.user_data.pop("admin_action", None)
-    
-    elif action == "unban":
-        if not target_id.isdigit():
-            await update.message.reply_text("❌ Неверный ID пользователя!")
-            return
-        
-        if target_id not in banned_users:
-            await update.message.reply_text("⚠️ Пользователь не заблокирован!")
-        else:
-            banned_users.remove(target_id)
-            Database.save("data/banned_users.json", list(banned_users))
-            add_admin_log("unban_user", user_id, target_id)
-            await update.message.reply_text(f"✅ Пользователь {target_id} разблокирован")
-            context.user_data.pop("admin_action", None)
-    
-    elif action == "broadcast":
-        message = target_id
-        success = 0
-        failed = 0
-        
-        await update.message.reply_text("⏳ Отправляю рассылку...")
-        
-        for uid in all_users:
-            try:
-                await context.bot.send_message(
-                    chat_id=uid,
-                    text=f"📢 <b>РАССЫЛКА ОТ АДМИНИСТРАТОРА</b>\n\n{message}",
-                    parse_mode='HTML'
-                )
-                success += 1
-                await asyncio.sleep(0.05)  # Пауза чтобы не получить лимит
-            except Exception as e:
-                failed += 1
-        
-        add_admin_log("broadcast", user_id, details=f"success={success}, failed={failed}")
-        
-        await update.message.reply_text(
-            f"✅ Рассылка завершена!\n\n"
-            f"✅ Успешно: {success}\n"
-            f"❌ Неудачно: {failed}"
-        )
-        
-        context.user_data.pop("admin_action", None)
 
 async def handle_admin_photo(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         return
     
     if context.user_data.get("admin_action") == "send_photo" and context.user_data.get("admin_step") == "awaiting_content":
@@ -1346,7 +1702,7 @@ async def handle_admin_photo(update: Update, context: ContextTypes.DEFAULT_TYPE)
 async def handle_admin_video(update: Update, context: ContextTypes.DEFAULT_TYPE):
     user_id = str(update.effective_user.id)
     
-    if not is_admin(user_id):
+    if not is_admin(int(user_id)):
         return
     
     if context.user_data.get("admin_action") == "send_video" and context.user_data.get("admin_step") == "awaiting_content":
@@ -1367,6 +1723,107 @@ async def handle_admin_video(update: Update, context: ContextTypes.DEFAULT_TYPE)
             except Exception as e:
                 await update.message.reply_text(f"❌ Ошибка отправки: {e}")
             
+            context.user_data.clear()
+
+async def handle_admin_document(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user_id = str(update.effective_user.id)
+    
+    if not is_admin(int(user_id)):
+        return
+    
+    if context.user_data.get("admin_action") == "send_document" and context.user_data.get("admin_step") == "awaiting_content":
+        target_id = context.user_data.get("target_user")
+        
+        if update.message.document:
+            document = update.message.document
+            
+            try:
+                await context.bot.send_document(
+                    chat_id=target_id,
+                    document=document.file_id,
+                    caption="📎 <b>ДОКУМЕНТ ОТ АДМИНИСТРАТОРА</b>",
+                    parse_mode='HTML'
+                )
+                await update.message.reply_text(f"✅ {t(user_id, 'document_sent')} пользователю {target_id}")
+                add_admin_log("send_document", user_id, target_id)
+            except Exception as e:
+                await update.message.reply_text(f"❌ Ошибка отправки: {e}")
+            
+            context.user_data.clear()
+
+async def process_admin_action(update: Update, context: ContextTypes.DEFAULT_TYPE, action: str, target_id: str):
+    user_id = str(update.effective_user.id)
+    
+    if action == "grant":
+        if not target_id.isdigit():
+            await update.message.reply_text("❌ Неверный ID пользователя!")
+            return
+        
+        if target_id in vip_users:
+            await update.message.reply_text("⚠️ Пользователь уже VIP!")
+        else:
+            vip_users.add(target_id)
+            Database.save("data/vip_users.json", list(vip_users))
+            
+            if target_id not in all_users:
+                all_users.add(target_id)
+                Database.save("data/all_users.json", list(all_users))
+            
+            add_admin_log("grant_vip", user_id, target_id)
+            
+            await update.message.reply_text(f"✅ {t(user_id, 'vip_granted')} пользователю {target_id}")
+            
+            try:
+                await context.bot.send_message(
+                    chat_id=target_id,
+                    text="🎉 <b>ПОЗДРАВЛЯЕМ!</b>\n\nВам выдан VIP доступ к профессиональным сигналам!",
+                    parse_mode='HTML'
+                )
+            except:
+                pass
+            
+            context.user_data.clear()
+    
+    elif action == "revoke":
+        if not target_id.isdigit():
+            await update.message.reply_text("❌ Неверный ID пользователя!")
+            return
+        
+        if target_id not in vip_users:
+            await update.message.reply_text("⚠️ Пользователь не VIP!")
+        else:
+            vip_users.remove(target_id)
+            Database.save("data/vip_users.json", list(vip_users))
+            add_admin_log("revoke_vip", user_id, target_id)
+            await update.message.reply_text(f"❌ {t(user_id, 'vip_revoked')} у пользователя {target_id}")
+            context.user_data.clear()
+    
+    elif action == "ban":
+        if not target_id.isdigit():
+            await update.message.reply_text("❌ Неверный ID пользователя!")
+            return
+        
+        if target_id in banned_users:
+            await update.message.reply_text("⚠️ Пользователь уже заблокирован!")
+        else:
+            banned_users.add(target_id)
+            Database.save("data/banned_users.json", list(banned_users))
+            add_admin_log("ban_user", user_id, target_id)
+            await update.message.reply_text(f"⛔ {t(user_id, 'user_banned')} {target_id}")
+            context.user_data.clear()
+    
+    elif action == "unban":
+        if not target_id.isdigit():
+            await update.message.reply_text("❌ Неверный ID пользователя!")
+            return
+        
+        if target_id not in banned_users:
+            await update.message.reply_text("⚠️ Пользователь не заблокирован!")
+        else:
+            banned_users.remove(target_id)
+            Database.save("data/banned_users.json", list(banned_users))
+            add_admin_log("unban_user", user_id, target_id)
+            await update.message.reply_text(f"✅ {t(user_id, 'user_unbanned')} {target_id}")
             context.user_data.clear()
 
 # ============================================
@@ -1425,36 +1882,66 @@ class AutoSignalSystem:
                 sent_count = 0
                 for user_id in users_to_send:
                     try:
+                        lang = get_user_language(user_id)
                         direction_emoji = "🟢" if signal['direction'] == "CALL" else "🔴"
-                        direction_text = "ВВЕРХ" if signal['direction'] == "CALL" else "ВНИЗ"
                         
-                        message_lines = [
-                            "<b>🤖 АВТОМАТИЧЕСКИЙ СИГНАЛ</b>",
-                            "",
-                            f"<b>📊 Пара:</b> <code>{signal['pair']}</code>",
-                            f"<b>🎯 Направление:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>",
-                            f"<b>📈 Вероятность:</b> <b>{signal['probability']}%</b> 🔥",
-                            f"<b>💪 Сила:</b> {signal['strength']}",
-                            f"<b>⏰ Экспирация:</b> <b>{signal['expiration']}</b>",
-                            f"<b>🕒 Точное время:</b> <b>{signal['exact_time']}</b>",
-                            f"<b>⏱️ Время входа:</b> <b>{signal['entry_time']}</b>",
-                            f"<b>📅 Дата:</b> {signal['date']}",
-                            "",
-                            "<b>📊 АНАЛИЗ С 20+ ИНДИКАТОРАМИ:</b>",
-                            f"• Настроение рынка: {signal['analysis']['market_sentiment']}",
-                            f"• Уровень риска: {signal['analysis']['risk_level']}",
-                            f"• Бычьи сигналы: {signal['analysis']['buy_signals']}",
-                            f"• Медвежьи сигналы: {signal['analysis']['sell_signals']}",
-                            f"• Стоп-лосс: {signal['analysis']['stop_loss']}",
-                            f"• Тейк-профит: {signal['analysis']['take_profit']}",
-                            "",
-                            "<b>⚠️ РЕКОМЕНДАЦИИ:</b>",
-                            "• Риск: 2-3% от депозита",
-                            "• Вход: по рынку",
-                            f"• Экспирация: {signal['exp_minutes']} минут",
-                            "",
-                            "<b>⚡ Сигнал сгенерирован автоматически</b>"
-                        ]
+                        if lang == 'ru':
+                            direction_text = "ВВЕРХ" if signal['direction'] == "CALL" else "ВНИЗ"
+                            message_lines = [
+                                "<b>🤖 АВТОМАТИЧЕСКИЙ СИГНАЛ</b>",
+                                "",
+                                f"<b>📊 Пара:</b> <code>{signal['pair']}</code>",
+                                f"<b>🎯 Направление:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>",
+                                f"<b>📈 Вероятность:</b> <b>{signal['probability']}%</b> 🔥",
+                                f"<b>💪 Сила:</b> {signal['strength']}",
+                                f"<b>⏰ Экспирация:</b> <b>{signal['expiration']}</b>",
+                                f"<b>🕒 Точное время:</b> <b>{signal['exact_time']}</b>",
+                                f"<b>⏱️ Время входа:</b> <b>{signal['entry_time']}</b>",
+                                f"<b>📅 Дата:</b> {signal['date']}",
+                                "",
+                                "<b>📊 АНАЛИЗ С 20+ ИНДИКАТОРАМИ:</b>",
+                                f"• Настроение рынка: {signal['analysis']['market_sentiment']}",
+                                f"• Уровень риска: {signal['analysis']['risk_level']}",
+                                f"• Бычьи сигналы: {signal['analysis']['buy_signals']}",
+                                f"• Медвежьи сигналы: {signal['analysis']['sell_signals']}",
+                                f"• Стоп-лосс: {signal['analysis']['stop_loss']}",
+                                f"• Тейк-профит: {signal['analysis']['take_profit']}",
+                                "",
+                                "<b>⚠️ РЕКОМЕНДАЦИИ:</b>",
+                                "• Риск: 2-3% от депозита",
+                                "• Вход: по рынку",
+                                f"• Экспирация: {signal['exp_minutes']} минут",
+                                "",
+                                "<b>⚡ Сигнал сгенерирован автоматически</b>"
+                            ]
+                        elif lang == 'en':
+                            message_lines = [
+                                "<b>🤖 AUTOMATIC SIGNAL</b>",
+                                "",
+                                f"<b>📊 Pair:</b> <code>{signal['pair']}</code>",
+                                f"<b>🎯 Direction:</b> {direction_emoji} <b>{signal['direction']}</b>",
+                                f"<b>📈 Probability:</b> <b>{signal['probability']}%</b> 🔥",
+                                f"<b>💪 Strength:</b> {signal['strength']}",
+                                f"<b>⏰ Expiration:</b> <b>{signal['expiration']}</b>",
+                                f"<b>🕒 Exact time:</b> <b>{signal['exact_time']}</b>",
+                                f"<b>⏱️ Entry time:</b> <b>{signal['entry_time']}</b>",
+                                f"<b>📅 Date:</b> {signal['date']}",
+                                "",
+                                "<b>📊 ANALYSIS WITH 20+ INDICATORS:</b>",
+                                f"• Market sentiment: {signal['analysis']['market_sentiment']}",
+                                f"• Risk level: {signal['analysis']['risk_level']}",
+                                f"• Buy signals: {signal['analysis']['buy_signals']}",
+                                f"• Sell signals: {signal['analysis']['sell_signals']}",
+                                f"• Stop loss: {signal['analysis']['stop_loss']}",
+                                f"• Take profit: {signal['analysis']['take_profit']}",
+                                "",
+                                "<b>⚠️ RECOMMENDATIONS:</b>",
+                                "• Risk: 2-3% of deposit",
+                                "• Entry: market price",
+                                f"• Expiration: {signal['exp_minutes']} minutes",
+                                "",
+                                "<b>⚡ Signal generated automatically</b>"
+                            ]
                         
                         message = "\n".join(message_lines)
                         
@@ -1492,90 +1979,6 @@ class AutoSignalSystem:
                 await asyncio.sleep(60)
 
 # ============================================
-# 📅 МАРАФОН 30 ДНЕЙ
-# ============================================
-
-def generate_marathon_plan(deposit: float, lang: str = 'ru') -> str:
-    """Генерация плана марафона"""
-    try:
-        if deposit < 50:
-            return "❌ <b>Минимальный депозит: $50!</b>"
-        
-        # Используем обычные строки с конкатенацией
-        plan_lines = [
-            "<b>📅 МАРАФОН 30 ДНЕЙ</b>",
-            "",
-            f"<b>💰 Стартовый депозит:</b> <b>${deposit:.2f}</b>",
-            f"<b>🎯 Цель за 30 дней:</b> <b>${deposit * 3:.2f}</b> (+200%)",
-            "",
-            "────────────────────",
-            "<b>📊 ПЛАН ПО ДНЯМ:</b>"
-        ]
-        
-        current = deposit
-        for day in range(1, 31):
-            # Рассчитываем дневную цель
-            if day <= 7:
-                daily_target = 3
-                phase = "I"
-            elif day <= 14:
-                daily_target = 4
-                phase = "II"
-            elif day <= 21:
-                daily_target = 5
-                phase = "III"
-            else:
-                daily_target = 6
-                phase = "IV"
-            
-            # Генерируем результат (детерминированный)
-            seed = day + int(deposit)
-            random.seed(seed)
-            daily_result = random.uniform(daily_target * 0.8, daily_target * 1.2)
-            
-            # Рассчитываем прибыль
-            profit = current * daily_result / 100
-            current += profit
-            
-            # Выбираем пары
-            if day % 3 == 0:
-                pairs = random.sample(OTC_PAIRS, 2)
-            else:
-                pairs = random.sample(EXCHANGE_PAIRS, 2)
-            
-            plan_lines.extend([
-                "",
-                f"<b>День {day} (Фаза {phase}):</b>",
-                f"• Баланс: <b>${current:.2f}</b>",
-                f"• Цель: +{daily_target}%",
-                f"• Результат: +{daily_result:.1f}%",
-                f"• Прибыль: <b>${profit:.2f}</b>",
-                f"• Пары: {', '.join(pairs)}"
-            ])
-        
-        total_profit = current - deposit
-        profit_percent = (total_profit / deposit) * 100
-        
-        plan_lines.extend([
-            "",
-            "────────────────────",
-            "<b>📈 ИТОГИ МАРАФОНА:</b>",
-            "",
-            f"• Стартовый депозит: <b>${deposit:.2f}</b>",
-            f"• Финальный баланс: <b>${current:.2f}</b>",
-            f"• Общая прибыль: <b>+{profit_percent:.1f}%</b>",
-            f"• Прибыль в $: <b>${total_profit:.2f}</b>",
-            "",
-            "<b>🚀 УСПЕХОВ В ТОРГОВЛЕ!</b>"
-        ])
-        
-        return "\n".join(plan_lines)
-    
-    except Exception as e:
-        logger.error(f"Ошибка генерации марафона: {e}")
-        return "❌ <b>Ошибка генерации плана. Попробуйте позже!</b>"
-
-# ============================================
 # 🎯 ОБРАБОТЧИК КОЛБЭКОВ
 # ============================================
 
@@ -1596,46 +1999,72 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             lang = data.replace("lang_", "")
             set_user_language(user_id, lang)
             
-            message = {
-                'ru': "✅ <b>Язык изменен на Русский!</b>\n\nДобро пожаловать в KURUT AI INFINITY!",
-                'en': "✅ <b>Language changed to English!</b>\n\nWelcome to KURUT AI INFINITY!",
-                'uz': "✅ <b>Til O'zbekcha o'zgartirildi!</b>\n\nKURUT AI INFINITY ga xush kelibsiz!",
-                'kg': "✅ <b>Тил Кыргызча өзгөртүлдү!</b>\n\nKURUT AI INFINITY кош келиңиз!"
-            }.get(lang, "✅ <b>Язык изменен!</b>\n\nДобро пожаловать в KURUT AI INFINITY!")
+            if lang == 'ru':
+                message = "✅ <b>Язык изменен на Русский!</b>\n\nДобро пожаловать в KURUT AI INFINITY!"
+                button_text = "🚀 Начать"
+            elif lang == 'en':
+                message = "✅ <b>Language changed to English!</b>\n\nWelcome to KURUT AI INFINITY!"
+                button_text = "🚀 Start"
             
             await query.edit_message_text(
                 message,
                 parse_mode='HTML',
                 reply_markup=InlineKeyboardMarkup([
-                    [InlineKeyboardButton("🚀 Начать", callback_data="main_menu")]
+                    [InlineKeyboardButton(button_text, callback_data="main_menu")]
                 ])
             )
+            return
         
         # ГЛАВНОЕ МЕНЮ
         elif data == "main_menu":
             await show_main_menu(query, context, user_id)
+            return
         
         # АДМИН ПАНЕЛЬ
         elif data == "admin_panel":
-            await admin_panel_callback(query, context)
+            await admin_panel_callback(update, context)
+            return
+        
+        # АДМИН ПАНЕЛЬ КОЛБЭКИ
+        elif data == "admin_stats":
+            await admin_stats_callback(update, context)
+            return
         elif data == "admin_grant":
-            await admin_grant_callback(query, context)
+            await admin_grant_callback(update, context)
+            return
         elif data == "admin_revoke":
-            await admin_revoke_callback(query, context)
+            await admin_revoke_callback(update, context)
+            return
         elif data == "admin_ban":
-            await admin_ban_callback(query, context)
+            await admin_ban_callback(update, context)
+            return
         elif data == "admin_unban":
-            await admin_unban_callback(query, context)
+            await admin_unban_callback(update, context)
+            return
         elif data == "admin_broadcast":
-            await admin_broadcast_callback(query, context)
+            await admin_broadcast_callback(update, context)
+            return
         elif data == "admin_message":
-            await admin_message_callback(query, context)
+            await admin_message_callback(update, context)
+            return
         elif data == "admin_photo":
-            await admin_photo_callback(query, context)
+            await admin_photo_callback(update, context)
+            return
         elif data == "admin_video":
-            await admin_video_callback(query, context)
+            await admin_video_callback(update, context)
+            return
         elif data == "admin_link":
-            await admin_link_callback(query, context)
+            await admin_link_callback(update, context)
+            return
+        elif data == "admin_document":
+            await admin_document_callback(update, context)
+            return
+        elif data == "admin_logs_view":
+            await admin_logs_callback(update, context)
+            return
+        elif data == "admin_ping":
+            await admin_ping_callback(update, context)
+            return
         
         # ПОЛУЧИТЬ СИГНАЛ
         elif data == "get_signal":
@@ -1648,6 +2077,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode='HTML',
                 reply_markup=KeyboardManager.market_menu(user_id)
             )
+            return
         
         # ВЫБОР РЫНКА
         elif data in ["market_otc", "market_exchange"]:
@@ -1669,6 +2099,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode='HTML',
                 reply_markup=KeyboardManager.pairs_menu(pairs, market_type, 0, user_id)
             )
+            return
         
         # ПАГИНАЦИЯ
         elif data.startswith("page_"):
@@ -1689,6 +2120,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     parse_mode='HTML',
                     reply_markup=KeyboardManager.pairs_menu(pairs, market_type, page, user_id)
                 )
+            return
         
         # ВЫБОР ПАРЫ И ГЕНЕРАЦИЯ СИГНАЛА
         elif data.startswith("pair_"):
@@ -1731,55 +2163,104 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     })
                     Database.save("data/signal_history.json", signal_history)
                     
-                    # Форматируем сообщение
+                    # Форматируем сообщение на выбранном языке
+                    lang = get_user_language(user_id)
                     direction_emoji = "🟢" if signal['direction'] == "CALL" else "🔴"
-                    direction_text = "ВВЕРХ" if signal['direction'] == "CALL" else "ВНИЗ"
                     
-                    message_lines = [
-                        "<b>🎯 ПРОФЕССИОНАЛЬНЫЙ СИГНАЛ</b>",
-                        "",
-                        f"<b>📊 Пара:</b> <code>{pair}</code>",
-                        f"<b>🎯 Направление:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>",
-                        f"<b>📈 Вероятность:</b> <b>{signal['probability']}%</b> 🔥",
-                        f"<b>💪 Сила:</b> {signal['strength']}",
-                        f"<b>⏰ Экспирация:</b> <b>{signal['expiration']}</b>",
-                        f"<b>🕒 Точное время:</b> <b>{signal['exact_time']}</b>",
-                        f"<b>⏱️ Время входа:</b> <b>{signal['entry_time']}</b>",
-                        f"<b>📅 Дата:</b> {signal['date']}",
-                        "",
-                        "<b>📊 АНАЛИЗ С 20+ ИНДИКАТОРАМИ:</b>",
-                        f"• Настроение рынка: {signal['analysis']['market_sentiment']}",
-                        f"• Оценка настроения: {signal['analysis']['sentiment_score']:.1f}",
-                        f"• Уровень риска: {signal['analysis']['risk_level']}",
-                        f"• Бычьи сигналы: {signal['analysis']['buy_signals']}",
-                        f"• Медвежьи сигналы: {signal['analysis']['sell_signals']}",
-                        f"• Уверенность: {signal['analysis']['confidence']}",
-                        f"• Стоп-лосс: {signal['analysis']['stop_loss']}",
-                        f"• Тейк-профит: {signal['analysis']['take_profit']}",
-                        "",
-                        "<b>Ключевые индикаторы:</b>"
-                    ]
+                    if lang == 'ru':
+                        direction_text = "ВВЕРХ" if signal['direction'] == "CALL" else "ВНИЗ"
+                        message_lines = [
+                            "<b>🎯 ПРОФЕССИОНАЛЬНЫЙ СИГНАЛ</b>",
+                            "",
+                            f"<b>📊 Пара:</b> <code>{pair}</code>",
+                            f"<b>🎯 Направление:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>",
+                            f"<b>📈 Вероятность:</b> <b>{signal['probability']}%</b> 🔥",
+                            f"<b>💪 Сила:</b> {signal['strength']}",
+                            f"<b>⏰ Экспирация:</b> <b>{signal['expiration']}</b>",
+                            f"<b>🕒 Точное время:</b> <b>{signal['exact_time']}</b>",
+                            f"<b>⏱️ Время входа:</b> <b>{signal['entry_time']}</b>",
+                            f"<b>📅 Дата:</b> {signal['date']}",
+                            "",
+                            "<b>📊 АНАЛИЗ С 20+ ИНДИКАТОРАМИ:</b>",
+                            f"• Настроение рынка: {signal['analysis']['market_sentiment']}",
+                            f"• Оценка настроения: {signal['analysis']['sentiment_score']:.1f}",
+                            f"• Уровень риска: {signal['analysis']['risk_level']}",
+                            f"• Бычьи сигналы: {signal['analysis']['buy_signals']}",
+                            f"• Медвежьи сигналы: {signal['analysis']['sell_signals']}",
+                            f"• Уверенность: {signal['analysis']['confidence']}",
+                            f"• Стоп-лосс: {signal['analysis']['stop_loss']}",
+                            f"• Тейк-профит: {signal['analysis']['take_profit']}",
+                            "",
+                            "<b>Ключевые индикаторы:</b>"
+                        ]
+                        
+                        for key, value in signal['analysis']['key_indicators'].items():
+                            message_lines.append(f"• {key}: {value}")
+                        
+                        message_lines.extend([
+                            "",
+                            "<b>📋 Причины сигнала:</b>"
+                        ])
+                        
+                        for i, reason in enumerate(signal['analysis']['reasons'], 1):
+                            message_lines.append(f"{i}. {reason}")
+                        
+                        message_lines.extend([
+                            "",
+                            "<b>⚠️ РЕКОМЕНДАЦИИ:</b>",
+                            "• Риск: 2-3% от депозита",
+                            "• Вход: по рынку",
+                            f"• Экспирация: {signal['exp_minutes']} минут",
+                            "",
+                            "<b>🚀 Удачи в торговле!</b>"
+                        ])
                     
-                    for key, value in signal['analysis']['key_indicators'].items():
-                        message_lines.append(f"• {key}: {value}")
-                    
-                    message_lines.extend([
-                        "",
-                        "<b>📋 Причины сигнала:</b>"
-                    ])
-                    
-                    for i, reason in enumerate(signal['analysis']['reasons'], 1):
-                        message_lines.append(f"{i}. {reason}")
-                    
-                    message_lines.extend([
-                        "",
-                        "<b>⚠️ РЕКОМЕНДАЦИИ:</b>",
-                        "• Риск: 2-3% от депозита",
-                        "• Вход: по рынку",
-                        f"• Экспирация: {signal['exp_minutes']} минут",
-                        "",
-                        "<b>🚀 Удачи в торговле!</b>"
-                    ])
+                    elif lang == 'en':
+                        message_lines = [
+                            "<b>🎯 PROFESSIONAL SIGNAL</b>",
+                            "",
+                            f"<b>📊 Pair:</b> <code>{pair}</code>",
+                            f"<b>🎯 Direction:</b> {direction_emoji} <b>{signal['direction']}</b>",
+                            f"<b>📈 Probability:</b> <b>{signal['probability']}%</b> 🔥",
+                            f"<b>💪 Strength:</b> {signal['strength']}",
+                            f"<b>⏰ Expiration:</b> <b>{signal['expiration']}</b>",
+                            f"<b>🕒 Exact time:</b> <b>{signal['exact_time']}</b>",
+                            f"<b>⏱️ Entry time:</b> <b>{signal['entry_time']}</b>",
+                            f"<b>📅 Date:</b> {signal['date']}",
+                            "",
+                            "<b>📊 ANALYSIS WITH 20+ INDICATORS:</b>",
+                            f"• Market sentiment: {signal['analysis']['market_sentiment']}",
+                            f"• Sentiment score: {signal['analysis']['sentiment_score']:.1f}",
+                            f"• Risk level: {signal['analysis']['risk_level']}",
+                            f"• Buy signals: {signal['analysis']['buy_signals']}",
+                            f"• Sell signals: {signal['analysis']['sell_signals']}",
+                            f"• Confidence: {signal['analysis']['confidence']}",
+                            f"• Stop loss: {signal['analysis']['stop_loss']}",
+                            f"• Take profit: {signal['analysis']['take_profit']}",
+                            "",
+                            "<b>Key indicators:</b>"
+                        ]
+                        
+                        for key, value in signal['analysis']['key_indicators'].items():
+                            message_lines.append(f"• {key}: {value}")
+                        
+                        message_lines.extend([
+                            "",
+                            "<b>📋 Signal reasons:</b>"
+                        ])
+                        
+                        for i, reason in enumerate(signal['analysis']['reasons'], 1):
+                            message_lines.append(f"{i}. {reason}")
+                        
+                        message_lines.extend([
+                            "",
+                            "<b>⚠️ RECOMMENDATIONS:</b>",
+                            "• Risk: 2-3% of deposit",
+                            "• Entry: market price",
+                            f"• Expiration: {signal['exp_minutes']} minutes",
+                            "",
+                            "<b>🚀 Good luck trading!</b>"
+                        ])
                     
                     message = "\n".join(message_lines)
                     
@@ -1788,6 +2269,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         parse_mode='HTML',
                         reply_markup=KeyboardManager.result_menu(user_id)
                     )
+            return
         
         # РЕЗУЛЬТАТЫ СДЕЛКИ
         elif data.startswith("trade_"):
@@ -1798,16 +2280,25 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     profit = 90
                 
                 update_user_stats(user_id, True, profit)
-                message = f"✅ <b>СДЕЛКА ВЫИГРАНА!</b>\n\n💰 Прибыль: {profit}%\n📊 Статистика обновлена!"
+                
+                if get_user_language(user_id) == 'ru':
+                    message = f"✅ <b>СДЕЛКА ВЫИГРАНА!</b>\n\n💰 Прибыль: {profit}%\n📊 Статистика обновлена!"
+                elif get_user_language(user_id) == 'en':
+                    message = f"✅ <b>TRADE WON!</b>\n\n💰 Profit: {profit}%\n📊 Statistics updated!"
             else:
                 update_user_stats(user_id, False)
-                message = f"❌ <b>СДЕЛКА ПРОИГРАНА</b>\n\n📉 Не расстраивайтесь!\n🎯 Следующий сигнал будет точнее!"
+                
+                if get_user_language(user_id) == 'ru':
+                    message = f"❌ <b>СДЕЛКА ПРОИГРАНА</b>\n\n📉 Не расстраивайтесь!\n🎯 Следующий сигнал будет точнее!"
+                elif get_user_language(user_id) == 'en':
+                    message = f"❌ <b>TRADE LOST</b>\n\n📉 Don't worry!\n🎯 Next signal will be more accurate!"
             
             await query.edit_message_text(
                 message,
                 parse_mode='HTML',
                 reply_markup=KeyboardManager.result_menu(user_id)
             )
+            return
         
         # АВТОСИГНАЛЫ МЕНЮ
         elif data == "auto_signals_menu":
@@ -1816,25 +2307,41 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 return
             
             enabled = auto_signals.get(user_id, False)
+            lang = get_user_language(user_id)
             
-            message_lines = [
-                "<b>🤖 АВТОМАТИЧЕСКИЕ СИГНАЛЫ</b>",
-                "",
-                "Бот будет отправлять вам сигналы каждые 2-3 минуты",
-                "",
-                f"<b>📊 Режим:</b> {'✅ ВКЛЮЧЕН' if enabled else '❌ ВЫКЛЮЧЕН'}",
-                f"<b>⏰ Интервал:</b> 2-3 минуты",
-                f"<b>🎯 Точность:</b> 94-97%",
-                f"<b>📈 Индикаторы:</b> 20+ технических индикаторов",
-                f"<b>📊 Пары:</b> OTC и биржевые",
-                f"<b>⏱️ Экспирация:</b> 1-10 минут"
-            ]
+            if lang == 'ru':
+                message_lines = [
+                    "<b>🤖 АВТОМАТИЧЕСКИЕ СИГНАЛЫ</b>",
+                    "",
+                    "Бот будет отправлять вам сигналы каждые 2-3 минуты",
+                    "",
+                    f"<b>📊 Режим:</b> {'✅ ВКЛЮЧЕН' if enabled else '❌ ВЫКЛЮЧЕН'}",
+                    f"<b>⏰ Интервал:</b> 2-3 минуты",
+                    f"<b>🎯 Точность:</b> 94-97%",
+                    f"<b>📈 Индикаторы:</b> 20+ технических индикаторов",
+                    f"<b>📊 Пары:</b> OTC и биржевые",
+                    f"<b>⏱️ Экспирация:</b> 1-10 минут"
+                ]
+            elif lang == 'en':
+                message_lines = [
+                    "<b>🤖 AUTOMATIC SIGNALS</b>",
+                    "",
+                    "Bot will send you signals every 2-3 minutes",
+                    "",
+                    f"<b>📊 Status:</b> {'✅ ENABLED' if enabled else '❌ DISABLED'}",
+                    f"<b>⏰ Interval:</b> 2-3 minutes",
+                    f"<b>🎯 Accuracy:</b> 94-97%",
+                    f"<b>📈 Indicators:</b> 20+ technical indicators",
+                    f"<b>📊 Pairs:</b> OTC and exchange",
+                    f"<b>⏱️ Expiration:</b> 1-10 minutes"
+                ]
             
             await query.edit_message_text(
                 "\n".join(message_lines),
                 parse_mode='HTML',
                 reply_markup=KeyboardManager.auto_signals_menu(user_id)
             )
+            return
         
         # ВКЛ/ВЫКЛ АВТОСИГНАЛЫ
         elif data == "toggle_auto":
@@ -1846,9 +2353,15 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             auto_signals[user_id] = not enabled
             Database.save("data/auto_signals.json", auto_signals)
             
-            status = "включены" if not enabled else "выключены"
+            lang = get_user_language(user_id)
+            if lang == 'ru':
+                status = "включены" if not enabled else "выключены"
+            elif lang == 'en':
+                status = "enabled" if not enabled else "disabled"
+            
             await query.answer(f"✅ Автосигналы {status}!", show_alert=True)
             await handle_callback(update, context)  # Обновляем меню
+            return
         
         # МАРАФОН
         elif data == "marathon_menu":
@@ -1863,297 +2376,16 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 parse_mode='HTML'
             )
             context.user_data["awaiting_deposit"] = True
+            return
         
         # СТАТИСТИКА
         elif data == "my_stats":
             ensure_user_data(user_id)
             stats = user_stats.get(user_id, {})
             
-            message = f"<b>📊 ВАША СТАТИСТИКА</b>\n\n"
-            message += f"<b>🆔 ID:</b> <code>{user_id}</code>\n"
-            message += f"<b>👑 Статус:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Обычный'}\n"
-            message += f"<b>📅 Регистрация:</b> {stats.get('join_date', 'Неизвестно')}\n\n"
-            message += f"<b>🎯 Точность:</b> <b>{stats.get('win_rate', 0):.1f}%</b>\n"
-            message += f"<b>💰 Прибыль:</b> <b>${stats.get('profit', 0):.0f}</b>\n"
-            message += f"<b>📊 Сделок:</b> <b>{stats.get('total_trades', 0)}</b>\n"
-            message += f"<b>✅ Выиграно:</b> <b>{stats.get('wins', 0)}</b>\n"
-            message += f"<b>❌ Проиграно:</b> <b>{stats.get('losses', 0)}</b>\n"
+            lang = get_user_language(user_id)
             
-            await query.edit_message_text(
-                message,
-                parse_mode='HTML',
-                reply_markup=KeyboardManager.back_to_menu(user_id)
-            )
-        
-        # О БОТЕ
-        elif data == "about":
-            message_lines = [
-                "<b>💎 О БОТЕ KURUT AI INFINITY v12.0</b>",
-                "",
-                "🚀 <b>Самый продвинутый торговый бот</b>",
-                "",
-                "<b>🎯 ОСОБЕННОСТИ:</b>",
-                "• 20+ технических индикаторов",
-                "• Точность сигналов: 94-97%",
-                "• Автосигналы каждые 2-3 минуты",
-                "• Анализ OTC и биржевого рынка",
-                "• Мультиязычность (RU/EN/UZ/KG)",
-                "• Полная статистика сделок",
-                "• Марафон 30 дней",
-                "",
-                "<b>📊 ТЕХНОЛОГИИ:</b>",
-                "• Искусственный интеллект",
-                "• Машинное обучение",
-                "• Анализ больших данных",
-                "• Реальное время",
-                "",
-                "<b>⚡ РЕЗУЛЬТАТЫ:</b>",
-                "• Средняя прибыль: 85-95%",
-                "• Минимальный риск",
-                "• Профессиональные сигналы",
-                "• Поддержка 24/7"
-            ]
-            
-            await query.edit_message_text(
-                "\n".join(message_lines),
-                parse_mode='HTML',
-                reply_markup=KeyboardManager.back_to_menu(user_id)
-            )
-        
-        # СОЦСЕТИ
-        elif data == "socials":
-            message_lines = [
-                "<b>📱 НАШИ СОЦСЕТИ</b>",
-                "",
-                "Подписывайтесь на наши социальные сети чтобы быть в курсе всех новостей!",
-                "",
-                "<b>🔗 ССЫЛКИ:</b>",
-                "• Telegram: https://t.me/KURUTTRADING",
-                "• YouTube: https://youtube.com/@kurut_kg",
-                "• Instagram: https://www.instagram.com/kurut_trading",
-                "• Открытый чат: https://t.me/Kurutopen",
-                "• Админ: https://t.me/Kuruttrader",
-                "",
-                "<b>💎 Будьте с нами!</b>"
-            ]
-            
-            keyboard = []
-            for platform, url in SOCIALS.items():
-                if platform == "telegram":
-                    name = "📱 Telegram"
-                elif platform == "youtube":
-                    name = "🎬 YouTube"
-                elif platform == "instagram":
-                    name = "📸 Instagram"
-                else:
-                    name = "💬 Чат"
-                
-                keyboard.append([InlineKeyboardButton(name, url=url)])
-            
-            keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data="main_menu")])
-            
-            await query.edit_message_text(
-                "\n".join(message_lines),
-                parse_mode='HTML',
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        
-        # ПОЛУЧИТЬ VIP
-        elif data == "get_vip":
-            message_lines = [
-                "<b>👑 ПОЛУЧИТЬ VIP ДОСТУП</b>",
-                "",
-                "Для получения VIP доступа к профессиональным сигналам:",
-                "",
-                "1. 📝 Зарегистрируйтесь по ссылке:",
-                "   <code>https://po-ru4.click/register?utm_campaign=797321</code>",
-                "",
-                "2. 💰 Пополните счет от $50",
-                "",
-                "3. 📩 Напишите админу: @Kuruttrader",
-                "",
-                "4. ✅ Получите VIP доступ",
-                "",
-                "<b>🎯 VIP ПРЕИМУЩЕСТВА:</b>",
-                "• Профессиональные сигналы",
-                "• Автосигналы каждые 2-3 минуты",
-                "• Точность 94-97%",
-                "• 20+ индикаторов анализа",
-                "• Марафон 30 дней",
-                "• Поддержка 24/7"
-            ]
-            
-            keyboard = [
-                [InlineKeyboardButton("📝 Регистрация", url=REF_LINK)],
-                [InlineKeyboardButton("📞 Написать админу", url=ADMIN_LINK)],
-                [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
-            ]
-            
-            await query.edit_message_text(
-                "\n".join(message_lines),
-                parse_mode='HTML',
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
-        
-        # ТОП ТРЕЙДЕРЫ
-        elif data == "top_traders":
-            # Получаем топ 10 пользователей
-            top_users = []
-            for uid, stats in user_stats.items():
-                if stats.get('total_trades', 0) > 0:
-                    win_rate = stats.get('win_rate', 0)
-                    profit = stats.get('profit', 0)
-                    top_users.append((uid, win_rate, profit))
-            
-            # Сортируем по профиту
-            top_users.sort(key=lambda x: x[2], reverse=True)
-            top_users = top_users[:10]
-            
-            message_lines = ["<b>🏆 ТОП 10 ТРЕЙДЕРОВ</b>", ""]
-            
-            for i, (uid, win_rate, profit) in enumerate(top_users, 1):
-                status = "👑" if is_vip(uid) else "👤"
-                message_lines.extend([
-                    f"{i}. {status} ID: <code>{uid[:8]}...</code>",
-                    f"   📊 Винрейт: <b>{win_rate:.1f}%</b>",
-                    f"   💰 Прибыль: <b>${profit:.0f}</b>",
-                    ""
-                ])
-            
-            if not top_users:
-                message_lines.extend([
-                    "📊 Статистика пока недоступна",
-                    "🎯 Сделайте первую сделку чтобы попасть в топ!",
-                    ""
-                ])
-            
-            message_lines.append("<b>🚀 Станьте следующим!</b>")
-            
-            await query.edit_message_text(
-                "\n".join(message_lines),
-                parse_mode='HTML',
-                reply_markup=KeyboardManager.back_to_menu(user_id)
-            )
-        
-        else:
-            await query.answer("⚡")
-    
-    except Exception as e:
-        logger.error(f"Ошибка в callback: {e}")
-        await query.answer("⚠️ Ошибка! Попробуйте позже.")
-
-# ============================================
-# 📨 ОБРАБОТЧИК СООБЩЕНИЙ
-# ============================================
-
-async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    user_id = str(update.effective_user.id)
-    
-    # Проверка на бан
-    if is_banned(user_id):
-        return
-    
-    # Проверка на фото/видео от админа
-    if update.message.photo and is_admin(user_id):
-        await handle_admin_photo(update, context)
-        return
-    
-    if update.message.video and is_admin(user_id):
-        await handle_admin_video(update, context)
-        return
-    
-    # Текстовые сообщения
-    if update.message.text:
-        text = update.message.text.strip()
-        
-        try:
-            # Обработка марафона
-            if context.user_data.get("awaiting_deposit"):
-                try:
-                    deposit = float(text)
-                    
-                    if deposit < 50:
-                        await update.message.reply_text(
-                            "🚨 Минимальный депозит: $50",
-                            parse_mode='HTML'
-                        )
-                        return
-                    
-                    await update.message.reply_text(
-                        "⏳ Генерирую план...",
-                        parse_mode='HTML'
-                    )
-                    
-                    plan = generate_marathon_plan(deposit, get_user_language(user_id))
-                    
-                    # Разбиваем если слишком длинный
-                    if len(plan) > 4000:
-                        parts = [plan[i:i+4000] for i in range(0, len(plan), 4000)]
-                        for i, part in enumerate(parts):
-                            await update.message.reply_text(
-                                part,
-                                parse_mode='HTML'
-                            )
-                            await asyncio.sleep(0.5)
-                    else:
-                        await update.message.reply_text(
-                            plan,
-                            parse_mode='HTML',
-                            reply_markup=KeyboardManager.back_to_menu(user_id)
-                        )
-                    
-                    context.user_data["awaiting_deposit"] = False
-                    
-                except ValueError:
-                    await update.message.reply_text(
-                        "❌ Введите число! Пример: 100, 500, 1000",
-                        parse_mode='HTML'
-                    )
-            
-            # Админ сообщения
-            elif context.user_data.get("admin_action"):
-                await handle_admin_message(update, context)
-            
-            # Команды
-            elif text.lower() in ['/start', 'start', 'старт']:
-                await start_command(update, context)
-            
-            elif text.lower() in ['/admin', 'admin', 'админ']:
-                if is_admin(user_id):
-                    await admin_panel_callback(update, context)
-                else:
-                    await update.message.reply_text("⛔ Только для администраторов!")
-            
-            elif text.lower() in ['/menu', 'menu', 'меню']:
-                await show_main_menu(update, context, user_id)
-            
-            elif text.lower() in ['сигнал', 'signal']:
-                if not is_vip(user_id):
-                    await update.message.reply_text(
-                        "🔒 Требуется VIP доступ!",
-                        parse_mode='HTML',
-                        reply_markup=KeyboardManager.main_menu(user_id)
-                    )
-                else:
-                    await update.message.reply_text(
-                        "🎯 Выберите тип рынка:",
-                        parse_mode='HTML',
-                        reply_markup=KeyboardManager.market_menu(user_id)
-                    )
-            
-            elif text.lower() in ['марафон', 'marathon']:
-                if not is_vip(user_id):
-                    await update.message.reply_text("🔒 Требуется VIP доступ!")
-                else:
-                    await update.message.reply_text(
-                        "📅 Введите стартовый депозит ($50+):"
-                    )
-                    context.user_data["awaiting_deposit"] = True
-            
-            elif text.lower() in ['статистика', 'stats']:
-                ensure_user_data(user_id)
-                stats = user_stats.get(user_id, {})
-                
+            if lang == 'ru':
                 message = f"<b>📊 ВАША СТАТИСТИКА</b>\n\n"
                 message += f"<b>🆔 ID:</b> <code>{user_id}</code>\n"
                 message += f"<b>👑 Статус:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Обычный'}\n"
@@ -2163,125 +2395,418 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 message += f"<b>📊 Сделок:</b> <b>{stats.get('total_trades', 0)}</b>\n"
                 message += f"<b>✅ Выиграно:</b> <b>{stats.get('wins', 0)}</b>\n"
                 message += f"<b>❌ Проиграно:</b> <b>{stats.get('losses', 0)}</b>\n"
-                
-                await update.message.reply_text(
-                    message,
-                    parse_mode='HTML',
-                    reply_markup=KeyboardManager.back_to_menu(user_id)
-                )
+            elif lang == 'en':
+                message = f"<b>📊 YOUR STATISTICS</b>\n\n"
+                message += f"<b>🆔 ID:</b> <code>{user_id}</code>\n"
+                message += f"<b>👑 Status:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Regular'}\n"
+                message += f"<b>📅 Registration:</b> {stats.get('join_date', 'Unknown')}\n\n"
+                message += f"<b>🎯 Accuracy:</b> <b>{stats.get('win_rate', 0):.1f}%</b>\n"
+                message += f"<b>💰 Profit:</b> <b>${stats.get('profit', 0):.0f}</b>\n"
+                message += f"<b>📊 Trades:</b> <b>{stats.get('total_trades', 0)}</b>\n"
+                message += f"<b>✅ Won:</b> <b>{stats.get('wins', 0)}</b>\n"
+                message += f"<b>❌ Lost:</b> <b>{stats.get('losses', 0)}</b>\n"
             
-            else:
-                await update.message.reply_text(
-                    "Используйте кнопки меню!",
-                    parse_mode='HTML',
-                    reply_markup=KeyboardManager.main_menu(user_id)
-                )
-        
-        except Exception as e:
-            logger.error(f"Ошибка обработки сообщения: {e}")
-            await update.message.reply_text(
-                "⚠️ Ошибка! Используйте кнопки меню.",
+            await query.edit_message_text(
+                message,
                 parse_mode='HTML',
-                reply_markup=KeyboardManager.main_menu(user_id)
+                reply_markup=KeyboardManager.back_to_menu(user_id)
             )
+            return
+        
+        # О БОТЕ
+        elif data == "about":
+            lang = get_user_language(user_id)
+            
+            if lang == 'ru':
+                message_lines = [
+                    "<b>💎 О БОТЕ KURUT AI INFINITY v12.0</b>",
+                    "",
+                    "🚀 <b>Самый продвинутый торговый бот</b>",
+                    "",
+                    "<b>🎯 ОСОБЕННОСТИ:</b>",
+                    "• 20+ технических индикаторов",
+                    "• Точность сигналов: 94-97%",
+                    "• Автосигналы каждые 2-3 минуты",
+                    "• Автопинг каждые 3 минуты",
+                    "• Анализ OTC и биржевого рынка",
+                    "• Мультиязычность (RU/EN)",
+                    "• Полная статистика сделок",
+                    "• Марафон 30 дней",
+                    "",
+                    "<b>📊 ТЕХНОЛОГИИ:</b>",
+                    "• Искусственный интеллект",
+                    "• Машинное обучение",
+                    "• Анализ больших данных",
+                    "• Реальное время",
+                    "",
+                    "<b>⚡ РЕЗУЛЬТАТЫ:</b>",
+                    "• Средняя прибыль: 85-95%",
+                    "• Минимальный риск",
+                    "• Профессиональные сигналы",
+                    "• Поддержка 24/7"
+                ]
+            elif lang == 'en':
+                message_lines = [
+                    "<b>💎 ABOUT KURUT AI INFINITY v12.0</b>",
+                    "",
+                    "🚀 <b>Most advanced trading bot</b>",
+                    "",
+                    "<b>🎯 FEATURES:</b>",
+                    "• 20+ technical indicators",
+                    "• Signal accuracy: 94-97%",
+                    "• Auto signals every 2-3 minutes",
+                    "• Auto ping every 3 minutes",
+                    "• OTC and exchange market analysis",
+                    "• Multilingual (RU/EN)",
+                    "• Complete trade statistics",
+                    "• 30 days marathon",
+                    "",
+                    "<b>📊 TECHNOLOGIES:</b>",
+                    "• Artificial Intelligence",
+                    "• Machine Learning",
+                    "• Big Data Analysis",
+                    "• Real-time",
+                    "",
+                    "<b>⚡ RESULTS:</b>",
+                    "• Average profit: 85-95%",
+                    "• Minimum risk",
+                    "• Professional signals",
+                    "• 24/7 support"
+                ]
+            
+            await query.edit_message_text(
+                "\n".join(message_lines),
+                parse_mode='HTML',
+                reply_markup=KeyboardManager.back_to_menu(user_id)
+            )
+            return
+        
+        # СОЦСЕТИ
+        elif data == "socials":
+            lang = get_user_language(user_id)
+            
+            if lang == 'ru':
+                message_lines = [
+                    "<b>📱 НАШИ СОЦСЕТИ</b>",
+                    "",
+                    "Подписывайтесь на наши социальные сети чтобы быть в курсе всех новостей!",
+                    "",
+                    "<b>🔗 ССЫЛКИ:</b>",
+                    "• Telegram: https://t.me/KURUTTRADING",
+                    "• YouTube: https://youtube.com/@kurut_kg",
+                    "• Instagram: https://www.instagram.com/kurut_trading",
+                    "• Открытый чат: https://t.me/Kurutopen",
+                    "• Админ: https://t.me/Kuruttrader",
+                    "",
+                    "<b>💎 Будьте с нами!</b>"
+                ]
+            elif lang == 'en':
+                message_lines = [
+                    "<b>📱 OUR SOCIALS</b>",
+                    "",
+                    "Follow our social networks to stay updated with all news!",
+                    "",
+                    "<b>🔗 LINKS:</b>",
+                    "• Telegram: https://t.me/KURUTTRADING",
+                    "• YouTube: https://youtube.com/@kurut_kg",
+                    "• Instagram: https://www.instagram.com/kurut_trading",
+                    "• Open chat: https://t.me/Kurutopen",
+                    "• Admin: https://t.me/Kuruttrader",
+                    "",
+                    "<b>💎 Stay with us!</b>"
+                ]
+            
+            keyboard = []
+            for platform, url in SOCIALS.items():
+                if platform == "telegram":
+                    name = "📱 Telegram" if lang == 'ru' else "📱 Telegram"
+                elif platform == "youtube":
+                    name = "🎬 YouTube" if lang == 'ru' else "🎬 YouTube"
+                elif platform == "instagram":
+                    name = "📸 Instagram" if lang == 'ru' else "📸 Instagram"
+                else:
+                    name = "💬 Чат" if lang == 'ru' else "💬 Chat"
+                
+                keyboard.append([InlineKeyboardButton(name, url=url)])
+            
+            keyboard.append([InlineKeyboardButton(
+                "🔙 Назад" if lang == 'ru' else "🔙 Back",
+                callback_data="main_menu"
+            )])
+            
+            await query.edit_message_text(
+                "\n".join(message_lines),
+                parse_mode='HTML',
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+            return
+        
+        # ПОЛУЧИТЬ VIP
+        elif data == "get_vip":
+            lang = get_user_language(user_id)
+            
+            if lang == 'ru':
+                message_lines = [
+                    "<b>👑 ПОЛУЧИТЬ VIP ДОСТУП</b>",
+                    "",
+                    "Для получения VIP доступа к профессиональным сигналам:",
+                    "",
+                    "1. 📝 Зарегистрируйтесь по ссылке:",
+                    "   <code>https://po-ru4.click/register?utm_campaign=797321</code>",
+                    "",
+                    "2. 💰 Пополните счет от $50",
+                    "",
+                    "3. 📩 Напишите админу: @Kuruttrader",
+                    "",
+                    "4. ✅ Получите VIP доступ",
+                    "",
+                    "<b>🎯 VIP ПРЕИМУЩЕСТВА:</b>",
+                    "• Профессиональные сигналы",
+                    "• Автосигналы каждые 2-3 минуты",
+                    "• Автопинг каждые 3 минуты",
+                    "• Точность 94-97%",
+                    "• 20+ индикаторов анализа",
+                    "• Марафон 30 дней",
+                    "• Поддержка 24/7"
+                ]
+                buttons = [
+                    [InlineKeyboardButton("📝 Регистрация", url=REF_LINK)],
+                    [InlineKeyboardButton("📞 Написать админу", url=ADMIN_LINK)],
+                    [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+                ]
+            elif lang == 'en':
+                message_lines = [
+                    "<b>👑 GET VIP ACCESS</b>",
+                    "",
+                    "To get VIP access to professional signals:",
+                    "",
+                    "1. 📝 Register via link:",
+                    "   <code>https://po-ru4.click/register?utm_campaign=797321</code>",
+                    "",
+                    "2. 💰 Deposit from $50",
+                    "",
+                    "3. 📩 Write to admin: @Kuruttrader",
+                    "",
+                    "4. ✅ Get VIP access",
+                    "",
+                    "<b>🎯 VIP BENEFITS:</b>",
+                    "• Professional signals",
+                    "• Auto signals every 2-3 minutes",
+                    "• Auto ping every 3 minutes",
+                    "• Accuracy 94-97%",
+                    "• 20+ analysis indicators",
+                    "• 30 days marathon",
+                    "• 24/7 support"
+                ]
+                buttons = [
+                    [InlineKeyboardButton("📝 Register", url=REF_LINK)],
+                    [InlineKeyboardButton("📞 Write to admin", url=ADMIN_LINK)],
+                    [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
+                ]
+            
+            await query.edit_message_text(
+                "\n".join(message_lines),
+                parse_mode='HTML',
+                reply_markup=InlineKeyboardMarkup(buttons)
+            )
+            return
+        
+        # ТОП ТРЕЙДЕРЫ
+        elif data == "top_traders":
+            # Собираем статистику всех пользователей
+            top_users = []
+            for uid, stats in user_stats.items():
+                if stats.get('total_trades', 0) > 0:
+                    win_rate = stats.get('win_rate', 0)
+                    profit = stats.get('profit', 0)
+                    total_trades = stats.get('total_trades', 0)
+                    
+                    if total_trades >= 5:  # Минимум 5 сделок для попадания в топ
+                        score = win_rate * 0.7 + (profit / 100) * 0.3
+                        top_users.append((uid, score, win_rate, profit, total_trades))
+            
+            # Сортируем по рейтингу
+            top_users.sort(key=lambda x: x[1], reverse=True)
+            top_users = top_users[:10]  # Топ 10
+            
+            lang = get_user_language(user_id)
+            
+            if lang == 'ru':
+                message = "<b>🏆 ТОП 10 ТРЕЙДЕРОВ</b>\n\n"
+                
+                if not top_users:
+                    message += "Пока нет трейдеров с достаточным количеством сделок."
+                else:
+                    for i, (uid, score, win_rate, profit, total_trades) in enumerate(top_users, 1):
+                        medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+                        status = "👑 VIP" if is_vip(uid) else "👤 Обычный"
+                        message += f"{medal} <b>ID:</b> <code>{uid}</code> {status}\n"
+                        message += f"   <b>Точность:</b> {win_rate:.1f}%\n"
+                        message += f"   <b>Прибыль:</b> ${profit:.0f}\n"
+                        message += f"   <b>Сделок:</b> {total_trades}\n\n"
+            elif lang == 'en':
+                message = "<b>🏆 TOP 10 TRADERS</b>\n\n"
+                
+                if not top_users:
+                    message += "No traders with enough trades yet."
+                else:
+                    for i, (uid, score, win_rate, profit, total_trades) in enumerate(top_users, 1):
+                        medal = "🥇" if i == 1 else "🥈" if i == 2 else "🥉" if i == 3 else f"{i}."
+                        status = "👑 VIP" if is_vip(uid) else "👤 Regular"
+                        message += f"{medal} <b>ID:</b> <code>{uid}</code> {status}\n"
+                        message += f"   <b>Accuracy:</b> {win_rate:.1f}%\n"
+                        message += f"   <b>Profit:</b> ${profit:.0f}\n"
+                        message += f"   <b>Trades:</b> {total_trades}\n\n"
+            
+            await query.edit_message_text(
+                message,
+                parse_mode='HTML',
+                reply_markup=KeyboardManager.back_to_menu(user_id)
+            )
+            return
+        
+    except Exception as e:
+        logger.error(f"Ошибка обработки callback {data}: {e}")
+        await query.answer("⚠️ Произошла ошибка!", show_alert=True)
+
+# ============================================
+# 📝 ОБРАБОТКА ТЕКСТОВЫХ СООБЩЕНИЙ
+# ============================================
+
+async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
+    user = update.effective_user
+    user_id = str(user.id)
+    text = update.message.text.strip() if update.message.text else ""
+    
+    if is_banned(user_id):
+        return
+    
+    ensure_user_data(user_id)
+    
+    # Обработка депозита для марафона
+    if context.user_data.get("awaiting_deposit"):
+        try:
+            deposit = float(text)
+            if deposit < 50:
+                await update.message.reply_text(f"🚨 {t(user_id, 'min_deposit')}")
+                return
+            
+            lang = get_user_language(user_id)
+            
+            if lang == 'ru':
+                message = f"<b>📅 ПЛАН МАРАФОНА НА 30 ДНЕЙ</b>\n\n"
+                message += f"<b>💰 Стартовый депозит:</b> <b>${deposit:.0f}</b>\n\n"
+                message += "<b>🎯 ЦЕЛЬ МАРАФОНА:</b>\n"
+                message += f"• Увеличить депозит до: <b>${deposit * 3:.0f}</b>\n"
+                message += f"• Средняя прибыль в день: <b>${deposit * 0.03:.0f}</b>\n"
+                message += f"• Всего сделок: <b>90-120</b>\n\n"
+                message += "<b>📊 СТРАТЕГИЯ:</b>\n"
+                message += "• Риск: 2-3% от депозита\n"
+                message += "• Точность сигналов: 94-97%\n"
+                message += "• Экспирация: 1-10 минут\n"
+                message += "• Рынки: OTC и биржевые\n\n"
+                message += "<b>⚠️ РЕКОМЕНДАЦИИ:</b>\n"
+                message += "• Следуйте всем сигналам\n"
+                message += "• Не отклоняйтесь от стратегии\n"
+                message += "• Контролируйте эмоции\n"
+                message += "• Анализируйте результаты\n\n"
+                message += "<b>🚀 Удачи в марафоне!</b>"
+            elif lang == 'en':
+                message = f"<b>📅 30 DAYS MARATHON PLAN</b>\n\n"
+                message += f"<b>💰 Starting deposit:</b> <b>${deposit:.0f}</b>\n\n"
+                message += "<b>🎯 MARATHON GOAL:</b>\n"
+                message += f"• Increase deposit to: <b>${deposit * 3:.0f}</b>\n"
+                message += f"• Average daily profit: <b>${deposit * 0.03:.0f}</b>\n"
+                message += f"• Total trades: <b>90-120</b>\n\n"
+                message += "<b>📊 STRATEGY:</b>\n"
+                message += "• Risk: 2-3% of deposit\n"
+                message += "• Signal accuracy: 94-97%\n"
+                message += "• Expiration: 1-10 minutes\n"
+                message += "• Markets: OTC and exchange\n\n"
+                message += "<b>⚠️ RECOMMENDATIONS:</b>\n"
+                message += "• Follow all signals\n"
+                message += "• Don't deviate from strategy\n"
+                message += "• Control emotions\n"
+                message += "• Analyze results\n\n"
+                message += "<b>🚀 Good luck in marathon!</b>"
+            
+            await update.message.reply_text(
+                message,
+                parse_mode='HTML',
+                reply_markup=KeyboardManager.back_to_menu(user_id)
+            )
+            
+            context.user_data.pop("awaiting_deposit", None)
+            return
+            
+        except ValueError:
+            await update.message.reply_text(f"❌ {t(user_id, 'error')} Введите число!")
+            return
+    
+    # Если сообщение не обработано, показываем главное меню
+    await show_main_menu(update, context, user_id)
 
 # ============================================
 # 🚀 ЗАПУСК БОТА
 # ============================================
 
 async def main():
-    # Создаем директории
+    """Запуск бота"""
+    try:
+        # Создаем приложение
+        application = Application.builder().token(TOKEN).build()
+        
+        # Добавляем обработчики команд
+        application.add_handler(CommandHandler("start", start_command))
+        application.add_handler(CommandHandler("menu", lambda u, c: show_main_menu(u, c, str(u.effective_user.id))))
+        
+        # Обработчик колбэков
+        application.add_handler(CallbackQueryHandler(handle_callback))
+        
+        # Обработчики сообщений
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+        application.add_handler(MessageHandler(filters.PHOTO, handle_admin_photo))
+        application.add_handler(MessageHandler(filters.VIDEO, handle_admin_video))
+        application.add_handler(MessageHandler(filters.Document.ALL, handle_admin_document))
+        
+        # Админ сообщения
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_admin_message))
+        
+        # Инициализируем системы
+        global auto_signal_system, ping_system
+        auto_signal_system = AutoSignalSystem(application)
+        ping_system = AutoPingSystem(application)
+        
+        # Запускаем системы
+        await auto_signal_system.start()
+        await ping_system.start()
+        
+        # Запускаем Flask сервер в отдельном потоке
+        flask_thread = Thread(target=run_flask, daemon=True)
+        flask_thread.start()
+        
+        logger.info("🚀 Бот запущен!")
+        logger.info(f"👥 Всего пользователей: {len(all_users)}")
+        logger.info(f"👑 VIP пользователей: {len(vip_users)}")
+        logger.info(f"⛔ Заблокированных: {len(banned_users)}")
+        logger.info("⏰ Автопинг каждые 3 минуты")
+        logger.info("🤖 Автосигналы каждые 2-3 минуты")
+        
+        # Запускаем бота
+        await application.run_polling(allowed_updates=Update.ALL_TYPES)
+        
+    except Exception as e:
+        logger.error(f"Ошибка запуска бота: {e}")
+    finally:
+        # Останавливаем системы при завершении
+        if 'auto_signal_system' in globals():
+            await auto_signal_system.stop()
+        if 'ping_system' in globals():
+            await ping_system.stop()
+
+if __name__ == "__main__":
+    # Создаем папку для данных если её нет
     os.makedirs("data", exist_ok=True)
     
-    # Запуск Flask сервера
-    flask_thread = Thread(target=run_flask, daemon=True)
-    flask_thread.start()
-    logger.info("🌐 Flask сервер запущен на порту 8080")
-    
-    # Создаем приложение бота
-    application = Application.builder().token(TOKEN).build()
-    
-    # Создаем систему автосигналов
-    auto_system = AutoSignalSystem(application)
-    
-    # Добавляем обработчики
-    application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("admin", lambda u, c: admin_panel_callback(u, c) if is_admin(str(u.effective_user.id)) else None))
-    application.add_handler(CommandHandler("menu", lambda u, c: show_main_menu(u, c, str(u.effective_user.id))))
-    
-    application.add_handler(CallbackQueryHandler(handle_callback))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
-    application.add_handler(MessageHandler(filters.PHOTO, handle_admin_photo))
-    application.add_handler(MessageHandler(filters.VIDEO, handle_admin_video))
-    
-    # Логируем запуск
-    logger.info("🚀 ЗАПУСКАЕМ KURUT AI INFINITY v12.0")
-    logger.info(f"👑 Админы: {ADMIN_IDS}")
-    logger.info(f"👥 Пользователей: {len(all_users)}")
-    logger.info(f"👑 VIP пользователей: {len(vip_users)}")
-    logger.info(f"📊 Пар OTC: {len(OTC_PAIRS)}")
-    logger.info(f"📈 Пар биржевых: {len(EXCHANGE_PAIRS)}")
-    logger.info(f"🎯 Точность: 94-97%")
-    logger.info(f"🤖 Автосигналы: каждые 2-3 минуты")
-    logger.info(f"📈 Индикаторы: 20+ технических индикаторов")
-    logger.info(f"🌍 Языки: RU/EN/UZ/KG")
-    
-    try:
-        # Инициализация бота
-        await application.initialize()
-        await application.start()
-        logger.info("✅ Бот успешно запущен!")
-        
-        # Запускаем автосигналы
-        await auto_system.start()
-        logger.info("🤖 Система автосигналов запущена")
-        
-        # Запускаем polling
-        await application.updater.start_polling(
-            drop_pending_updates=True,
-            allowed_updates=Update.ALL_TYPES
-        )
-        logger.info("🔄 Polling запущен")
-        
-        # Бесконечный цикл
-        while True:
-            await asyncio.sleep(3600)  # Спим 1 час
-        
-    except KeyboardInterrupt:
-        logger.info("⛔ Бот остановлен пользователем")
-    except Exception as e:
-        logger.error(f"💥 Ошибка запуска: {e}")
-    finally:
-        # Корректное завершение
-        try:
-            logger.info("🔄 Остановка бота...")
-            await auto_system.stop()
-            if application.updater and application.updater.running:
-                await application.updater.stop()
-            if application.running:
-                await application.stop()
-            await application.shutdown()
-            logger.info("✅ Бот корректно остановлен")
-        except Exception as e:
-            logger.error(f"⚠️ Ошибка при остановке: {e}")
-
-def run_bot():
-    asyncio.run(main())
-
-if __name__ == '__main__':
-    # Создаем requirements.txt
-    try:
-        with open("requirements.txt", "w", encoding="utf-8") as f:
-            f.write("""python-telegram-bot==20.7
-flask==3.0.0
-waitress==3.0.1
-pandas==2.0.3
-numpy==1.24.3
-requests==2.31.0
-""")
-        logger.info("📋 requirements.txt создан")
-    except:
-        pass
-    
     # Запускаем бота
-    run_bot()
+    asyncio.run(main())
