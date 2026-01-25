@@ -1,15 +1,9 @@
 # ============================================
-# 🚀 KURUT AI INFINITY | ULTIMATE PRO TRADING BOT v12.4
+# 🚀 KURUT AI INFINITY | ULTIMATE PRO TRADING BOT v12.5
 # ============================================
 # АВТОР: @Kuruttrader
-# ВЕРСИЯ: 12.4 | FIXED SYNTAX ERRORS
+# ВЕРСИЯ: 12.5 | FIXED F-STRINGS
 # ДАТА: 2024
-# ============================================
-# ИСПРАВЛЕНИЯ:
-# 1. ✅ Исправлены f-строки с обратными слешами
-# 2. ✅ Исправлен автопинг
-# 3. ✅ Исправлена мультиязычность
-# 4. ✅ Исправлены автосигналы
 # ============================================
 
 import json
@@ -106,7 +100,7 @@ def home():
     <body>
         <div class="container">
             <div class="header">
-                <h1>🚀 KURUT AI INFINITY v12.4</h1>
+                <h1>🚀 KURUT AI INFINITY v12.5</h1>
                 <p>Professional Trading Signals</p>
             </div>
             <div class="status">
@@ -190,7 +184,7 @@ auto_signals: Dict = Database.load("data/auto_signals.json", {})
 admin_logs: List = Database.load("data/admin_logs.json", [])
 
 # ============================================
-# ⏰ СИСТЕМА АВТОПИНГА КАЖДЫЕ 3 МИНУТЫ (ИСПРАВЛЕННАЯ)
+# ⏰ СИСТЕМА АВТОПИНГА КАЖДЫЕ 3 МИНУТЫ
 # ============================================
 
 class AutoPingSystem:
@@ -208,7 +202,7 @@ class AutoPingSystem:
         
         self.running = True
         self.ping_task = asyncio.create_task(self.ping_loop())
-        logger.info("⏰ Система автопинга ЗАПУЩЕНА (внутренний, не отправляет админам)")
+        logger.info("⏰ Система автопинга ЗАПУЩЕНА (каждые 3 минуты)")
     
     async def stop(self):
         """Остановка системы автопинга"""
@@ -222,13 +216,13 @@ class AutoPingSystem:
         logger.info("⏰ Система автопинга ОСТАНОВЛЕНА")
     
     async def ping_loop(self):
-        """Основной цикл автопинга - каждые 3 минуты (только логирование)"""
+        """Основной цикл автопинга - каждые 3 минуты"""
         while self.running:
             try:
                 # Ждем 3 минуты
                 await asyncio.sleep(180)
                 
-                # Только логируем, НЕ отправляем сообщения админам
+                # Логируем пинг
                 self.ping_count += 1
                 self.last_ping = datetime.now()
                 
@@ -683,14 +677,14 @@ EXCHANGE_PAIRS = [
 ]
 
 # ============================================
-# 🌍 СИСТЕМА МУЛЬТИЯЗЫЧНОСТИ (ПОЛНАЯ ВЕРСИЯ)
+# 🌍 СИСТЕМА МУЛЬТИЯЗЫЧНОСТИ
 # ============================================
 
 TEXTS = {
     'ru': {
         'welcome': "👋 Добро пожаловать в KURUT AI INFINITY!",
         'choose_lang': "Выберите язык:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.4",
+        'main_menu': "🚀 KURUT AI INFINITY v12.5",
         'your_id': "🆔 Ваш ID:",
         'status': "👑 Статус:",
         'vip': "✅ VIP",
@@ -772,7 +766,7 @@ TEXTS = {
     'en': {
         'welcome': "👋 Welcome to KURUT AI INFINITY!",
         'choose_lang': "Choose language:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.4",
+        'main_menu': "🚀 KURUT AI INFINITY v12.5",
         'your_id': "🆔 Your ID:",
         'status': "👑 Status:",
         'vip': "✅ VIP",
@@ -854,7 +848,7 @@ TEXTS = {
     'kg': {
         'welcome': "👋 KURUT AI INFINITY'ке кош келиңиз!",
         'choose_lang': "Тилди тандаңыз:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.4",
+        'main_menu': "🚀 KURUT AI INFINITY v12.5",
         'your_id': "🆔 Сиздин ID:",
         'status': "👑 Статус:",
         'vip': "✅ VIP",
@@ -936,7 +930,7 @@ TEXTS = {
     'uz': {
         'welcome': "👋 KURUT AI INFINITY'ga xush kelibsiz!",
         'choose_lang': "Tilni tanlang:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.4",
+        'main_menu': "🚀 KURUT AI INFINITY v12.5",
         'your_id': "🆔 Sizning ID:",
         'status': "👑 Status:",
         'vip': "✅ VIP",
@@ -1172,111 +1166,95 @@ class AutoSignalSystem:
                         
                         if lang == 'ru':
                             direction_text = "ВВЕРХ" if signal['direction'] == "CALL" else "ВНИЗ"
-                            message = f"""<b>🤖 АВТОМАТИЧЕСКИЙ СИГНАЛ</b>
-
-<b>📊 Пара:</b> <code>{signal['pair']}</code>
-<b>🎯 Направление:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
-<b>📈 Вероятность:</b> <b>{signal['probability']}%</b> 🔥
-<b>💪 Сила:</b> {signal['strength']}
-<b>⏰ Экспирация:</b> <b>{signal['expiration']}</b>
-<b>🕒 Точное время:</b> <b>{signal['exact_time']}</b>
-<b>⏱️ Время входа:</b> <b>{signal['entry_time']}</b>
-<b>📅 Дата:</b> {signal['date']}
-
-<b>📊 АНАЛИЗ С 20+ ИНДИКАТОРАМИ:</b>
-• Настроение рынка: {signal['analysis']['market_sentiment']}
-• Уровень риска: {signal['analysis']['risk_level']}
-• Бычьи сигналы: {signal['analysis']['buy_signals']}
-• Медвежьи сигналы: {signal['analysis']['sell_signals']}
-• Стоп-лосс: {signal['analysis']['stop_loss']}
-• Тейк-профит: {signal['analysis']['take_profit']}
-
-<b>⚠️ РЕКОМЕНДАЦИИ:</b>
-• Риск: 2-3% от депозита
-• Вход: по рынку
-• Экспирация: {signal['exp_minutes']} минут
-
-<b>⚡ Сигнал сгенерирован автоматически</b>"""
+                            message = f"<b>🤖 АВТОМАТИЧЕСКИЙ СИГНАЛ</b>\n\n"
+                            message += f"<b>📊 Пара:</b> <code>{signal['pair']}</code>\n"
+                            message += f"<b>🎯 Направление:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>\n"
+                            message += f"<b>📈 Вероятность:</b> <b>{signal['probability']}%</b> 🔥\n"
+                            message += f"<b>💪 Сила:</b> {signal['strength']}\n"
+                            message += f"<b>⏰ Экспирация:</b> <b>{signal['expiration']}</b>\n"
+                            message += f"<b>🕒 Точное время:</b> <b>{signal['exact_time']}</b>\n"
+                            message += f"<b>⏱️ Время входа:</b> <b>{signal['entry_time']}</b>\n"
+                            message += f"<b>📅 Дата:</b> {signal['date']}\n\n"
+                            message += f"<b>📊 АНАЛИЗ С 20+ ИНДИКАТОРАМИ:</b>\n"
+                            message += f"• Настроение рынка: {signal['analysis']['market_sentiment']}\n"
+                            message += f"• Уровень риска: {signal['analysis']['risk_level']}\n"
+                            message += f"• Бычьи сигналы: {signal['analysis']['buy_signals']}\n"
+                            message += f"• Медвежьи сигналы: {signal['analysis']['sell_signals']}\n"
+                            message += f"• Стоп-лосс: {signal['analysis']['stop_loss']}\n"
+                            message += f"• Тейк-профит: {signal['analysis']['take_profit']}\n\n"
+                            message += f"<b>⚠️ РЕКОМЕНДАЦИИ:</b>\n"
+                            message += f"• Риск: 2-3% от депозита\n"
+                            message += f"• Вход: по рынку\n"
+                            message += f"• Экспирация: {signal['exp_minutes']} минут\n\n"
+                            message += f"<b>⚡ Сигнал сгенерирован автоматически</b>"
                         elif lang == 'en':
-                            message = f"""<b>🤖 AUTOMATIC SIGNAL</b>
-
-<b>📊 Pair:</b> <code>{signal['pair']}</code>
-<b>🎯 Direction:</b> {direction_emoji} <b>{signal['direction']}</b>
-<b>📈 Probability:</b> <b>{signal['probability']}%</b> 🔥
-<b>💪 Strength:</b> {signal['strength']}
-<b>⏰ Expiration:</b> <b>{signal['expiration']}</b>
-<b>🕒 Exact time:</b> <b>{signal['exact_time']}</b>
-<b>⏱️ Entry time:</b> <b>{signal['entry_time']}</b>
-<b>📅 Date:</b> {signal['date']}
-
-<b>📊 ANALYSIS WITH 20+ INDICATORS:</b>
-• Market sentiment: {signal['analysis']['market_sentiment']}
-• Risk level: {signal['analysis']['risk_level']}
-• Buy signals: {signal['analysis']['buy_signals']}
-• Sell signals: {signal['analysis']['sell_signals']}
-• Stop loss: {signal['analysis']['stop_loss']}
-• Take profit: {signal['analysis']['take_profit']}
-
-<b>⚠️ RECOMMENDATIONS:</b>
-• Risk: 2-3% of deposit
-• Entry: market price
-• Expiration: {signal['exp_minutes']} minutes
-
-<b>⚡ Signal generated automatically</b>"""
+                            message = f"<b>🤖 AUTOMATIC SIGNAL</b>\n\n"
+                            message += f"<b>📊 Pair:</b> <code>{signal['pair']}</code>\n"
+                            message += f"<b>🎯 Direction:</b> {direction_emoji} <b>{signal['direction']}</b>\n"
+                            message += f"<b>📈 Probability:</b> <b>{signal['probability']}%</b> 🔥\n"
+                            message += f"<b>💪 Strength:</b> {signal['strength']}\n"
+                            message += f"<b>⏰ Expiration:</b> <b>{signal['expiration']}</b>\n"
+                            message += f"<b>🕒 Exact time:</b> <b>{signal['exact_time']}</b>\n"
+                            message += f"<b>⏱️ Entry time:</b> <b>{signal['entry_time']}</b>\n"
+                            message += f"<b>📅 Date:</b> {signal['date']}\n\n"
+                            message += f"<b>📊 ANALYSIS WITH 20+ INDICATORS:</b>\n"
+                            message += f"• Market sentiment: {signal['analysis']['market_sentiment']}\n"
+                            message += f"• Risk level: {signal['analysis']['risk_level']}\n"
+                            message += f"• Buy signals: {signal['analysis']['buy_signals']}\n"
+                            message += f"• Sell signals: {signal['analysis']['sell_signals']}\n"
+                            message += f"• Stop loss: {signal['analysis']['stop_loss']}\n"
+                            message += f"• Take profit: {signal['analysis']['take_profit']}\n\n"
+                            message += f"<b>⚠️ RECOMMENDATIONS:</b>\n"
+                            message += f"• Risk: 2-3% of deposit\n"
+                            message += f"• Entry: market price\n"
+                            message += f"• Expiration: {signal['exp_minutes']} minutes\n\n"
+                            message += f"<b>⚡ Signal generated automatically</b>"
                         elif lang == 'kg':
                             direction_text = "ЖОГОРУ" if signal['direction'] == "CALL" else "ТӨМӨН"
-                            message = f"""<b>🤖 АВТОМАТТЫК СИГНАЛ</b>
-
-<b>📊 Жуп:</b> <code>{signal['pair']}</code>
-<b>🎯 Багыт:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
-<b>📈 Ыктымалдык:</b> <b>{signal['probability']}%</b> 🔥
-<b>💪 Куч:</b> {signal['strength']}
-<b>⏰ Эксирация:</b> <b>{signal['expiration']}</b>
-<b>🕒 Так убакыт:</b> <b>{signal['exact_time']}</b>
-<b>⏱️ Кириш убакыты:</b> <b>{signal['entry_time']}</b>
-<b>📅 Дата:</b> {signal['date']}
-
-<b>📊 20+ ИНДИКАТОР МЕНЕН АНАЛИЗ:</b>
-• Базардын көңүлү: {signal['analysis']['market_sentiment']}
-• Төөнөгүнүн деңгээли: {signal['analysis']['risk_level']}
-• Сатып алуу сигналдары: {signal['analysis']['buy_signals']}
-• Сатуу сигналдары: {signal['analysis']['sell_signals']}
-• Стоп-лосс: {signal['analysis']['stop_loss']}
-• Тейк-профит: {signal['analysis']['take_profit']}
-
-<b>⚠️ СУНУШТАР:</b>
-• Төөнөгү: депозиттин 2-3%
-• Кириш: базар баасы боюнча
-• Эксирация: {signal['exp_minutes']} мүнөт
-
-<b>⚡ Сигнал автоматтык түрдө түзүлдү</b>"""
+                            message = f"<b>🤖 АВТОМАТТЫК СИГНАЛ</b>\n\n"
+                            message += f"<b>📊 Жуп:</b> <code>{signal['pair']}</code>\n"
+                            message += f"<b>🎯 Багыт:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>\n"
+                            message += f"<b>📈 Ыктымалдык:</b> <b>{signal['probability']}%</b> 🔥\n"
+                            message += f"<b>💪 Куч:</b> {signal['strength']}\n"
+                            message += f"<b>⏰ Эксирация:</b> <b>{signal['expiration']}</b>\n"
+                            message += f"<b>🕒 Так убакыт:</b> <b>{signal['exact_time']}</b>\n"
+                            message += f"<b>⏱️ Кириш убакыты:</b> <b>{signal['entry_time']}</b>\n"
+                            message += f"<b>📅 Дата:</b> {signal['date']}\n\n"
+                            message += f"<b>📊 20+ ИНДИКАТОР МЕНЕН АНАЛИЗ:</b>\n"
+                            message += f"• Базардын көңүлү: {signal['analysis']['market_sentiment']}\n"
+                            message += f"• Төөнөгүнүн деңгээли: {signal['analysis']['risk_level']}\n"
+                            message += f"• Сатып алуу сигналдары: {signal['analysis']['buy_signals']}\n"
+                            message += f"• Сатуу сигналдары: {signal['analysis']['sell_signals']}\n"
+                            message += f"• Стоп-лосс: {signal['analysis']['stop_loss']}\n"
+                            message += f"• Тейк-профит: {signal['analysis']['take_profit']}\n\n"
+                            message += f"<b>⚠️ СУНУШТАР:</b>\n"
+                            message += f"• Төөнөгү: депозиттин 2-3%\n"
+                            message += f"• Кириш: базар баасы боюнча\n"
+                            message += f"• Эксирация: {signal['exp_minutes']} мүнөт\n\n"
+                            message += f"<b>⚡ Сигнал автоматтык түрдө түзүлдү</b>"
                         elif lang == 'uz':
                             direction_text = "YUQORI" if signal['direction'] == "CALL" else "QUYI"
-                            message = f"""<b>🤖 AVTOMATIK SIGNAL</b>
-
-<b>📊 Juftlik:</b> <code>{signal['pair']}</code>
-<b>🎯 Yo'nalish:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
-<b>📈 Ehtimollik:</b> <b>{signal['probability']}%</b> 🔥
-<b>💪 Kuch:</b> {signal['strength']}
-<b>⏰ Ekspiratsiya:</b> <b>{signal['expiration']}</b>
-<b>🕒 Aniq vaqt:</b> <b>{signal['exact_time']}</b>
-<b>⏱️ Kirish vaqti:</b> <b>{signal['entry_time']}</b>
-<b>📅 Sana:</b> {signal['date']}
-
-<b>📊 20+ INDIKATOR BILAN TAHLLIY:</b>
-• Bozor kayfiyati: {signal['analysis']['market_sentiment']}
-• Xavf darajasi: {signal['analysis']['risk_level']}
-• Sotib olish signallari: {signal['analysis']['buy_signals']}
-• Sotish signallari: {signal['analysis']['sell_signals']}
-• Stop-loss: {signal['analysis']['stop_loss']}
-• Take-profit: {signal['analysis']['take_profit']}
-
-<b>⚠️ TAVSIYALAR:</b>
-• Xavf: depozitning 2-3%
-• Kirish: bozor narxida
-• Ekspiratsiya: {signal['exp_minutes']} daqiqa
-
-<b>⚡ Signal avtomatik ravishda yaratildi</b>"""
+                            message = f"<b>🤖 AVTOMATIK SIGNAL</b>\n\n"
+                            message += f"<b>📊 Juftlik:</b> <code>{signal['pair']}</code>\n"
+                            message += f"<b>🎯 Yo'nalish:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>\n"
+                            message += f"<b>📈 Ehtimollik:</b> <b>{signal['probability']}%</b> 🔥\n"
+                            message += f"<b>💪 Kuch:</b> {signal['strength']}\n"
+                            message += f"<b>⏰ Ekspiratsiya:</b> <b>{signal['expiration']}</b>\n"
+                            message += f"<b>🕒 Aniq vaqt:</b> <b>{signal['exact_time']}</b>\n"
+                            message += f"<b>⏱️ Kirish vaqti:</b> <b>{signal['entry_time']}</b>\n"
+                            message += f"<b>📅 Sana:</b> {signal['date']}\n\n"
+                            message += f"<b>📊 20+ INDIKATOR BILAN TAHLLIY:</b>\n"
+                            message += f"• Bozor kayfiyati: {signal['analysis']['market_sentiment']}\n"
+                            message += f"• Xavf darajasi: {signal['analysis']['risk_level']}\n"
+                            message += f"• Sotib olish signallari: {signal['analysis']['buy_signals']}\n"
+                            message += f"• Sotish signallari: {signal['analysis']['sell_signals']}\n"
+                            message += f"• Stop-loss: {signal['analysis']['stop_loss']}\n"
+                            message += f"• Take-profit: {signal['analysis']['take_profit']}\n\n"
+                            message += f"<b>⚠️ TAVSIYALAR:</b>\n"
+                            message += f"• Xavf: depozitning 2-3%\n"
+                            message += f"• Kirish: bozor narxida\n"
+                            message += f"• Ekspiratsiya: {signal['exp_minutes']} daqiqa\n\n"
+                            message += f"<b>⚡ Signal avtomatik ravishda yaratildi</b>"
                         
                         await self.application.bot.send_message(
                             chat_id=user_id,
@@ -1310,7 +1288,7 @@ class AutoSignalSystem:
                 await asyncio.sleep(60)
 
 # ============================================
-# 🚀 ОСНОВНЫЕ ФУНКЦИИ БОТА (С ИСПРАВЛЕНИЯМИ)
+# 🚀 ОСНОВНЫЕ ФУНКЦИИ БОТА
 # ============================================
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1631,31 +1609,27 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     
                     if lang == 'ru':
                         direction_text = "ВВЕРХ" if signal['direction'] == "CALL" else "ВНИЗ"
-                        message = f"""<b>🎯 ПРОФЕССИОНАЛЬНЫЙ СИГНАЛ</b>
-
-<b>📊 Пара:</b> <code>{pair}</code>
-<b>🎯 Направление:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
-<b>📈 Вероятность:</b> <b>{signal['probability']}%</b> 🔥
-<b>💪 Сила:</b> {signal['strength']}
-<b>⏰ Экспирация:</b> <b>{signal['expiration']}</b>
-<b>🕒 Точное время:</b> <b>{signal['exact_time']}</b>
-<b>⏱️ Время входа:</b> <b>{signal['entry_time']}</b>
-<b>📅 Дата:</b> {signal['date']}
-
-<b>📊 АНАЛИЗ С 20+ ИНДИКАТОРАМИ:</b>
-• Настроение рынка: {signal['analysis']['market_sentiment']}
-• Уровень риска: {signal['analysis']['risk_level']}
-• Бычьи сигналы: {signal['analysis']['buy_signals']}
-• Медвежьи сигналы: {signal['analysis']['sell_signals']}
-• Стоп-лосс: {signal['analysis']['stop_loss']}
-• Тейк-профит: {signal['analysis']['take_profit']}
-
-<b>⚠️ РЕКОМЕНДАЦИИ:</b>
-• Риск: 2-3% от депозита
-• Вход: по рынку
-• Экспирация: {signal['exp_minutes']} минут
-
-<b>🚀 Удачи в торговле!</b>"""
+                        message = f"<b>🎯 ПРОФЕССИОНАЛЬНЫЙ СИГНАЛ</b>\n\n"
+                        message += f"<b>📊 Пара:</b> <code>{pair}</code>\n"
+                        message += f"<b>🎯 Направление:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>\n"
+                        message += f"<b>📈 Вероятность:</b> <b>{signal['probability']}%</b> 🔥\n"
+                        message += f"<b>💪 Сила:</b> {signal['strength']}\n"
+                        message += f"<b>⏰ Экспирация:</b> <b>{signal['expiration']}</b>\n"
+                        message += f"<b>🕒 Точное время:</b> <b>{signal['exact_time']}</b>\n"
+                        message += f"<b>⏱️ Время входа:</b> <b>{signal['entry_time']}</b>\n"
+                        message += f"<b>📅 Дата:</b> {signal['date']}\n\n"
+                        message += f"<b>📊 АНАЛИЗ С 20+ ИНДИКАТОРАМИ:</b>\n"
+                        message += f"• Настроение рынка: {signal['analysis']['market_sentiment']}\n"
+                        message += f"• Уровень риска: {signal['analysis']['risk_level']}\n"
+                        message += f"• Бычьи сигналы: {signal['analysis']['buy_signals']}\n"
+                        message += f"• Медвежьи сигналы: {signal['analysis']['sell_signals']}\n"
+                        message += f"• Стоп-лосс: {signal['analysis']['stop_loss']}\n"
+                        message += f"• Тейк-профит: {signal['analysis']['take_profit']}\n\n"
+                        message += f"<b>⚠️ РЕКОМЕНДАЦИИ:</b>\n"
+                        message += f"• Риск: 2-3% от депозита\n"
+                        message += f"• Вход: по рынку\n"
+                        message += f"• Экспирация: {signal['exp_minutes']} минут\n\n"
+                        message += f"<b>🚀 Удачи в торговле!</b>"
                         
                         keyboard = [
                             [
@@ -1673,31 +1647,27 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                         ]
                     
                     elif lang == 'en':
-                        message = f"""<b>🎯 PROFESSIONAL SIGNAL</b>
-
-<b>📊 Pair:</b> <code>{pair}</code>
-<b>🎯 Direction:</b> {direction_emoji} <b>{signal['direction']}</b>
-<b>📈 Probability:</b> <b>{signal['probability']}%</b> 🔥
-<b>💪 Strength:</b> {signal['strength']}
-<b>⏰ Expiration:</b> <b>{signal['expiration']}</b>
-<b>🕒 Exact time:</b> <b>{signal['exact_time']}</b>
-<b>⏱️ Entry time:</b> <b>{signal['entry_time']}</b>
-<b>📅 Date:</b> {signal['date']}
-
-<b>📊 ANALYSIS WITH 20+ INDICATORS:</b>
-• Market sentiment: {signal['analysis']['market_sentiment']}
-• Risk level: {signal['analysis']['risk_level']}
-• Buy signals: {signal['analysis']['buy_signals']}
-• Sell signals: {signal['analysis']['sell_signals']}
-• Stop loss: {signal['analysis']['stop_loss']}
-• Take profit: {signal['analysis']['take_profit']}
-
-<b>⚠️ RECOMMENDATIONS:</b>
-• Risk: 2-3% of deposit
-• Entry: market price
-• Expiration: {signal['exp_minutes']} minutes
-
-<b>🚀 Good luck trading!</b>"""
+                        message = f"<b>🎯 PROFESSIONAL SIGNAL</b>\n\n"
+                        message += f"<b>📊 Pair:</b> <code>{pair}</code>\n"
+                        message += f"<b>🎯 Direction:</b> {direction_emoji} <b>{signal['direction']}</b>\n"
+                        message += f"<b>📈 Probability:</b> <b>{signal['probability']}%</b> 🔥\n"
+                        message += f"<b>💪 Strength:</b> {signal['strength']}\n"
+                        message += f"<b>⏰ Expiration:</b> <b>{signal['expiration']}</b>\n"
+                        message += f"<b>🕒 Exact time:</b> <b>{signal['exact_time']}</b>\n"
+                        message += f"<b>⏱️ Entry time:</b> <b>{signal['entry_time']}</b>\n"
+                        message += f"<b>📅 Date:</b> {signal['date']}\n\n"
+                        message += f"<b>📊 ANALYSIS WITH 20+ INDICATORS:</b>\n"
+                        message += f"• Market sentiment: {signal['analysis']['market_sentiment']}\n"
+                        message += f"• Risk level: {signal['analysis']['risk_level']}\n"
+                        message += f"• Buy signals: {signal['analysis']['buy_signals']}\n"
+                        message += f"• Sell signals: {signal['analysis']['sell_signals']}\n"
+                        message += f"• Stop loss: {signal['analysis']['stop_loss']}\n"
+                        message += f"• Take profit: {signal['analysis']['take_profit']}\n\n"
+                        message += f"<b>⚠️ RECOMMENDATIONS:</b>\n"
+                        message += f"• Risk: 2-3% of deposit\n"
+                        message += f"• Entry: market price\n"
+                        message += f"• Expiration: {signal['exp_minutes']} minutes\n\n"
+                        message += f"<b>🚀 Good luck trading!</b>"
                         
                         keyboard = [
                             [
@@ -1716,31 +1686,27 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     
                     elif lang == 'kg':
                         direction_text = "ЖОГОРУ" if signal['direction'] == "CALL" else "ТӨМӨН"
-                        message = f"""<b>🎯 ПРОФЕССИОНАЛДЫК СИГНАЛ</b>
-
-<b>📊 Жуп:</b> <code>{pair}</code>
-<b>🎯 Багыт:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
-<b>📈 Ыктымалдык:</b> <b>{signal['probability']}%</b> 🔥
-<b>💪 Куч:</b> {signal['strength']}
-<b>⏰ Эксирация:</b> <b>{signal['expiration']}</b>
-<b>🕒 Так убакыт:</b> <b>{signal['exact_time']}</b>
-<b>⏱️ Кириш убакыты:</b> <b>{signal['entry_time']}</b>
-<b>📅 Дата:</b> {signal['date']}
-
-<b>📊 20+ ИНДИКАТОР МЕНЕН АНАЛИЗ:</b>
-• Базардын көңүлү: {signal['analysis']['market_sentiment']}
-• Төөнөгүнүн деңгээли: {signal['analysis']['risk_level']}
-• Сатып алуу сигналдары: {signal['analysis']['buy_signals']}
-• Сатуу сигналдары: {signal['analysis']['sell_signals']}
-• Стоп-лосс: {signal['analysis']['stop_loss']}
-• Тейк-профит: {signal['analysis']['take_profit']}
-
-<b>⚠️ СУНУШТАР:</b>
-• Төөнөгү: депозиттин 2-3%
-• Кириш: базар баасы боюнча
-• Эксирация: {signal['exp_minutes']} мүнөт
-
-<b>🚀 Соодада ийгилик!</b>"""
+                        message = f"<b>🎯 ПРОФЕССИОНАЛДЫК СИГНАЛ</b>\n\n"
+                        message += f"<b>📊 Жуп:</b> <code>{pair}</code>\n"
+                        message += f"<b>🎯 Багыт:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>\n"
+                        message += f"<b>📈 Ыктымалдык:</b> <b>{signal['probability']}%</b> 🔥\n"
+                        message += f"<b>💪 Куч:</b> {signal['strength']}\n"
+                        message += f"<b>⏰ Эксирация:</b> <b>{signal['expiration']}</b>\n"
+                        message += f"<b>🕒 Так убакыт:</b> <b>{signal['exact_time']}</b>\n"
+                        message += f"<b>⏱️ Кириш убакыты:</b> <b>{signal['entry_time']}</b>\n"
+                        message += f"<b>📅 Дата:</b> {signal['date']}\n\n"
+                        message += f"<b>📊 20+ ИНДИКАТОР МЕНЕН АНАЛИЗ:</b>\n"
+                        message += f"• Базардын көңүлү: {signal['analysis']['market_sentiment']}\n"
+                        message += f"• Төөнөгүнүн деңгээли: {signal['analysis']['risk_level']}\n"
+                        message += f"• Сатып алуу сигналдары: {signal['analysis']['buy_signals']}\n"
+                        message += f"• Сатуу сигналдары: {signal['analysis']['sell_signals']}\n"
+                        message += f"• Стоп-лосс: {signal['analysis']['stop_loss']}\n"
+                        message += f"• Тейк-профит: {signal['analysis']['take_profit']}\n\n"
+                        message += f"<b>⚠️ СУНУШТАР:</b>\n"
+                        message += f"• Төөнөгү: депозиттин 2-3%\n"
+                        message += f"• Кириш: базар баасы боюнча\n"
+                        message += f"• Эксирация: {signal['exp_minutes']} мүнөт\n\n"
+                        message += f"<b>🚀 Соодада ийгилик!</b>"
                         
                         keyboard = [
                             [
@@ -1759,31 +1725,27 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     
                     elif lang == 'uz':
                         direction_text = "YUQORI" if signal['direction'] == "CALL" else "QUYI"
-                        message = f"""<b>🎯 PROFESSIONAL SIGNAL</b>
-
-<b>📊 Juftlik:</b> <code>{pair}</code>
-<b>🎯 Yo'nalish:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
-<b>📈 Ehtimollik:</b> <b>{signal['probability']}%</b> 🔥
-<b>💪 Kuch:</b> {signal['strength']}
-<b>⏰ Ekspiratsiya:</b> <b>{signal['expiration']}</b>
-<b>🕒 Aniq vaqt:</b> <b>{signal['exact_time']}</b>
-<b>⏱️ Kirish vaqti:</b> <b>{signal['entry_time']}</b>
-<b>📅 Sana:</b> {signal['date']}
-
-<b>📊 20+ INDIKATOR BILAN TAHLLIY:</b>
-• Bozor kayfiyati: {signal['analysis']['market_sentiment']}
-• Xavf darajasi: {signal['analysis']['risk_level']}
-• Sotib olish signallari: {signal['analysis']['buy_signals']}
-• Sotish signallari: {signal['analysis']['sell_signals']}
-• Stop-loss: {signal['analysis']['stop_loss']}
-• Take-profit: {signal['analysis']['take_profit']}
-
-<b>⚠️ TAVSIYALAR:</b>
-• Xavf: depozitning 2-3%
-• Kirish: bozor narxida
-• Ekspiratsiya: {signal['exp_minutes']} daqiqa
-
-<b>🚀 Savdoda omad!</b>"""
+                        message = f"<b>🎯 PROFESSIONAL SIGNAL</b>\n\n"
+                        message += f"<b>📊 Juftlik:</b> <code>{pair}</code>\n"
+                        message += f"<b>🎯 Yo'nalish:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>\n"
+                        message += f"<b>📈 Ehtimollik:</b> <b>{signal['probability']}%</b> 🔥\n"
+                        message += f"<b>💪 Kuch:</b> {signal['strength']}\n"
+                        message += f"<b>⏰ Ekspiratsiya:</b> <b>{signal['expiration']}</b>\n"
+                        message += f"<b>🕒 Aniq vaqt:</b> <b>{signal['exact_time']}</b>\n"
+                        message += f"<b>⏱️ Kirish vaqti:</b> <b>{signal['entry_time']}</b>\n"
+                        message += f"<b>📅 Sana:</b> {signal['date']}\n\n"
+                        message += f"<b>📊 20+ INDIKATOR BILAN TAHLLIY:</b>\n"
+                        message += f"• Bozor kayfiyati: {signal['analysis']['market_sentiment']}\n"
+                        message += f"• Xavf darajasi: {signal['analysis']['risk_level']}\n"
+                        message += f"• Sotib olish signallari: {signal['analysis']['buy_signals']}\n"
+                        message += f"• Sotish signallari: {signal['analysis']['sell_signals']}\n"
+                        message += f"• Stop-loss: {signal['analysis']['stop_loss']}\n"
+                        message += f"• Take-profit: {signal['analysis']['take_profit']}\n\n"
+                        message += f"<b>⚠️ TAVSIYALAR:</b>\n"
+                        message += f"• Xavf: depozitning 2-3%\n"
+                        message += f"• Kirish: bozor narxida\n"
+                        message += f"• Ekspiratsiya: {signal['exp_minutes']} daqiqa\n\n"
+                        message += f"<b>🚀 Savdoda omad!</b>"
                         
                         keyboard = [
                             [
@@ -1914,16 +1876,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             lang = get_user_language(user_id)
             
             if lang == 'ru':
-                message = f"""<b>🤖 АВТОМАТИЧЕСКИЕ СИГНАЛЫ</b>
-
-Бот будет отправлять вам сигналы каждые 2-3 минуты
-
-<b>📊 Режим:</b> {'✅ ВКЛЮЧЕН' if enabled else '❌ ВЫКЛЮЧЕН'}
-<b>⏰ Интервал:</b> 2-3 минуты
-<b>🎯 Точность:</b> 94-97%
-<b>📈 Индикаторы:</b> 20+ технических индикаторов
-<b>📊 Пары:</b> OTC и биржевые
-<b>⏱️ Экспирация:</b> 1-10 минут"""
+                message = f"<b>🤖 АВТОМАТИЧЕСКИЕ СИГНАЛЫ</b>\n\n"
+                message += f"Бот будет отправлять вам сигналы каждые 2-3 минуты\n\n"
+                message += f"<b>📊 Режим:</b> {'✅ ВКЛЮЧЕН' if enabled else '❌ ВЫКЛЮЧЕН'}\n"
+                message += f"<b>⏰ Интервал:</b> 2-3 минуты\n"
+                message += f"<b>🎯 Точность:</b> 94-97%\n"
+                message += f"<b>📈 Индикаторы:</b> 20+ технических индикаторов\n"
+                message += f"<b>📊 Пары:</b> OTC и биржевые\n"
+                message += f"<b>⏱️ Экспирация:</b> 1-10 минут"
                 
                 keyboard = [
                     [
@@ -1937,16 +1897,14 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     ]
                 ]
             elif lang == 'en':
-                message = f"""<b>🤖 AUTOMATIC SIGNALS</b>
-
-Bot will send you signals every 2-3 minutes
-
-<b>📊 Status:</b> {'✅ ENABLED' if enabled else '❌ DISABLED'}
-<b>⏰ Interval:</b> 2-3 minutes
-<b>🎯 Accuracy:</b> 94-97%
-<b>📈 Indicators:</b> 20+ technical indicators
-<b>📊 Pairs:</b> OTC and exchange
-<b>⏱️ Expiration:</b> 1-10 minutes"""
+                message = f"<b>🤖 AUTOMATIC SIGNALS</b>\n\n"
+                message += f"Bot will send you signals every 2-3 minutes\n\n"
+                message += f"<b>📊 Status:</b> {'✅ ENABLED' if enabled else '❌ DISABLED'}\n"
+                message += f"<b>⏰ Interval:</b> 2-3 minutes\n"
+                message += f"<b>🎯 Accuracy:</b> 94-97%\n"
+                message += f"<b>📈 Indicators:</b> 20+ technical indicators\n"
+                message += f"<b>📊 Pairs:</b> OTC and exchange\n"
+                message += f"<b>⏱️ Expiration:</b> 1-10 minutes"
                 
                 keyboard = [
                     [
@@ -1960,16 +1918,14 @@ Bot will send you signals every 2-3 minutes
                     ]
                 ]
             elif lang == 'kg':
-                message = f"""<b>🤖 АВТОМАТТЫК СИГНАЛДАР</b>
-
-Бот ар 2-3 мүнөт сайын сизге сигналдарды жөнөтөт
-
-<b>📊 Режим:</b> {'✅ КҮЙГҮЗҮЛДҮ' if enabled else '❌ ӨЧҮРҮЛДҮ'}
-<b>⏰ Интервал:</b> 2-3 мүнөт
-<b>🎯 Тактык:</b> 94-97%
-<b>📈 Индикаторлор:</b> 20+ техникалык индикатор
-<b>📊 Жуптар:</b> OTC жана биржа
-<b>⏱️ Эксирация:</b> 1-10 мүнөт"""
+                message = f"<b>🤖 АВТОМАТТЫК СИГНАЛДАР</b>\n\n"
+                message += f"Бот ар 2-3 мүнөт сайын сизге сигналдарды жөнөтөт\n\n"
+                message += f"<b>📊 Режим:</b> {'✅ КҮЙГҮЗҮЛДҮ' if enabled else '❌ ӨЧҮРҮЛДҮ'}\n"
+                message += f"<b>⏰ Интервал:</b> 2-3 мүнөт\n"
+                message += f"<b>🎯 Тактык:</b> 94-97%\n"
+                message += f"<b>📈 Индикаторлор:</b> 20+ техникалык индикатор\n"
+                message += f"<b>📊 Жуптар:</b> OTC жана биржа\n"
+                message += f"<b>⏱️ Эксирация:</b> 1-10 мүнөт"
                 
                 keyboard = [
                     [
@@ -1983,16 +1939,14 @@ Bot will send you signals every 2-3 minutes
                     ]
                 ]
             elif lang == 'uz':
-                message = f"""<b>🤖 AVTOMATIK SIGNALLAR</b>
-
-Bot har 2-3 daqiqada sizga signallar yuboradi
-
-<b>📊 Holat:</b> {'✅ YOQILDI' if enabled else '❌ O\'CHIRILDI'}
-<b>⏰ Interval:</b> 2-3 daqiqa
-<b>🎯 Aniqlik:</b> 94-97%
-<b>📈 Indikatorlar:</b> 20+ texnik indikator
-<b>📊 Juftliklar:</b> OTC va birja
-<b>⏱️ Ekspiratsiya:</b> 1-10 daqiqa"""
+                message = f"<b>🤖 AVTOMATIK SIGNALLAR</b>\n\n"
+                message += f"Bot har 2-3 daqiqada sizga signallar yuboradi\n\n"
+                message += f"<b>📊 Holat:</b> {'✅ YOQILDI' if enabled else '❌ O\'CHIRILDI'}\n"
+                message += f"<b>⏰ Interval:</b> 2-3 daqiqa\n"
+                message += f"<b>🎯 Aniqlik:</b> 94-97%\n"
+                message += f"<b>📈 Indikatorlar:</b> 20+ texnik indikator\n"
+                message += f"<b>📊 Juftliklar:</b> OTC va birja\n"
+                message += f"<b>⏱️ Ekspiratsiya:</b> 1-10 daqiqa"
                 
                 keyboard = [
                     [
@@ -2042,53 +1996,45 @@ Bot har 2-3 daqiqada sizga signallar yuboradi
             lang = get_user_language(user_id)
             
             if lang == 'ru':
-                message = f"""<b>📊 ВАША СТАТИСТИКА</b>
-
-<b>🆔 ID:</b> <code>{user_id}</code>
-<b>👑 Статус:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Обычный'}
-<b>📅 Регистрация:</b> {stats.get('join_date', 'Неизвестно')}
-
-<b>🎯 Точность:</b> <b>{stats.get('win_rate', 0):.1f}%</b>
-<b>💰 Прибыль:</b> <b>${stats.get('profit', 0):.0f}</b>
-<b>📊 Сделок:</b> <b>{stats.get('total_trades', 0)}</b>
-<b>✅ Выиграно:</b> <b>{stats.get('wins', 0)}</b>
-<b>❌ Проиграно:</b> <b>{stats.get('losses', 0)}</b>"""
+                message = f"<b>📊 ВАША СТАТИСТИКА</b>\n\n"
+                message += f"<b>🆔 ID:</b> <code>{user_id}</code>\n"
+                message += f"<b>👑 Статус:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Обычный'}\n"
+                message += f"<b>📅 Регистрация:</b> {stats.get('join_date', 'Неизвестно')}\n\n"
+                message += f"<b>🎯 Точность:</b> <b>{stats.get('win_rate', 0):.1f}%</b>\n"
+                message += f"<b>💰 Прибыль:</b> <b>${stats.get('profit', 0):.0f}</b>\n"
+                message += f"<b>📊 Сделок:</b> <b>{stats.get('total_trades', 0)}</b>\n"
+                message += f"<b>✅ Выиграно:</b> <b>{stats.get('wins', 0)}</b>\n"
+                message += f"<b>❌ Проиграно:</b> <b>{stats.get('losses', 0)}</b>"
             elif lang == 'en':
-                message = f"""<b>📊 YOUR STATISTICS</b>
-
-<b>🆔 ID:</b> <code>{user_id}</code>
-<b>👑 Status:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Regular'}
-<b>📅 Registration:</b> {stats.get('join_date', 'Unknown')}
-
-<b>🎯 Accuracy:</b> <b>{stats.get('win_rate', 0):.1f}%</b>
-<b>💰 Profit:</b> <b>${stats.get('profit', 0):.0f}</b>
-<b>📊 Trades:</b> <b>{stats.get('total_trades', 0)}</b>
-<b>✅ Won:</b> <b>{stats.get('wins', 0)}</b>
-<b>❌ Lost:</b> <b>{stats.get('losses', 0)}</b>"""
+                message = f"<b>📊 YOUR STATISTICS</b>\n\n"
+                message += f"<b>🆔 ID:</b> <code>{user_id}</code>\n"
+                message += f"<b>👑 Status:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Regular'}\n"
+                message += f"<b>📅 Registration:</b> {stats.get('join_date', 'Unknown')}\n\n"
+                message += f"<b>🎯 Accuracy:</b> <b>{stats.get('win_rate', 0):.1f}%</b>\n"
+                message += f"<b>💰 Profit:</b> <b>${stats.get('profit', 0):.0f}</b>\n"
+                message += f"<b>📊 Trades:</b> <b>{stats.get('total_trades', 0)}</b>\n"
+                message += f"<b>✅ Won:</b> <b>{stats.get('wins', 0)}</b>\n"
+                message += f"<b>❌ Lost:</b> <b>{stats.get('losses', 0)}</b>"
             elif lang == 'kg':
-                message = f"""<b>📊 СИЗДИН СТАТИСТИКАНЫЗ</b>
-
-<b>🆔 ID:</b> <code>{user_id}</code>
-<b>👑 Статус:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Кадимки'}
-<b>📅 Каттоо:</b> {stats.get('join_date', 'Белгисиз')}
-
-<b>🎯 Тактык:</b> <b>{stats.get('win_rate', 0):.1f}%</b>
-<b>💰 Пайда:</b> <b>${stats.get('profit', 0):.0f}</b>
-<b>📊 Саадалар:</b> <b>{stats.get('total_trades', 0)}</b>
-<b>✅ Жеңиштер:</b> <b>{stats.get('wins', 0)}</b>
-<b>❌ Жеңилүүлөр:</b> <b>{stats.get('losses', 0)}</b>"""
+                message = f"<b>📊 СИЗДИН СТАТИСТИКАНЫЗ</b>\n\n"
+                message += f"<b>🆔 ID:</b> <code>{user_id}</code>\n"
+                message += f"<b>👑 Статус:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Кадимки'}\n"
+                message += f"<b>📅 Каттоо:</b> {stats.get('join_date', 'Белгисиз')}\n\n"
+                message += f"<b>🎯 Тактык:</b> <b>{stats.get('win_rate', 0):.1f}%</b>\n"
+                message += f"<b>💰 Пайда:</b> <b>${stats.get('profit', 0):.0f}</b>\n"
+                message += f"<b>📊 Саадалар:</b> <b>{stats.get('total_trades', 0)}</b>\n"
+                message += f"<b>✅ Жеңиштер:</b> <b>{stats.get('wins', 0)}</b>\n"
+                message += f"<b>❌ Жеңилүүлөр:</b> <b>{stats.get('losses', 0)}</b>"
             elif lang == 'uz':
-                message = f"""<b>📊 SIZNING STATISTIKANGIZ</b>
-
-<b>🆔 ID:</b> <code>{user_id}</code>
-<b>👑 Status:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Oddiy'}
-<b>📅 Ro'yxatdan o'tish:</b> {stats.get('join_date', 'Noma\'lum')}
-
-<b>🎯 Aniqlik:</b> <b>{stats.get('win_rate', 0):.1f}%</b>
-<b>💰 Foyda:</b> <b>${stats.get('profit', 0):.0f}</b>
-<b>📊 Savdolar:</b> <b>{stats.get('total_trades', 0)}</b>
-<b>✅ Yutuqlar:</b> <b>{stats.get('wins', 0)}</b>
-<b>❌ Yutqazishlar:</b> <b>{stats.get('losses', 0)}</b>"""
+                message = f"<b>📊 SIZNING STATISTIKANGIZ</b>\n\n"
+                message += f"<b>🆔 ID:</b> <code>{user_id}</code>\n"
+                message += f"<b>👑 Status:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Oddiy'}\n"
+                message += f"<b>📅 Ro'yxatdan o'tish:</b> {stats.get('join_date', 'Noma\'lum')}\n\n"
+                message += f"<b>🎯 Aniqlik:</b> <b>{stats.get('win_rate', 0):.1f}%</b>\n"
+                message += f"<b>💰 Foyda:</b> <b>${stats.get('profit', 0):.0f}</b>\n"
+                message += f"<b>📊 Savdolar:</b> <b>{stats.get('total_trades', 0)}</b>\n"
+                message += f"<b>✅ Yutuqlar:</b> <b>{stats.get('wins', 0)}</b>\n"
+                message += f"<b>❌ Yutqazishlar:</b> <b>{stats.get('losses', 0)}</b>"
             
             keyboard = []
             if lang == 'ru':
@@ -2110,27 +2056,21 @@ Bot har 2-3 daqiqada sizga signallar yuboradi
             lang = get_user_language(user_id)
             
             if lang == 'ru':
-                message = """<b>👑 ПОЛУЧИТЬ VIP ДОСТУП</b>
-
-Для получения VIP доступа к профессиональным сигналам:
-
-1. 📝 Зарегистрируйтесь по ссылке:
-   <code>https://po-ru4.click/register?utm_campaign=797321</code>
-
-2. 💰 Пополните счет от $50
-
-3. 📩 Напишите админу: @Kuruttrader
-
-4. ✅ Получите VIP доступ
-
-<b>🎯 VIP ПРЕИМУЩЕСТВА:</b>
-• Профессиональные сигналы
-• Автосигналы каждые 2-3 минуты
-• Автопинг каждые 3 минуты
-• Точность 94-97%
-• 20+ индикаторов анализа
-• Марафон 30 дней
-• Поддержка 24/7"""
+                message = "<b>👑 ПОЛУЧИТЬ VIP ДОСТУП</b>\n\n"
+                message += "Для получения VIP доступа к профессиональным сигналам:\n\n"
+                message += "1. 📝 Зарегистрируйтесь по ссылке:\n"
+                message += "   <code>https://po-ru4.click/register?utm_campaign=797321</code>\n\n"
+                message += "2. 💰 Пополните счет от $50\n\n"
+                message += "3. 📩 Напишите админу: @Kuruttrader\n\n"
+                message += "4. ✅ Получите VIP доступ\n\n"
+                message += "<b>🎯 VIP ПРЕИМУЩЕСТВА:</b>\n"
+                message += "• Профессиональные сигналы\n"
+                message += "• Автосигналы каждые 2-3 минуты\n"
+                message += "• Автопинг каждые 3 минуты\n"
+                message += "• Точность 94-97%\n"
+                message += "• 20+ индикаторов анализа\n"
+                message += "• Марафон 30 дней\n"
+                message += "• Поддержка 24/7"
                 
                 keyboard = [
                     [InlineKeyboardButton("📝 Регистрация", url=REF_LINK)],
@@ -2138,27 +2078,21 @@ Bot har 2-3 daqiqada sizga signallar yuboradi
                     [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
                 ]
             elif lang == 'en':
-                message = """<b>👑 GET VIP ACCESS</b>
-
-To get VIP access to professional signals:
-
-1. 📝 Register via link:
-   <code>https://po-ru4.click/register?utm_campaign=797321</code>
-
-2. 💰 Deposit from $50
-
-3. 📩 Write to admin: @Kuruttrader
-
-4. ✅ Get VIP access
-
-<b>🎯 VIP BENEFITS:</b>
-• Professional signals
-• Auto signals every 2-3 minutes
-• Auto ping every 3 minutes
-• Accuracy 94-97%
-• 20+ analysis indicators
-• 30 days marathon
-• 24/7 support"""
+                message = "<b>👑 GET VIP ACCESS</b>\n\n"
+                message += "To get VIP access to professional signals:\n\n"
+                message += "1. 📝 Register via link:\n"
+                message += "   <code>https://po-ru4.click/register?utm_campaign=797321</code>\n\n"
+                message += "2. 💰 Deposit from $50\n\n"
+                message += "3. 📩 Write to admin: @Kuruttrader\n\n"
+                message += "4. ✅ Get VIP access\n\n"
+                message += "<b>🎯 VIP BENEFITS:</b>\n"
+                message += "• Professional signals\n"
+                message += "• Auto signals every 2-3 minutes\n"
+                message += "• Auto ping every 3 minutes\n"
+                message += "• Accuracy 94-97%\n"
+                message += "• 20+ analysis indicators\n"
+                message += "• 30 days marathon\n"
+                message += "• 24/7 support"
                 
                 keyboard = [
                     [InlineKeyboardButton("📝 Register", url=REF_LINK)],
@@ -2166,27 +2100,21 @@ To get VIP access to professional signals:
                     [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
                 ]
             elif lang == 'kg':
-                message = """<b>👑 VIP ДОСТУП АЛУУ</b>
-
-Профессионалдык сигналдар үчүн VIP доступ алуу үчүн:
-
-1. 📝 Төмөнкү шилтеме менен катталыңыз:
-   <code>https://po-ru4.click/register?utm_campaign=797321</code>
-
-2. 💰 $50дан баштап депозит салыңыз
-
-3. 📩 Админге жазыңыз: @Kuruttrader
-
-4. ✅ VIP доступ алыңыз
-
-<b>🎯 VIP АРТЫКЧЫЛЫКТАРЫ:</b>
-• Профессионалдык сигналдар
-• Автосигналдар ар 2-3 мүнөт сайын
-• Автопиң ар 3 мүнөт сайын
-• Тактык 94-97%
-• 20+ анализ индикатору
-• 30 күн марафон
-• 24/7 колдоо"""
+                message = "<b>👑 VIP ДОСТУП АЛУУ</b>\n\n"
+                message += "Профессионалдык сигналдар үчүн VIP доступ алуу үчүн:\n\n"
+                message += "1. 📝 Төмөнкү шилтеме менен катталыңыз:\n"
+                message += "   <code>https://po-ru4.click/register?utm_campaign=797321</code>\n\n"
+                message += "2. 💰 $50дан баштап депозит салыңыз\n\n"
+                message += "3. 📩 Админге жазыңыз: @Kuruttrader\n\n"
+                message += "4. ✅ VIP доступ алыңыз\n\n"
+                message += "<b>🎯 VIP АРТЫКЧЫЛЫКТАРЫ:</b>\n"
+                message += "• Профессионалдык сигналдар\n"
+                message += "• Автосигналдар ар 2-3 мүнөт сайын\n"
+                message += "• Автопиң ар 3 мүнөт сайын\n"
+                message += "• Тактык 94-97%\n"
+                message += "• 20+ анализ индикатору\n"
+                message += "• 30 күн марафон\n"
+                message += "• 24/7 колдоо"
                 
                 keyboard = [
                     [InlineKeyboardButton("📝 Каттоо", url=REF_LINK)],
@@ -2194,27 +2122,21 @@ To get VIP access to professional signals:
                     [InlineKeyboardButton("🏠 Башкы меню", callback_data="main_menu")]
                 ]
             elif lang == 'uz':
-                message = """<b>👑 VIP DOSTUP OLISH</b>
-
-Professional signallar uchun VIP dostup olish uchun:
-
-1. 📝 Quyidagi havola orqali ro'yxatdan o'ting:
-   <code>https://po-ru4.click/register?utm_campaign=797321</code>
-
-2. 💰 $50 dan boshlab depozit qo'ying
-
-3. 📩 Admin'ga yozing: @Kuruttrader
-
-4. ✅ VIP dostup oling
-
-<b>🎯 VIP AFZALLIKLARI:</b>
-• Professional signallar
-• Avtosignallar har 2-3 daqiqada
-• Avtoping har 3 daqiqada
-• Aniqlik 94-97%
-• 20+ tahlil indikatori
-• 30 kun marafon
-• 24/7 qo'llab-quvvatlash"""
+                message = "<b>👑 VIP DOSTUP OLISH</b>\n\n"
+                message += "Professional signallar uchun VIP dostup olish uchun:\n\n"
+                message += "1. 📝 Quyidagi havola orqali ro'yxatdan o'ting:\n"
+                message += "   <code>https://po-ru4.click/register?utm_campaign=797321</code>\n\n"
+                message += "2. 💰 $50 dan boshlab depozit qo'ying\n\n"
+                message += "3. 📩 Admin'ga yozing: @Kuruttrader\n\n"
+                message += "4. ✅ VIP dostup oling\n\n"
+                message += "<b>🎯 VIP AFZALLIKLARI:</b>\n"
+                message += "• Professional signallar\n"
+                message += "• Avtosignallar har 2-3 daqiqada\n"
+                message += "• Avtoping har 3 daqiqada\n"
+                message += "• Aniqlik 94-97%\n"
+                message += "• 20+ tahlil indikatori\n"
+                message += "• 30 kun marafon\n"
+                message += "• 24/7 qo'llab-quvvatlash"
                 
                 keyboard = [
                     [InlineKeyboardButton("📝 Ro'yxatdan o'tish", url=REF_LINK)],
@@ -2412,69 +2334,61 @@ Professional signallar uchun VIP dostup olish uchun:
             lang = get_user_language(user_id)
             
             if lang == 'ru':
-                message = """<b>👑 ПОЛНЫЙ ДОСТУП</b>
-
-<b>✅ Функции полного доступа:</b>
-• Выдача VIP статуса
-• Отзыв VIP статуса
-• Блокировка пользователей
-• Разблокировка пользователей
-• Массовая рассылка
-• Отправка сообщений
-• Просмотр статистики
-• Просмотр логов
-• Управление автосигналами
-
-<b>⚠️ ВНИМАНИЕ:</b>
-Полный доступ имеют только администраторы."""
+                message = "<b>👑 ПОЛНЫЙ ДОСТУП</b>\n\n"
+                message += "<b>✅ Функции полного доступа:</b>\n"
+                message += "• Выдача VIP статуса\n"
+                message += "• Отзыв VIP статуса\n"
+                message += "• Блокировка пользователей\n"
+                message += "• Разблокировка пользователей\n"
+                message += "• Массовая рассылка\n"
+                message += "• Отправка сообщений\n"
+                message += "• Просмотр статистики\n"
+                message += "• Просмотр логов\n"
+                message += "• Управление автосигналами\n\n"
+                message += "<b>⚠️ ВНИМАНИЕ:</b>\n"
+                message += "Полный доступ имеют только администраторы."
             elif lang == 'en':
-                message = """<b>👑 FULL ACCESS</b>
-
-<b>✅ Full access functions:</b>
-• Grant VIP status
-• Revoke VIP status
-• Ban users
-• Unban users
-• Mass broadcasting
-• Send messages
-• View statistics
-• View logs
-• Manage auto signals
-
-<b>⚠️ WARNING:</b>
-Only administrators have full access."""
+                message = "<b>👑 FULL ACCESS</b>\n\n"
+                message += "<b>✅ Full access functions:</b>\n"
+                message += "• Grant VIP status\n"
+                message += "• Revoke VIP status\n"
+                message += "• Ban users\n"
+                message += "• Unban users\n"
+                message += "• Mass broadcasting\n"
+                message += "• Send messages\n"
+                message += "• View statistics\n"
+                message += "• View logs\n"
+                message += "• Manage auto signals\n\n"
+                message += "<b>⚠️ WARNING:</b>\n"
+                message += "Only administrators have full access."
             elif lang == 'kg':
-                message = """<b>👑 ТОЛУК МҮМКҮНЧҮЛҮК</b>
-
-<b>✅ Толук мүмкүнчүлүктүн функциялары:</b>
-• VIP статус берүү
-• VIP статусту алуу
-• Колдонуучуларды блоктоо
-• Колдонуучулардын блогуун ачуу
-• Жапма-жай жарыялоо
-• Кабар жөнөтүү
-• Статистиканы көрүү
-• Логдорду көрүү
-• Автосигналдарды башкаруу
-
-<b>⚠️ КӨҢҮЛ БУРУҢУЗ:</b>
-Толук мүмкүнчүлүк админдерде гана бар."""
+                message = "<b>👑 ТОЛУК МҮМКҮНЧҮЛҮК</b>\n\n"
+                message += "<b>✅ Толук мүмкүнчүлүктүн функциялары:</b>\n"
+                message += "• VIP статус берүү\n"
+                message += "• VIP статусту алуу\n"
+                message += "• Колдонуучуларды блоктоо\n"
+                message += "• Колдонуучулардын блогуун ачуу\n"
+                message += "• Жапма-жай жарыялоо\n"
+                message += "• Кабар жөнөтүү\n"
+                message += "• Статистиканы көрүү\n"
+                message += "• Логдорду көрүү\n"
+                message += "• Автосигналдарды башкаруу\n\n"
+                message += "<b>⚠️ КӨҢҮЛ БУРУҢУЗ:</b>\n"
+                message += "Толук мүмкүнчүлүк админдерде гана бар."
             elif lang == 'uz':
-                message = """<b>👑 TO'LIQ RUXSAT</b>
-
-<b>✅ To'liq ruxsat funksiyalari:</b>
-• VIP status berish
-• VIP status'ni olib tashlash
-• Foydalanuvchilarni bloklash
-• Foydalanuvchilarning blokini ochish
-• Ommaviy tarqatish
-• Xabar yuborish
-• Statistika ko'rish
-• Log'larni ko'rish
-• Avtosignallarni boshqarish
-
-<b>⚠️ DIQQAT:</b>
-Faqat administrator'larda to'liq ruxsat mavjud."""
+                message = "<b>👑 TO'LIQ RUXSAT</b>\n\n"
+                message += "<b>✅ To'liq ruxsat funksiyalari:</b>\n"
+                message += "• VIP status berish\n"
+                message += "• VIP status'ni olib tashlash\n"
+                message += "• Foydalanuvchilarni bloklash\n"
+                message += "• Foydalanuvchilarning blokini ochish\n"
+                message += "• Ommaviy tarqatish\n"
+                message += "• Xabar yuborish\n"
+                message += "• Statistika ko'rish\n"
+                message += "• Log'larni ko'rish\n"
+                message += "• Avtosignallarni boshqarish\n\n"
+                message += "<b>⚠️ DIQQAT:</b>\n"
+                message += "Faqat administrator'larda to'liq ruxsat mavjud."
             
             keyboard = []
             if lang == 'ru':
@@ -2516,97 +2430,77 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             lang = get_user_language(user_id)
             
             if lang == 'ru':
-                message = f"""<b>📅 ПЛАН МАРАФОНА НА 30 ДНЕЙ</b>
-
-<b>💰 Стартовый депозит:</b> <b>${deposit:.0f}</b>
-
-<b>🎯 ЦЕЛЬ МАРАФОНА:</b>
-• Увеличить депозит до: <b>${deposit * 3:.0f}</b>
-• Средняя прибыль в день: <b>${deposit * 0.03:.0f}</b>
-• Всего сделок: <b>90-120</b>
-
-<b>📊 СТРАТЕГИЯ:</b>
-• Риск: 2-3% от депозита
-• Точность сигналов: 94-97%
-• Экспирация: 1-10 минут
-• Рынки: OTC и биржевые
-
-<b>⚠️ РЕКОМЕНДАЦИИ:</b>
-• Следуйте всем сигналам
-• Не отклоняйтесь от стратегии
-• Контролируйте эмоции
-• Анализируйте результаты
-
-<b>🚀 Удачи в марафоне!</b>"""
+                message = f"<b>📅 ПЛАН МАРАФОНА НА 30 ДНЕЙ</b>\n\n"
+                message += f"<b>💰 Стартовый депозит:</b> <b>${deposit:.0f}</b>\n\n"
+                message += f"<b>🎯 ЦЕЛЬ МАРАФОНА:</b>\n"
+                message += f"• Увеличить депозит до: <b>${deposit * 3:.0f}</b>\n"
+                message += f"• Средняя прибыль в день: <b>${deposit * 0.03:.0f}</b>\n"
+                message += f"• Всего сделок: <b>90-120</b>\n\n"
+                message += f"<b>📊 СТРАТЕГИЯ:</b>\n"
+                message += f"• Риск: 2-3% от депозита\n"
+                message += f"• Точность сигналов: 94-97%\n"
+                message += f"• Экспирация: 1-10 минут\n"
+                message += f"• Рынки: OTC и биржевые\n\n"
+                message += f"<b>⚠️ РЕКОМЕНДАЦИИ:</b>\n"
+                message += f"• Следуйте всем сигналам\n"
+                message += f"• Не отклоняйтесь от стратегии\n"
+                message += f"• Контролируйте эмоции\n"
+                message += f"• Анализируйте результаты\n\n"
+                message += f"<b>🚀 Удачи в марафоне!</b>"
             elif lang == 'en':
-                message = f"""<b>📅 30 DAYS MARATHON PLAN</b>
-
-<b>💰 Starting deposit:</b> <b>${deposit:.0f}</b>
-
-<b>🎯 MARATHON GOAL:</b>
-• Increase deposit to: <b>${deposit * 3:.0f}</b>
-• Average daily profit: <b>${deposit * 0.03:.0f}</b>
-• Total trades: <b>90-120</b>
-
-<b>📊 STRATEGY:</b>
-• Risk: 2-3% of deposit
-• Signal accuracy: 94-97%
-• Expiration: 1-10 minutes
-• Markets: OTC and exchange
-
-<b>⚠️ RECOMMENDATIONS:</b>
-• Follow all signals
-• Don't deviate from strategy
-• Control emotions
-• Analyze results
-
-<b>🚀 Good luck in marathon!</b>"""
+                message = f"<b>📅 30 DAYS MARATHON PLAN</b>\n\n"
+                message += f"<b>💰 Starting deposit:</b> <b>${deposit:.0f}</b>\n\n"
+                message += f"<b>🎯 MARATHON GOAL:</b>\n"
+                message += f"• Increase deposit to: <b>${deposit * 3:.0f}</b>\n"
+                message += f"• Average daily profit: <b>${deposit * 0.03:.0f}</b>\n"
+                message += f"• Total trades: <b>90-120</b>\n\n"
+                message += f"<b>📊 STRATEGY:</b>\n"
+                message += f"• Risk: 2-3% of deposit\n"
+                message += f"• Signal accuracy: 94-97%\n"
+                message += f"• Expiration: 1-10 minutes\n"
+                message += f"• Markets: OTC and exchange\n\n"
+                message += f"<b>⚠️ RECOMMENDATIONS:</b>\n"
+                message += f"• Follow all signals\n"
+                message += f"• Don't deviate from strategy\n"
+                message += f"• Control emotions\n"
+                message += f"• Analyze results\n\n"
+                message += f"<b>🚀 Good luck in marathon!</b>"
             elif lang == 'kg':
-                message = f"""<b>📅 30 КҮН МАРАФОН ПЛАНЫ</b>
-
-<b>💰 Баштапкы депозит:</b> <b>${deposit:.0f}</b>
-
-<b>🎯 МАРАФОНДУН МАКСАТЫ:</b>
-• Депозитти көбөйтүү: <b>${deposit * 3:.0f}</b>
-• Күнүмдүк орточо пайда: <b>${deposit * 0.03:.0f}</b>
-• Бардык саадалар: <b>90-120</b>
-
-<b>📊 СТРАТЕГИЯ:</b>
-• Төөнөгү: депозиттин 2-3%
-• Сигналдардын тактыгы: 94-97%
-• Эксирация: 1-10 мүнөт
-• Базарлар: OTC жана биржа
-
-<b>⚠️ СУНУШТАР:</b>
-• Бардык сигналдарга ээрчиңиз
-• Стратегиядан четтеп кетпеңиз
-• Эмоцияларды көзөмөлдөңүз
-• Натыйжаларды талдоо
-
-<b>🚀 Марафондо ийгилик!</b>"""
+                message = f"<b>📅 30 КҮН МАРАФОН ПЛАНЫ</b>\n\n"
+                message += f"<b>💰 Баштапкы депозит:</b> <b>${deposit:.0f}</b>\n\n"
+                message += f"<b>🎯 МАРАФОНДУН МАКСАТЫ:</b>\n"
+                message += f"• Депозитти көбөйтүү: <b>${deposit * 3:.0f}</b>\n"
+                message += f"• Күнүмдүк орточо пайда: <b>${deposit * 0.03:.0f}</b>\n"
+                message += f"• Бардык саадалар: <b>90-120</b>\n\n"
+                message += f"<b>📊 СТРАТЕГИЯ:</b>\n"
+                message += f"• Төөнөгү: депозиттин 2-3%\n"
+                message += f"• Сигналдардын тактыгы: 94-97%\n"
+                message += f"• Эксирация: 1-10 мүнөт\n"
+                message += f"• Базарлар: OTC жана биржа\n\n"
+                message += f"<b>⚠️ СУНУШТАР:</b>\n"
+                message += f"• Бардык сигналдарга ээрчиңиз\n"
+                message += f"• Стратегиядан четтеп кетпеңиз\n"
+                message += f"• Эмоцияларды көзөмөлдөңүз\n"
+                message += f"• Натыйжаларды талдоо\n\n"
+                message += f"<b>🚀 Марафондо ийгилик!</b>"
             elif lang == 'uz':
-                message = f"""<b>📅 30 KUN MARAFON REJASI</b>
-
-<b>💰 Boshlang'ich depozit:</b> <b>${deposit:.0f}</b>
-
-<b>🎯 MARAFON MAQSADI:</b>
-• Depozitni oshirish: <b>${deposit * 3:.0f}</b>
-• Kunlik o'rtacha foyda: <b>${deposit * 0.03:.0f}</b>
-• Jami savdolar: <b>90-120</b>
-
-<b>📊 STRATEGIYA:</b>
-• Xavf: depozitning 2-3%
-• Signallarning aniqligi: 94-97%
-• Ekspiratsiya: 1-10 daqiqa
-• Bozorlar: OTC va birja
-
-<b>⚠️ TAVSIYALAR:</b>
-• Barcha signallarga amal qiling
-• Strategiyadan chetlashmang
-• Emotsiyalarni nazorat qiling
-• Natijalarni tahliylang
-
-<b>🚀 Marafonda omad!</b>"""
+                message = f"<b>📅 30 KUN MARAFON REJASI</b>\n\n"
+                message += f"<b>💰 Boshlang'ich depozit:</b> <b>${deposit:.0f}</b>\n\n"
+                message += f"<b>🎯 MARAFON MAQSADI:</b>\n"
+                message += f"• Depozitni oshirish: <b>${deposit * 3:.0f}</b>\n"
+                message += f"• Kunlik o'rtacha foyda: <b>${deposit * 0.03:.0f}</b>\n"
+                message += f"• Jami savdolar: <b>90-120</b>\n\n"
+                message += f"<b>📊 STRATEGIYA:</b>\n"
+                message += f"• Xavf: depozitning 2-3%\n"
+                message += f"• Signallarning aniqligi: 94-97%\n"
+                message += f"• Ekspiratsiya: 1-10 daqiqa\n"
+                message += f"• Bozorlar: OTC va birja\n\n"
+                message += f"<b>⚠️ TAVSIYALAR:</b>\n"
+                message += f"• Barcha signallarga amal qiling\n"
+                message += f"• Strategiyadan chetlashmang\n"
+                message += f"• Emotsiyalarni nazorat qiling\n"
+                message += f"• Natijalarni tahliylang\n\n"
+                message += f"<b>🚀 Marafonda omad!</b>"
             
             lang = get_user_language(user_id)
             if lang == 'ru':
@@ -2616,7 +2510,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
             elif lang == 'kg':
                 keyboard = [[InlineKeyboardButton("🏠 Башкы меню", callback_data="main_menu")]]
             elif lang == 'uz':
-                keyboard = [[InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")]]
+                keyboard = [[InlineKeyboardButton("🏠 Asosiy menyу", callback_data="main_menu")]]
             
             await update.message.reply_text(
                 message,
@@ -2670,7 +2564,7 @@ async def run_bot():
         logger.info(f"👥 Всего пользователей: {len(all_users)}")
         logger.info(f"👑 VIP пользователей: {len(vip_users)}")
         logger.info(f"⛔ Заблокированных: {len(banned_users)}")
-        logger.info("⏰ Автопинг каждые 3 минуты (только логирование)")
+        logger.info("⏰ Автопинг каждые 3 минуты")
         logger.info("🤖 Автосигналы каждые 2-3 минуты")
         
         # Запускаем polling
