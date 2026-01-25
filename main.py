@@ -860,8 +860,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     except Exception as e:
         logger.error(f"Ошибка выбора пары {data}: {e}")
-        await query.answer("❌ Ошибка выбора пары", show_alert=True)
-        
+       await query.answer("❌ Ошибка выбора пары", show_alert=True)
         # ВЫБОР ЭКСПИРАЦИИ
         elif data.startswith("exp_"):
             if not is_vip(user_id):
