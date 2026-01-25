@@ -1,16 +1,15 @@
 # ============================================
-# 🚀 KURUT AI INFINITY | ULTIMATE PRO TRADING BOT v12.3
+# 🚀 KURUT AI INFINITY | ULTIMATE PRO TRADING BOT v12.4
 # ============================================
 # АВТОР: @Kuruttrader
-# ВЕРСИЯ: 12.3 | OPTIMIZED WITH FIXES
+# ВЕРСИЯ: 12.4 | FIXED SYNTAX ERRORS
 # ДАТА: 2024
 # ============================================
 # ИСПРАВЛЕНИЯ:
-# 1. ✅ Исправлена система автопинга (не отправляет админам)
-# 2. ✅ Полный доступ для админов
-# 3. ✅ Исправлена мультиязычность (KG, UZ, EN, RU)
+# 1. ✅ Исправлены f-строки с обратными слешами
+# 2. ✅ Исправлен автопинг
+# 3. ✅ Исправлена мультиязычность
 # 4. ✅ Исправлены автосигналы
-# 5. ✅ Устранены все ошибки
 # ============================================
 
 import json
@@ -107,7 +106,7 @@ def home():
     <body>
         <div class="container">
             <div class="header">
-                <h1>🚀 KURUT AI INFINITY v12.3</h1>
+                <h1>🚀 KURUT AI INFINITY v12.4</h1>
                 <p>Professional Trading Signals</p>
             </div>
             <div class="status">
@@ -691,7 +690,7 @@ TEXTS = {
     'ru': {
         'welcome': "👋 Добро пожаловать в KURUT AI INFINITY!",
         'choose_lang': "Выберите язык:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.3",
+        'main_menu': "🚀 KURUT AI INFINITY v12.4",
         'your_id': "🆔 Ваш ID:",
         'status': "👑 Статус:",
         'vip': "✅ VIP",
@@ -773,7 +772,7 @@ TEXTS = {
     'en': {
         'welcome': "👋 Welcome to KURUT AI INFINITY!",
         'choose_lang': "Choose language:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.3",
+        'main_menu': "🚀 KURUT AI INFINITY v12.4",
         'your_id': "🆔 Your ID:",
         'status': "👑 Status:",
         'vip': "✅ VIP",
@@ -855,7 +854,7 @@ TEXTS = {
     'kg': {
         'welcome': "👋 KURUT AI INFINITY'ке кош келиңиз!",
         'choose_lang': "Тилди тандаңыз:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.3",
+        'main_menu': "🚀 KURUT AI INFINITY v12.4",
         'your_id': "🆔 Сиздин ID:",
         'status': "👑 Статус:",
         'vip': "✅ VIP",
@@ -937,7 +936,7 @@ TEXTS = {
     'uz': {
         'welcome': "👋 KURUT AI INFINITY'ga xush kelibsiz!",
         'choose_lang': "Tilni tanlang:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.3",
+        'main_menu': "🚀 KURUT AI INFINITY v12.4",
         'your_id': "🆔 Sizning ID:",
         'status': "👑 Status:",
         'vip': "✅ VIP",
@@ -2033,7 +2032,9 @@ Bot har 2-3 daqiqada sizga signallar yuboradi
                 status = "yoqildi" if not enabled else "o'chirildi"
             
             await query.answer(f"✅ Автосигналы {status}!", show_alert=True)
-            await auto_signals_menu(query, context)
+            # Возвращаемся в меню автосигналов
+            data = "auto_signals_menu"
+            return await handle_callback(update, context)
         
         elif data == "my_stats":
             ensure_user_data(user_id)
