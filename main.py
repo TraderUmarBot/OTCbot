@@ -833,29 +833,34 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         # ВЫБОР ПАРЫ
         elif data.startswith("pair_"):
-            if not is_vip(user_id):
-                await query.answer(get_text(user_id, 'require_vip'), show_alert=True)
-                return
-            
-            parts = data.split("_")
-            if len(parts) >= 3:
-                category_id = parts[1]
-                pair_index = int(parts[2])
-                
-                if category_id not in MARKET_CATEGORIES:
-                    await query.answer("❌ Категория не найдена", show_alert=True)
-                    return
-                
-                pairs = MARKET_CATEGORIES[category_id]['pairs']
-                if 0 <= pair_index < len(pairs):
-                    pair = pairs[pair_index]
-                    
-                    # Сохраняем выбранную пару
-                    context.user_data['selected_pair'] = pair
-                    context.user_data['selected_category'] = category_id
-                    
-                    # Показываем выбор экспирации
-                    await show_expiration_selection(query, user_id, pair)
+    if not is_vip(user_id):
+        await query.answer(get_text(user_id, 'require_vip'), show_alert=True)
+        return
+
+    try:
+        _, category_id, pair_index = data.split("_")
+        pair_index = int(pair_index)
+
+        if category_id not in MARKET_CATEGORIES:
+            await query.answer("❌ Категория не найдена", show_alert=True)
+            return
+
+        pairs = MARKET_CATEGORIES[category_id]['pairs']
+
+        if not (0 <= pair_index < len(pairs)):
+            await query.answer("❌ Пара не найдена", show_alert=True)
+            return
+
+        pair = pairs[pair_index]
+
+        context.user_data['selected_pair'] = pair
+        context.user_data['selected_category'] = category_id
+
+        await show_expiration_selection(query, user_id, pair)
+
+    except Exception as e:
+        logger.error(f"Ошибка выбора пары {data}: {e}")
+        await query.answer("❌ Ошибка выбора пары", show_alert=True)
         
         # ВЫБОР ЭКСПИРАЦИИ
         elif data.startswith("exp_"):
