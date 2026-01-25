@@ -189,7 +189,7 @@ class AutoPingSystem:
         self.ping_count = 0
         self.start_time = datetime.now()
     
-    def start(self):
+    def start(self, application):
         """Запуск автопинга"""
         def ping_loop():
             while self.is_running:
@@ -498,7 +498,9 @@ TEXTS = {
         'next': "➡️ Далее",
         'prev': "⬅️ Назад",
         'main_menu_btn': "🏠 Главное меню",
-        'page': "Страница {current}/{total}"
+        'page': "Страница {current}/{total}",
+        'start_button': "🚀 НАЧАТЬ",
+        'start_button_kg': "🚀 БАШТОО"
     },
     'kg': {
         'welcome': "👋 KURUT AI INFINITY v15.0'ке кош келиңиз!",
@@ -534,7 +536,9 @@ TEXTS = {
         'next': "➡️ Кийинки",
         'prev': "⬅️ Мурунку",
         'main_menu_btn': "🏠 Башкы меню",
-        'page': "Барак {current}/{total}"
+        'page': "Барак {current}/{total}",
+        'start_button': "🚀 НАЧАТЬ",
+        'start_button_kg': "🚀 БАШТОО"
     }
 }
 
@@ -792,9 +796,6 @@ async def show_main_menu(update, user_id: str):
 # 🎯 ОБРАБОТКА CALLBACK - ВСЕ РАБОТАЕТ
 # ============================================
 
-# Глобальные переменные для пагинации
-user_pagination = {}
-
 async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     query = update.callback_query
     await query.answer()
@@ -982,6 +983,174 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
+        # МОЯ СТАТИСТИКА
+        elif data == "my_stats":
+            user_stats_data = user_stats.get(user_id, {})
+            wins = user_stats_data.get('wins', 0)
+            losses = user_stats_data.get('losses', 0)
+            total = wins + losses
+            win_rate = user_stats_data.get('win_rate', 0)
+            profit = user_stats_data.get('profit', 0)
+            
+            lang = get_user_language(user_id)
+            if lang == 'ru':
+                message = f"📊 <b>ВАША СТАТИСТИКА</b>\n\n"
+                message += f"🎯 Общие сделки: <b>{total}</b>\n"
+                message += f"✅ Выигрыши: <b>{wins}</b>\n"
+                message += f"❌ Проигрыши: <b>{losses}</b>\n"
+                message += f"📈 Процент успеха: <b>{win_rate}%</b>\n"
+                message += f"💰 Прибыль: <b>${profit}</b>\n"
+                message += f"📅 Дата регистрации: {user_stats_data.get('join_date', 'Неизвестно')}\n"
+            else:
+                message = f"📊 <b>СИЗДИН СТАТИСТИКАНЫЗ</b>\n\n"
+                message += f"🎯 Жалпы иштер: <b>{total}</b>\n"
+                message += f"✅ Жеңиштер: <b>{wins}</b>\n"
+                message += f"❌ Жеңилүүлөр: <b>{losses}</b>\n"
+                message += f"📈 Ийгилик пайызы: <b>{win_rate}%</b>\n"
+                message += f"💰 Пайда: <b>${profit}</b>\n"
+                message += f"📅 Каттоо күнү: {user_stats_data.get('join_date', 'Белгисиз')}\n"
+            
+            keyboard = [[InlineKeyboardButton(get_text(user_id, 'main_menu_btn'), callback_data="main_menu")]]
+            await query.edit_message_text(message, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(keyboard))
+        
+        # ИНСТРУКЦИЯ
+        elif data == "instructions":
+            lang = get_user_language(user_id)
+            if lang == 'ru':
+                message = "📖 <b>ИНСТРУКЦИЯ ПО ИСПОЛЬЗОВАНИЮ</b>\n\n"
+                message += "1. <b>Получите VIP доступ</b> через админа\n"
+                message += "2. <b>Выберите категорию</b> (OTC Валюты, Биржевые Валюты, Акции, Крипта)\n"
+                message += "3. <b>Выберите торговую пару</b> из 100+ вариантов\n"
+                message += "4. <b>Выберите экспирацию</b> от 30 секунд до 10 минут\n"
+                message += "5. <b>Получите точный сигнал</b> с указанием времени входа\n"
+                message += "6. <b>Следуйте сигналу</b> и отмечайте результат\n\n"
+                message += "🎯 <b>Точность сигналов: 94-97%</b>\n"
+                message += "🤖 <b>Автосигналы:</b> каждые 2-3 минуты для VIP\n"
+                message += "⏱️ <b>Автопинг:</b> каждые 3 минуты (бот работает 24/7)"
+            else:
+                message = "📖 <b>КОЛДОНУУ НУСКАМАСЫ</b>\n\n"
+                message += "1. <b>VIP доступ алыңыз</b> админ аркылуу\n"
+                message += "2. <b>Категорияны тандаңыз</b> (OTC Валюта, Биржа Валютасы, Акциялар, Крипта)\n"
+                message += "3. <b>Соода жупун тандаңыз</b> 100+ варианттан\n"
+                message += "4. <b>Эксирацияны тандаңыз</b> 30 секундтан 10 мүнөткө чейин\n"
+                message += "5. <b>Так сигнал алыңыз</b> кириш убактысы менен\n"
+                message += "6. <b>Сигналга ээрчиңиз</b> жана натыйжаны белгилеңиз\n\n"
+                message += "🎯 <b>Сигналдардын тактыгы: 94-97%</b>\n"
+                message += "🤖 <b>Автосигналдар:</b> VIP үчүн ар 2-3 мүнөт сайын\n"
+                message += "⏱️ <b>Автопиң:</b> ар 3 мүнөт сайын (бот 24/7 иштейт)"
+            
+            keyboard = [[InlineKeyboardButton(get_text(user_id, 'main_menu_btn'), callback_data="main_menu")]]
+            await query.edit_message_text(message, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(keyboard))
+        
+        # СОЦСЕТИ
+        elif data == "socials":
+            lang = get_user_language(user_id)
+            if lang == 'ru':
+                message = "🌐 <b>МЫ В СОЦИАЛЬНЫХ СЕТЯХ</b>\n\n"
+                message += "📢 <b>Telegram канал:</b> @KURUTTRADING\n"
+                message += "📺 <b>YouTube:</b> @kurut_kg\n"
+                message += "📸 <b>Instagram:</b> @kurut_trading\n"
+                message += "💬 <b>Открытый чат:</b> @Kurutopen\n"
+                message += "👨‍💼 <b>Админ:</b> @Kuruttrader\n\n"
+                message += "<b>🔔 Подписывайтесь, чтобы не пропустить обновления!</b>"
+            else:
+                message = "🌐 <b>БИЗ СОЦИАЛДЫК ТАРМАКТАРДА</b>\n\n"
+                message += "📢 <b>Telegram канал:</b> @KURUTTRADING\n"
+                message += "📺 <b>YouTube:</b> @kurut_kg\n"
+                message += "📸 <b>Instagram:</b> @kurut_trading\n"
+                message += "💬 <b>Ачык чат:</b> @Kurutopen\n"
+                message += "👨‍💼 <b>Админ:</b> @Kuruttrader\n\n"
+                message += "<b>🔔 Жаңылыктарды өткөрүп жибербөө үчүн жазылыңыз!</b>"
+            
+            keyboard = [
+                [InlineKeyboardButton("📢 Telegram", url=SOCIALS["telegram"])],
+                [InlineKeyboardButton("📺 YouTube", url=SOCIALS["youtube"])],
+                [InlineKeyboardButton("📸 Instagram", url=SOCIALS["instagram"])],
+                [InlineKeyboardButton("💬 Чат", url=SOCIALS["open_chat"])],
+                [InlineKeyboardButton(get_text(user_id, 'main_menu_btn'), callback_data="main_menu")]
+            ]
+            await query.edit_message_text(message, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(keyboard))
+        
+        # МАРАФОН 30 ДНЕЙ
+        elif data == "marathon":
+            lang = get_user_language(user_id)
+            if lang == 'ru':
+                message = "📅 <b>МАРАФОН 30 ДНЕЙ</b>\n\n"
+                message += "🚀 <b>Старт:</b> При получении VIP доступа\n"
+                message += "🎯 <b>Цель:</b> +300% к депозиту за 30 дней\n"
+                message += "📈 <b>Средняя прибыль в день:</b> +10%\n"
+                message += "✅ <b>Условия:</b>\n"
+                message += "• Начальный депозит: от $50\n"
+                message += "• Следование всем сигналам\n"
+                message += "• Использование рекомендованных лотов\n"
+                message += "• Отслеживание результатов\n\n"
+                message += "🔥 <b>Участники VIP марафона получают:</b>\n"
+                message += "• Приоритетные сигналы\n"
+                message += "• Персональную поддержку\n"
+                message += "• Бонусные автосигналы\n"
+                message += "• Анализ результатов\n"
+            else:
+                message = "📅 <b>30 КҮН МАРАФОНУ</b>\n\n"
+                message += "🚀 <b>Башталуу:</b> VIP доступ алуу менен\n"
+                message += "🎯 <b>Максат:</b> 30 күндө депозитке +300%\n"
+                message += "📈 <b>Күнүмдүк орточо пайда:</b> +10%\n"
+                message += "✅ <b>Шарттар:</b>\n"
+                message += "• Баштапкы депозит: $50дан\n"
+                message += "• Бардык сигналдарга ээрчиш\n"
+                message += "• Сунушталган лотторду колдонуу\n"
+                message += "• Натыйжаларды көзөмөлдөө\n\n"
+                message += "🔥 <b>VIP марафонуна катышуучулар алышат:</b>\n"
+                message += "• Артыкчыл сигналдар\n"
+                message += "• Жеке колдоо\n"
+                message += "• Бонус автосигналдар\n"
+                message += "• Натыйжаларды талдоо\n"
+            
+            keyboard = [
+                [InlineKeyboardButton("👑 Получить VIP" if lang == 'ru' else "👑 VIP алуу", callback_data="get_vip")],
+                [InlineKeyboardButton(get_text(user_id, 'main_menu_btn'), callback_data="main_menu")]
+            ]
+            await query.edit_message_text(message, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(keyboard))
+        
+        # АВТОСИГНАЛЫ
+        elif data == "auto_signals":
+            if not is_vip(user_id):
+                await query.answer(get_text(user_id, 'require_vip'), show_alert=True)
+                return
+            
+            user_id_str = str(user_id)
+            current_status = auto_signals.get(user_id_str, False)
+            
+            # Переключаем статус
+            auto_signals[user_id_str] = not current_status
+            Database.save("data/auto_signals.json", auto_signals)
+            
+            lang = get_user_language(user_id)
+            if lang == 'ru':
+                if auto_signals[user_id_str]:
+                    message = "✅ <b>АВТОСИГНАЛЫ ВКЛЮЧЕНЫ!</b>\n\n"
+                    message += "🤖 Теперь вы будете получать автоматические сигналы каждые 2-3 минуты.\n"
+                    message += "📊 Сигналы будут приходить для случайных пар из всех категорий.\n"
+                    message += "🎯 Точность автосигналов: 94-97%\n\n"
+                    message += "⚡ <b>Сигналы начнут приходить в течение 2-3 минут!</b>"
+                else:
+                    message = "⏸️ <b>АВТОСИГНАЛЫ ОТКЛЮЧЕНЫ!</b>\n\n"
+                    message += "Вы больше не будете получать автоматические сигналы.\n"
+                    message += "Для получения сигналов используйте кнопку 'Получить сигнал'."
+            else:
+                if auto_signals[user_id_str]:
+                    message = "✅ <b>АВТОСИГНАЛДАР КОШУЛДУ!</b>\n\n"
+                    message += "🤖 Эми сиз автоматтык сигналдарды ар 2-3 мүнөт сайын аласыз.\n"
+                    message += "📊 Сигналдар бардык категориялардан кокус жуптар үчүн келет.\n"
+                    message += "🎯 Автосигналдардын тактыгы: 94-97%\n\n"
+                    message += "⚡ <b>Сигналдар 2-3 мүнөт ичинде келе баштайт!</b>"
+                else:
+                    message = "⏸️ <b>АВТОСИГНАЛДАР ӨЧҮРҮЛДҮ!</b>\n\n"
+                    message += "Сиз автоматтык сигналдарды ала бербейсиз.\n"
+                    message += "Сигналдар алуу үчүн 'Сигнал алуу' баскычын колдонуңуз."
+            
+            keyboard = [[InlineKeyboardButton(get_text(user_id, 'main_menu_btn'), callback_data="main_menu")]]
+            await query.edit_message_text(message, parse_mode='HTML', reply_markup=InlineKeyboardMarkup(keyboard))
+        
         # АДМИН ПАНЕЛЬ
         elif data == "admin_panel":
             if not is_admin(int(user_id)):
@@ -1002,10 +1171,67 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             message += f"/broadcast <текст> - Рассылка"
             
             keyboard = [
-                [InlineKeyboardButton("➕ Выдать VIP", callback_data="admin_grant")],
-                [InlineKeyboardButton("➖ Забрать VIP", callback_data="admin_revoke")],
-                [InlineKeyboardButton("📢 Рассылка", callback_data="admin_broadcast")],
                 [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+            ]
+            
+            await query.edit_message_text(
+                message,
+                parse_mode='HTML',
+                reply_markup=InlineKeyboardMarkup(keyboard)
+            )
+        
+        # ОТМЕТКИ О ТОРГАХ (выиграл/проиграл)
+        elif data.startswith("trade_"):
+            # Обновляем статистику
+            if user_id not in user_stats:
+                user_stats[user_id] = {
+                    "wins": 0, "losses": 0, "profit": 0,
+                    "total_trades": 0, "win_rate": 0,
+                    "join_date": datetime.now().strftime("%Y-%m-%d %H:%M:%S"),
+                    "last_active": datetime.now().isoformat()
+                }
+            
+            if "win" in data:
+                user_stats[user_id]["wins"] += 1
+                if "95" in data:
+                    user_stats[user_id]["profit"] += 95
+                elif "85" in data:
+                    user_stats[user_id]["profit"] += 85
+            elif "loss" in data:
+                user_stats[user_id]["losses"] += 1
+                user_stats[user_id]["profit"] -= 100
+            
+            # Пересчитываем общие показатели
+            wins = user_stats[user_id]["wins"]
+            losses = user_stats[user_id]["losses"]
+            total = wins + losses
+            user_stats[user_id]["total_trades"] = total
+            
+            if total > 0:
+                user_stats[user_id]["win_rate"] = round((wins / total) * 100, 2)
+            
+            # Обновляем время активности
+            user_stats[user_id]["last_active"] = datetime.now().isoformat()
+            
+            # Сохраняем
+            Database.save("data/user_stats.json", user_stats)
+            
+            lang = get_user_language(user_id)
+            if lang == 'ru':
+                message = "✅ <b>РЕЗУЛЬТАТ СОХРАНЕН!</b>\n\n"
+                message += "📊 Ваша статистика обновлена.\n"
+                message += "🎯 Продолжайте торговлю!\n\n"
+                message += f"📈 Текущий винрейт: <b>{user_stats[user_id]['win_rate']}%</b>"
+            else:
+                message = "✅ <b>НААТЫЖА САКТАЛДЫ!</b>\n\n"
+                message += "📊 Сиздин статистикаңыз жаңыртылды.\n"
+                message += "🎯 Сооданы улантыңыз!\n\n"
+                message += f"📈 Учурдагы жеңиш пайызы: <b>{user_stats[user_id]['win_rate']}%</b>"
+            
+            keyboard = [
+                [InlineKeyboardButton("🔄 Новый сигнал" if lang == 'ru' else "🔄 Жаңы сигнал", callback_data="get_signal")],
+                [InlineKeyboardButton("📊 Статистика" if lang == 'ru' else "📊 Статистика", callback_data="my_stats")],
+                [InlineKeyboardButton(get_text(user_id, 'main_menu_btn'), callback_data="main_menu")]
             ]
             
             await query.edit_message_text(
@@ -1289,7 +1515,7 @@ async def broadcast_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
 # 🚀 ЗАПУСК БОТА - ВСЕ СИСТЕМЫ GO!
 # ============================================
 
-async def main():
+def main():
     """Основная функция запуска"""
     global ping_system, auto_signal_system
     
@@ -1312,13 +1538,15 @@ async def main():
         application.add_handler(CommandHandler("revoke", revoke_command))
         application.add_handler(CommandHandler("broadcast", broadcast_command))
         application.add_handler(CommandHandler("menu", 
-            lambda u, c: show_main_menu(u.message, str(u.effective_user.id))))
+            lambda update, context: show_main_menu(update.message, str(update.effective_user.id))))
+        
+        # Исправлено: Используем filters.Regex для обработки всех callback
         application.add_handler(CallbackQueryHandler(handle_callback))
         application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
         
         # 4. Запускаем автопинг
         ping_system = AutoPingSystem()
-        ping_system.start()
+        ping_system.start(application)
         logger.info("✅ Автопинг запущен (каждые 3 минуты, 24/7)")
         
         # 5. Запускаем автосигналы
@@ -1328,9 +1556,13 @@ async def main():
         
         # 6. Запускаем бота
         logger.info("🤖 Запуск Telegram бота...")
-        await application.initialize()
-        await application.start()
-        await application.updater.start_polling()
+        
+        # Запускаем бота в отдельном потоке
+        def run_bot():
+            asyncio.run(application.run_polling(allowed_updates=Update.ALL_TYPES))
+        
+        bot_thread = threading.Thread(target=run_bot, daemon=True)
+        bot_thread.start()
         
         logger.info("=" * 60)
         logger.info("✅ БОТ УСПЕШНО ЗАПУЩЕН!")
@@ -1344,19 +1576,14 @@ async def main():
         logger.info(f"🔧 Все функции: РАБОТАЮТ")
         logger.info("=" * 60)
         
-        # 7. Бесконечный цикл
+        # 7. Бесконечный цикл для главного потока
         while True:
-            await asyncio.sleep(3600)
+            time.sleep(3600)
             
     except Exception as e:
         logger.error(f"❌ Ошибка запуска: {e}")
         import traceback
         traceback.print_exc()
-    finally:
-        try:
-            await application.stop()
-        except:
-            pass
 
 def signal_handler(signum, frame):
     """Обработчик сигналов"""
@@ -1369,7 +1596,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGTERM, signal_handler)
     
     try:
-        asyncio.run(main())
+        main()
     except KeyboardInterrupt:
         logger.info("🛑 Бот остановлен пользователем")
     except Exception as e:
