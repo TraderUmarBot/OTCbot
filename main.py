@@ -679,16 +679,17 @@ async def show_main_menu(update, user_id: str):
     """Показывает главное меню"""
     if is_banned(user_id):
         if hasattr(update, 'edit_message_text'):
-            await update.edit_message_text("⛔ Вы заблокированы.")
+            await update.edit_message_text("⛔️ Вы заблокированы.")
         else:
-            await update.reply_text("⛔ Вы заблокированы.")
+            await update.reply_text("⛔️ Вы заблокированы.")
         return
-    
+
     ensure_user_data(user_id)
-    
+
     status = get_text(user_id, 'vip') if is_vip(user_id) else get_text(user_id, 'require_vip')
-    message = get_text(user_id, 'main_menu', user_id=user_id, status=status)
-    
+
+    message = get_text(user_id, 'main_menu', status=status)
+
     keyboard = []
     
     # Основные кнопки
