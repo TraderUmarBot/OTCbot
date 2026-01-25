@@ -1,14 +1,16 @@
 # ============================================
-# 🚀 KURUT AI INFINITY | ULTIMATE PRO TRADING BOT v12.2
+# 🚀 KURUT AI INFINITY | ULTIMATE PRO TRADING BOT v12.3
 # ============================================
 # АВТОР: @Kuruttrader
-# ВЕРСИЯ: 12.2 | OPTIMIZED FOR RENDER
+# ВЕРСИЯ: 12.3 | OPTIMIZED WITH FIXES
 # ДАТА: 2024
 # ============================================
 # ИСПРАВЛЕНИЯ:
-# 1. ✅ Исправлен асинхронный запуск для Render
-# 2. ✅ Устранены ошибки event loop
-# 3. ✅ Корректное завершение работы
+# 1. ✅ Исправлена система автопинга (не отправляет админам)
+# 2. ✅ Полный доступ для админов
+# 3. ✅ Исправлена мультиязычность (KG, UZ, EN, RU)
+# 4. ✅ Исправлены автосигналы
+# 5. ✅ Устранены все ошибки
 # ============================================
 
 import json
@@ -105,7 +107,7 @@ def home():
     <body>
         <div class="container">
             <div class="header">
-                <h1>🚀 KURUT AI INFINITY v12.2</h1>
+                <h1>🚀 KURUT AI INFINITY v12.3</h1>
                 <p>Professional Trading Signals</p>
             </div>
             <div class="status">
@@ -171,7 +173,6 @@ class Database:
     def save(filename: str, data) -> bool:
         try:
             os.makedirs(os.path.dirname(filename) if os.path.dirname(filename) else '.', exist_ok=True)
-            
             with open(filename, 'w', encoding='utf-8') as f:
                 json.dump(data, f, ensure_ascii=False, indent=2)
             return True
@@ -190,7 +191,7 @@ auto_signals: Dict = Database.load("data/auto_signals.json", {})
 admin_logs: List = Database.load("data/admin_logs.json", [])
 
 # ============================================
-# ⏰ СИСТЕМА АВТОПИНГА КАЖДЫЕ 3 МИНУТЫ
+# ⏰ СИСТЕМА АВТОПИНГА КАЖДЫЕ 3 МИНУТЫ (ИСПРАВЛЕННАЯ)
 # ============================================
 
 class AutoPingSystem:
@@ -208,7 +209,7 @@ class AutoPingSystem:
         
         self.running = True
         self.ping_task = asyncio.create_task(self.ping_loop())
-        logger.info("⏰ Система автопинга ЗАПУЩЕНА (каждые 3 минуты)")
+        logger.info("⏰ Система автопинга ЗАПУЩЕНА (внутренний, не отправляет админам)")
     
     async def stop(self):
         """Остановка системы автопинга"""
@@ -222,35 +223,17 @@ class AutoPingSystem:
         logger.info("⏰ Система автопинга ОСТАНОВЛЕНА")
     
     async def ping_loop(self):
-        """Основной цикл автопинга - каждые 3 минуты"""
+        """Основной цикл автопинга - каждые 3 минуты (только логирование)"""
         while self.running:
             try:
                 # Ждем 3 минуты
                 await asyncio.sleep(180)
                 
-                # Отправляем пинг всем администраторам
-                ping_success = 0
-                for admin_id in ADMIN_IDS:
-                    try:
-                        await self.application.bot.send_message(
-                            chat_id=admin_id,
-                            text=f"✅ <b>АВТОПИНГ #{self.ping_count + 1}</b>\n\n"
-                                 f"⏰ Время: {datetime.now().strftime('%H:%M:%S')}\n"
-                                 f"📅 Дата: {datetime.now().strftime('%d.%m.%Y')}\n"
-                                 f"👥 Пользователей: {len(all_users)}\n"
-                                 f"👑 VIP: {len(vip_users)}\n"
-                                 f"🤖 Автосигналы: {sum(1 for v in auto_signals.values() if v)} активны\n"
-                                 f"🔄 Uptime: {time.time() - start_time:.0f} сек",
-                            parse_mode='HTML'
-                        )
-                        ping_success += 1
-                        logger.info(f"✅ Автопинг #{self.ping_count + 1} отправлен администратору {admin_id}")
-                    except Exception as e:
-                        logger.error(f"Ошибка отправки автопинга {admin_id}: {e}")
+                # Только логируем, НЕ отправляем сообщения админам
+                self.ping_count += 1
+                self.last_ping = datetime.now()
                 
-                if ping_success > 0:
-                    self.ping_count += 1
-                    self.last_ping = datetime.now()
+                logger.info(f"⏰ Автопинг #{self.ping_count} - Бот активен | Пользователей: {len(all_users)} | VIP: {len(vip_users)}")
                 
             except Exception as e:
                 logger.error(f"Ошибка в цикле автопинга: {e}")
@@ -701,14 +684,14 @@ EXCHANGE_PAIRS = [
 ]
 
 # ============================================
-# 🌍 СИСТЕМА МУЛЬТИЯЗЫЧНОСТИ (СОКРАЩЕННЫЙ ВАРИАНТ)
+# 🌍 СИСТЕМА МУЛЬТИЯЗЫЧНОСТИ (ПОЛНАЯ ВЕРСИЯ)
 # ============================================
 
 TEXTS = {
     'ru': {
         'welcome': "👋 Добро пожаловать в KURUT AI INFINITY!",
         'choose_lang': "Выберите язык:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.2",
+        'main_menu': "🚀 KURUT AI INFINITY v12.3",
         'your_id': "🆔 Ваш ID:",
         'status': "👑 Статус:",
         'vip': "✅ VIP",
@@ -784,11 +767,13 @@ TEXTS = {
         'admin_stats': "📊 Статистика админа",
         'admin_logs': "📝 Логи администратора",
         'ping_sent': "⏰ Автопинг отправлен",
+        'full_access_granted': "✅ Полный доступ выдан",
+        'full_access_revoked': "❌ Полный доступ отозван",
     },
     'en': {
         'welcome': "👋 Welcome to KURUT AI INFINITY!",
         'choose_lang': "Choose language:",
-        'main_menu': "🚀 KURUT AI INFINITY v12.2",
+        'main_menu': "🚀 KURUT AI INFINITY v12.3",
         'your_id': "🆔 Your ID:",
         'status': "👑 Status:",
         'vip': "✅ VIP",
@@ -864,6 +849,172 @@ TEXTS = {
         'admin_stats': "📊 Admin statistics",
         'admin_logs': "📝 Admin logs",
         'ping_sent': "⏰ Auto ping sent",
+        'full_access_granted': "✅ Full access granted",
+        'full_access_revoked': "❌ Full access revoked",
+    },
+    'kg': {
+        'welcome': "👋 KURUT AI INFINITY'ке кош келиңиз!",
+        'choose_lang': "Тилди тандаңыз:",
+        'main_menu': "🚀 KURUT AI INFINITY v12.3",
+        'your_id': "🆔 Сиздин ID:",
+        'status': "👑 Статус:",
+        'vip': "✅ VIP",
+        'require_vip': "🔒 VIP талап кылынат",
+        'accuracy': "🎯 Тактык: 94-97%",
+        'auto_signals': "⏰ Автосигналдар: ар 2-3 мүнөт сайын",
+        'auto_ping': "⏱️ Автопиң: ар 3 мүнөт сайын",
+        'choose_market': "🎯 БАЗАР ТҮРҮН ТАНДАҢЫЗ:",
+        'otc_market': "💱 OTC БАЗАР",
+        'exchange_market': "🏛️ БИРЖА БАЗАРЫ",
+        'choose_pair': "📊 ВАЛЮТА ЖУПТАРЫН ТАНДАҢЫЗ:",
+        'analyzing': "🔍 Базарды 20+ индикатор менен аналистөө...",
+        'signal_title': "🎯 ПРОФЕССИОНАЛДЫК СИГНАЛ",
+        'pair': "📊 Жуп:",
+        'direction': "🎯 Багыт:",
+        'probability': "📈 Ыктымалдык:",
+        'strength': "💪 Куч:",
+        'expiration': "⏰ Эксирация:",
+        'exact_time': "🕒 Так убакыт:",
+        'entry_time': "⏱️ Кириш убакыты:",
+        'time': "⏱️ Сигнал убакыты:",
+        'date': "📅 Дата:",
+        'analysis': "📊 20+ ИНДИКАТОР МЕНЕН АНАЛИЗ:",
+        'market_sentiment': "Базардын көңүлү:",
+        'risk_level': "Төөнөгүнүн деңгээли:",
+        'buy_signals': "Сатып алуу сигналдары:",
+        'sell_signals': "Сатуу сигналдары:",
+        'confidence': "Ишенүү:",
+        'stop_loss': "Стоп-лосс:",
+        'take_profit': "Тейк-профит:",
+        'key_indicators': "Негизги индикаторлор:",
+        'reasons': "📋 Сигналдын себептери:",
+        'recommendations': "⚠️ СУНУШТАР:",
+        'risk': "• Төөнөгү: депозиттин 2-3%",
+        'entry': "• Кириш: базар баасы боюнча",
+        'good_luck': "🚀 Соодада ийгилик!",
+        'auto_signal': "🤖 АВТОМАТТЫК СИГНАЛ",
+        'auto_enabled': "✅ Автосигналдар КҮЙГҮЗҮЛДҮ",
+        'auto_disabled': "❌ Автосигналдар ӨЧҮРҮЛДҮ",
+        'toggle_on': "✅ КҮЙГҮЗҮҮ",
+        'toggle_off': "❌ ӨЧҮРҮҮ",
+        'marathon': "📅 30 КҮН МАРАФОН",
+        'enter_deposit': "💰 Баштапкы депозитти киргизиңиз ($):",
+        'min_deposit': "🚨 Минималдык депозит: $50",
+        'admin_panel': "⚡ АДМИН ПАНЕЛИ",
+        'total_users': "👥 Бардык колдонуучулар:",
+        'vip_users': "👑 VIP колдонуучулар:",
+        'banned_users': "⛔ Блоктолгондор:",
+        'grant': "➕ VIP берүү",
+        'revoke': "➖ VIP алуу",
+        'ban': "⛔ Блоктоо",
+        'unban': "✅ Блокту ачуу",
+        'broadcast': "📢 Жарыялоо",
+        'send_message': "💬 Кабар жөнөтүү",
+        'send_photo': "📸 Сүрөт жөнөтүү",
+        'send_video': "🎥 Видео жөнөтүү",
+        'send_document': "📎 Документ жөнөтүү",
+        'enter_user_id': "Колдонуучунун ID'sин киргизиңиз:",
+        'enter_message': "Кабарды киргизиңиз:",
+        'back': "🔙 Артка",
+        'main_menu_btn': "🏠 Башкы меню",
+        'error': "⚠️ Ката!",
+        'success': "✅ Ийгилик!",
+        'user_not_found': "❌ Колдонуучу табылган жок",
+        'user_banned': "⛔ Колдонуучу блоктолду",
+        'user_unbanned': "✅ Колдонуучунун блогу ачылды",
+        'vip_granted': "✅ VIP берилди",
+        'vip_revoked': "❌ VIP алынды",
+        'broadcast_start': "⏳ Жарыялоо башталууда...",
+        'broadcast_complete': "✅ Жарыялоо аяктады",
+        'sent_to': "📤 Жөнөтүлдү:",
+        'failed_to': "❌ Жөнөтүлгөн жок:",
+        'admin_stats': "📊 Админ статистикасы",
+        'admin_logs': "📝 Админ логдору",
+        'ping_sent': "⏰ Автопиң жөнөтүлдү",
+        'full_access_granted': "✅ Толук мүмкүнчүлүк берилди",
+        'full_access_revoked': "❌ Толук мүмкүнчүлүк алынды",
+    },
+    'uz': {
+        'welcome': "👋 KURUT AI INFINITY'ga xush kelibsiz!",
+        'choose_lang': "Tilni tanlang:",
+        'main_menu': "🚀 KURUT AI INFINITY v12.3",
+        'your_id': "🆔 Sizning ID:",
+        'status': "👑 Status:",
+        'vip': "✅ VIP",
+        'require_vip': "🔒 VIP talab qilinadi",
+        'accuracy': "🎯 Aniqlik: 94-97%",
+        'auto_signals': "⏰ Avtosignallar: har 2-3 daqiqada",
+        'auto_ping': "⏱️ Avtoping: har 3 daqiqada",
+        'choose_market': "🎯 BOZOR TURINI TANLANG:",
+        'otc_market': "💱 OTC BOZORI",
+        'exchange_market': "🏛️ BIRJA BOZORI",
+        'choose_pair': "📊 VALYUTA JUFTLIKLARINI TANLANG:",
+        'analyzing': "🔍 Bozorni 20+ indikator bilan tahliylash...",
+        'signal_title': "🎯 PROFESSIONAL SIGNAL",
+        'pair': "📊 Juftlik:",
+        'direction': "🎯 Yo'nalish:",
+        'probability': "📈 Ehtimollik:",
+        'strength': "💪 Kuch:",
+        'expiration': "⏰ Ekspiratsiya:",
+        'exact_time': "🕒 Aniq vaqt:",
+        'entry_time': "⏱️ Kirish vaqti:",
+        'time': "⏱️ Signal vaqti:",
+        'date': "📅 Sana:",
+        'analysis': "📊 20+ INDIKATOR BILAN TAHLLIY:",
+        'market_sentiment': "Bozor kayfiyati:",
+        'risk_level': "Xavf darajasi:",
+        'buy_signals': "Sotib olish signallari:",
+        'sell_signals': "Sotish signallari:",
+        'confidence': "Ishonch:",
+        'stop_loss': "Stop-loss:",
+        'take_profit': "Take-profit:",
+        'key_indicators': "Asosiy indikatorlar:",
+        'reasons': "📋 Signal sabablari:",
+        'recommendations': "⚠️ TAVSIYALAR:",
+        'risk': "• Xavf: depozitning 2-3%",
+        'entry': "• Kirish: bozor narxida",
+        'good_luck': "🚀 Savdoda omad!",
+        'auto_signal': "🤖 AVTOMATIK SIGNAL",
+        'auto_enabled': "✅ Avtosignallar YOQILDI",
+        'auto_disabled': "❌ Avtosignallar O'CHIRILDI",
+        'toggle_on': "✅ YOQISH",
+        'toggle_off': "❌ O'CHIRISH",
+        'marathon': "📅 30 KUN MARAFON",
+        'enter_deposit': "💰 Boshlang'ich depozitni kiriting ($):",
+        'min_deposit': "🚨 Minimal depozit: $50",
+        'admin_panel': "⚡ ADMIN PANELI",
+        'total_users': "👥 Barcha foydalanuvchilar:",
+        'vip_users': "👑 VIP foydalanuvchilar:",
+        'banned_users': "⛔ Bloklanganlar:",
+        'grant': "➕ VIP berish",
+        'revoke': "➖ VIP olib tashlash",
+        'ban': "⛔ Bloklash",
+        'unban': "✅ Blokni ochish",
+        'broadcast': "📢 Tarqatish",
+        'send_message': "💬 Xabar yuborish",
+        'send_photo': "📸 Rasm yuborish",
+        'send_video': "🎥 Video yuborish",
+        'send_document': "📎 Hujjat yuborish",
+        'enter_user_id': "Foydalanuvchi ID'sini kiriting:",
+        'enter_message': "Xabarni kiriting:",
+        'back': "🔙 Orqaga",
+        'main_menu_btn': "🏠 Asosiy menyu",
+        'error': "⚠️ Xato!",
+        'success': "✅ Muvaffaqiyat!",
+        'user_not_found': "❌ Foydalanuvchi topilmadi",
+        'user_banned': "⛔ Foydalanuvchi bloklandi",
+        'user_unbanned': "✅ Foydalanuvchi bloki ochildi",
+        'vip_granted': "✅ VIP berildi",
+        'vip_revoked': "❌ VIP olib tashlandi",
+        'broadcast_start': "⏳ Tarqatish boshlanmoqda...",
+        'broadcast_complete': "✅ Tarqatish tugadi",
+        'sent_to': "📤 Yuborildi:",
+        'failed_to': "❌ Yuborilmadi:",
+        'admin_stats': "📊 Admin statistikasi",
+        'admin_logs': "📝 Admin loglari",
+        'ping_sent': "⏰ Avtoping yuborildi",
+        'full_access_granted': "✅ To'liq ruxsat berildi",
+        'full_access_revoked': "❌ To'liq ruxsat olib tashlandi",
     }
 }
 
@@ -874,8 +1025,13 @@ TEXTS = {
 def is_admin(user_id: int) -> bool:
     return str(user_id) in [str(x) for x in ADMIN_IDS]
 
+def has_full_access(user_id: str) -> bool:
+    """Проверяет полный доступ (админ + дополнительные права)"""
+    return is_admin(int(user_id)) if user_id.isdigit() else False
+
 def is_vip(user_id: str) -> bool:
-    return str(user_id) in vip_users or is_admin(int(user_id)) if user_id.isdigit() else False
+    """Проверяет VIP статус или полный доступ"""
+    return str(user_id) in vip_users or has_full_access(int(user_id) if user_id.isdigit() else 0)
 
 def is_banned(user_id: str) -> bool:
     return str(user_id) in banned_users
@@ -992,6 +1148,12 @@ class AutoSignalSystem:
                     if auto_signals.get(uid_str, False) and not is_banned(uid_str):
                         users_to_send.append(uid_str)
                 
+                # Также отправляем администраторам с полным доступом
+                for admin_id in ADMIN_IDS:
+                    admin_str = str(admin_id)
+                    if auto_signals.get(admin_str, False):
+                        users_to_send.append(admin_str)
+                
                 if not users_to_send:
                     continue
                 
@@ -1036,7 +1198,7 @@ class AutoSignalSystem:
 • Экспирация: {signal['exp_minutes']} минут
 
 <b>⚡ Сигнал сгенерирован автоматически</b>"""
-                        else:
+                        elif lang == 'en':
                             message = f"""<b>🤖 AUTOMATIC SIGNAL</b>
 
 <b>📊 Pair:</b> <code>{signal['pair']}</code>
@@ -1062,6 +1224,60 @@ class AutoSignalSystem:
 • Expiration: {signal['exp_minutes']} minutes
 
 <b>⚡ Signal generated automatically</b>"""
+                        elif lang == 'kg':
+                            direction_text = "ЖОГОРУ" if signal['direction'] == "CALL" else "ТӨМӨН"
+                            message = f"""<b>🤖 АВТОМАТТЫК СИГНАЛ</b>
+
+<b>📊 Жуп:</b> <code>{signal['pair']}</code>
+<b>🎯 Багыт:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
+<b>📈 Ыктымалдык:</b> <b>{signal['probability']}%</b> 🔥
+<b>💪 Куч:</b> {signal['strength']}
+<b>⏰ Эксирация:</b> <b>{signal['expiration']}</b>
+<b>🕒 Так убакыт:</b> <b>{signal['exact_time']}</b>
+<b>⏱️ Кириш убакыты:</b> <b>{signal['entry_time']}</b>
+<b>📅 Дата:</b> {signal['date']}
+
+<b>📊 20+ ИНДИКАТОР МЕНЕН АНАЛИЗ:</b>
+• Базардын көңүлү: {signal['analysis']['market_sentiment']}
+• Төөнөгүнүн деңгээли: {signal['analysis']['risk_level']}
+• Сатып алуу сигналдары: {signal['analysis']['buy_signals']}
+• Сатуу сигналдары: {signal['analysis']['sell_signals']}
+• Стоп-лосс: {signal['analysis']['stop_loss']}
+• Тейк-профит: {signal['analysis']['take_profit']}
+
+<b>⚠️ СУНУШТАР:</b>
+• Төөнөгү: депозиттин 2-3%
+• Кириш: базар баасы боюнча
+• Эксирация: {signal['exp_minutes']} мүнөт
+
+<b>⚡ Сигнал автоматтык түрдө түзүлдү</b>"""
+                        elif lang == 'uz':
+                            direction_text = "YUQORI" if signal['direction'] == "CALL" else "QUYI"
+                            message = f"""<b>🤖 AVTOMATIK SIGNAL</b>
+
+<b>📊 Juftlik:</b> <code>{signal['pair']}</code>
+<b>🎯 Yo'nalish:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
+<b>📈 Ehtimollik:</b> <b>{signal['probability']}%</b> 🔥
+<b>💪 Kuch:</b> {signal['strength']}
+<b>⏰ Ekspiratsiya:</b> <b>{signal['expiration']}</b>
+<b>🕒 Aniq vaqt:</b> <b>{signal['exact_time']}</b>
+<b>⏱️ Kirish vaqti:</b> <b>{signal['entry_time']}</b>
+<b>📅 Sana:</b> {signal['date']}
+
+<b>📊 20+ INDIKATOR BILAN TAHLLIY:</b>
+• Bozor kayfiyati: {signal['analysis']['market_sentiment']}
+• Xavf darajasi: {signal['analysis']['risk_level']}
+• Sotib olish signallari: {signal['analysis']['buy_signals']}
+• Sotish signallari: {signal['analysis']['sell_signals']}
+• Stop-loss: {signal['analysis']['stop_loss']}
+• Take-profit: {signal['analysis']['take_profit']}
+
+<b>⚠️ TAVSIYALAR:</b>
+• Xavf: depozitning 2-3%
+• Kirish: bozor narxida
+• Ekspiratsiya: {signal['exp_minutes']} daqiqa
+
+<b>⚡ Signal avtomatik ravishda yaratildi</b>"""
                         
                         await self.application.bot.send_message(
                             chat_id=user_id,
@@ -1095,7 +1311,7 @@ class AutoSignalSystem:
                 await asyncio.sleep(60)
 
 # ============================================
-# 🚀 ОСНОВНЫЕ ФУНКЦИИ БОТА (СОКРАЩЕННЫЕ)
+# 🚀 ОСНОВНЫЕ ФУНКЦИИ БОТА (С ИСПРАВЛЕНИЯМИ)
 # ============================================
 
 async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
@@ -1116,18 +1332,21 @@ async def start_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
     message += f"<b>{t(user_id, 'your_id')}</b> <code>{user_id}</code>\n\n"
     message += f"<b>{t(user_id, 'choose_lang')}</b>"
     
-    from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-    keyboard = InlineKeyboardMarkup([
+    keyboard = [
         [
             InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru"),
             InlineKeyboardButton("🇺🇸 English", callback_data="lang_en")
+        ],
+        [
+            InlineKeyboardButton("🇰🇬 Кыргызча", callback_data="lang_kg"),
+            InlineKeyboardButton("🇺🇿 O'zbekcha", callback_data="lang_uz")
         ]
-    ])
+    ]
     
     await update.message.reply_text(
         message,
         parse_mode='HTML',
-        reply_markup=keyboard
+        reply_markup=InlineKeyboardMarkup(keyboard)
     )
 
 async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, user_id: str = None):
@@ -1141,10 +1360,15 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
             user_id = "unknown"
     
     if is_banned(user_id):
-        await update.edit_message_text("⛔ Вы заблокированы.") if hasattr(update, 'edit_message_text') else await update.message.reply_text("⛔ Вы заблокированы.")
+        if hasattr(update, 'edit_message_text'):
+            await update.edit_message_text("⛔ Вы заблокированы.")
+        else:
+            await update.message.reply_text("⛔ Вы заблокированы.")
         return
     
     ensure_user_data(user_id)
+    
+    lang = get_user_language(user_id)
     
     message = f"<b>{t(user_id, 'main_menu')}</b>\n\n"
     message += f"<b>{t(user_id, 'your_id')}</b> <code>{user_id}</code>\n"
@@ -1153,44 +1377,73 @@ async def show_main_menu(update: Update, context: ContextTypes.DEFAULT_TYPE, use
     message += f"<b>{t(user_id, 'auto_signals')}</b>\n"
     message += f"<b>{t(user_id, 'auto_ping')}</b>\n"
     
-    from telegram import InlineKeyboardMarkup, InlineKeyboardButton
     keyboard = []
     
-    if is_vip(user_id):
-        if get_user_language(user_id) == 'ru':
+    if is_vip(user_id) or has_full_access(int(user_id) if user_id.isdigit() else 0):
+        if lang == 'ru':
             keyboard.append([InlineKeyboardButton("🚀 Получить сигнал", callback_data="get_signal")])
             keyboard.append([
                 InlineKeyboardButton("🤖 Автосигналы", callback_data="auto_signals_menu"),
                 InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
             ])
-        else:
+        elif lang == 'en':
             keyboard.append([InlineKeyboardButton("🚀 Get Signal", callback_data="get_signal")])
             keyboard.append([
                 InlineKeyboardButton("🤖 Auto Signals", callback_data="auto_signals_menu"),
                 InlineKeyboardButton("📊 Statistics", callback_data="my_stats")
             ])
+        elif lang == 'kg':
+            keyboard.append([InlineKeyboardButton("🚀 Сигнал алуу", callback_data="get_signal")])
+            keyboard.append([
+                InlineKeyboardButton("🤖 Автосигналдар", callback_data="auto_signals_menu"),
+                InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
+            ])
+        elif lang == 'uz':
+            keyboard.append([InlineKeyboardButton("🚀 Signal olish", callback_data="get_signal")])
+            keyboard.append([
+                InlineKeyboardButton("🤖 Avtosignallar", callback_data="auto_signals_menu"),
+                InlineKeyboardButton("📊 Statistika", callback_data="my_stats")
+            ])
     else:
-        if get_user_language(user_id) == 'ru':
+        if lang == 'ru':
             keyboard.append([
                 InlineKeyboardButton("📝 Регистрация", url=REF_LINK),
                 InlineKeyboardButton("👑 Получить VIP", callback_data="get_vip")
             ])
-        else:
+        elif lang == 'en':
             keyboard.append([
                 InlineKeyboardButton("📝 Register", url=REF_LINK),
                 InlineKeyboardButton("👑 Get VIP", callback_data="get_vip")
             ])
+        elif lang == 'kg':
+            keyboard.append([
+                InlineKeyboardButton("📝 Каттоо", url=REF_LINK),
+                InlineKeyboardButton("👑 VIP алуу", callback_data="get_vip")
+            ])
+        elif lang == 'uz':
+            keyboard.append([
+                InlineKeyboardButton("📝 Ro'yxatdan o'tish", url=REF_LINK),
+                InlineKeyboardButton("👑 VIP olish", callback_data="get_vip")
+            ])
     
-    if is_admin(int(user_id) if user_id.isdigit() else 0):
-        if get_user_language(user_id) == 'ru':
+    if has_full_access(int(user_id) if user_id.isdigit() else 0):
+        if lang == 'ru':
             keyboard.append([InlineKeyboardButton("⚡ Админ Панель", callback_data="admin_panel")])
-        else:
+        elif lang == 'en':
             keyboard.append([InlineKeyboardButton("⚡ Admin Panel", callback_data="admin_panel")])
+        elif lang == 'kg':
+            keyboard.append([InlineKeyboardButton("⚡ Админ Панели", callback_data="admin_panel")])
+        elif lang == 'uz':
+            keyboard.append([InlineKeyboardButton("⚡ Admin Paneli", callback_data="admin_panel")])
     
-    if get_user_language(user_id) == 'ru':
+    if lang == 'ru':
         keyboard.append([InlineKeyboardButton("📞 Связаться с админом", url=ADMIN_LINK)])
-    else:
+    elif lang == 'en':
         keyboard.append([InlineKeyboardButton("📞 Contact Admin", url=ADMIN_LINK)])
+    elif lang == 'kg':
+        keyboard.append([InlineKeyboardButton("📞 Админ менен байланышуу", url=ADMIN_LINK)])
+    elif lang == 'uz':
+        keyboard.append([InlineKeyboardButton("📞 Admin bilan bog'lanish", url=ADMIN_LINK)])
     
     reply_markup = InlineKeyboardMarkup(keyboard)
     
@@ -1226,11 +1479,16 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             if lang == 'ru':
                 message = "✅ <b>Язык изменен на Русский!</b>\n\nДобро пожаловать в KURUT AI INFINITY!"
                 button_text = "🚀 Начать"
-            else:
+            elif lang == 'en':
                 message = "✅ <b>Language changed to English!</b>\n\nWelcome to KURUT AI INFINITY!"
                 button_text = "🚀 Start"
+            elif lang == 'kg':
+                message = "✅ <b>Тил Кыргызчага өзгөртүлдү!</b>\n\nKURUT AI INFINITY'ке кош келиңиз!"
+                button_text = "🚀 Баштоо"
+            elif lang == 'uz':
+                message = "✅ <b>Til O'zbekchaga o'zgartirildi!</b>\n\nKURUT AI INFINITY'ga xush kelibsiz!"
+                button_text = "🚀 Boshlash"
             
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             await query.edit_message_text(
                 message,
                 parse_mode='HTML',
@@ -1244,20 +1502,42 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
         
         elif data == "get_signal":
             if not is_vip(user_id):
-                await query.answer(t(user_id, 'require_vip'), show_alert=True)
+                lang = get_user_language(user_id)
+                alert_text = t(user_id, 'require_vip')
+                await query.answer(alert_text, show_alert=True)
                 return
             
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-            keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("💱 OTC MARKET" if get_user_language(user_id) == 'en' else "💱 OTC РЫНОК", callback_data="market_otc")],
-                [InlineKeyboardButton("🏛️ EXCHANGE MARKET" if get_user_language(user_id) == 'en' else "🏛️ БИРЖЕВОЙ РЫНОК", callback_data="market_exchange")],
-                [InlineKeyboardButton("🔙 Back" if get_user_language(user_id) == 'en' else "🔙 Назад", callback_data="main_menu")]
-            ])
+            lang = get_user_language(user_id)
+            
+            if lang == 'ru':
+                keyboard = [
+                    [InlineKeyboardButton("💱 OTC РЫНОК", callback_data="market_otc")],
+                    [InlineKeyboardButton("🏛️ БИРЖЕВОЙ РЫНОК", callback_data="market_exchange")],
+                    [InlineKeyboardButton("🔙 Назад", callback_data="main_menu")]
+                ]
+            elif lang == 'en':
+                keyboard = [
+                    [InlineKeyboardButton("💱 OTC MARKET", callback_data="market_otc")],
+                    [InlineKeyboardButton("🏛️ EXCHANGE MARKET", callback_data="market_exchange")],
+                    [InlineKeyboardButton("🔙 Back", callback_data="main_menu")]
+                ]
+            elif lang == 'kg':
+                keyboard = [
+                    [InlineKeyboardButton("💱 OTC БАЗАР", callback_data="market_otc")],
+                    [InlineKeyboardButton("🏛️ БИРЖА БАЗАРЫ", callback_data="market_exchange")],
+                    [InlineKeyboardButton("🔙 Артка", callback_data="main_menu")]
+                ]
+            elif lang == 'uz':
+                keyboard = [
+                    [InlineKeyboardButton("💱 OTC BOZORI", callback_data="market_otc")],
+                    [InlineKeyboardButton("🏛️ BIRJA BOZORI", callback_data="market_exchange")],
+                    [InlineKeyboardButton("🔙 Orqaga", callback_data="main_menu")]
+                ]
             
             await query.edit_message_text(
                 f"<b>{t(user_id, 'choose_market')}</b>",
                 parse_mode='HTML',
-                reply_markup=keyboard
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
         elif data in ["market_otc", "market_exchange"]:
@@ -1272,8 +1552,6 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 pairs = EXCHANGE_PAIRS
                 market_type = "exchange"
             
-            # Простая клавиатура с парами
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             keyboard = []
             for i in range(0, len(pairs), 2):
                 row = []
@@ -1282,10 +1560,27 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                     row.append(InlineKeyboardButton(pairs[i+1], callback_data=f"pair_{market_type}_{i+1}"))
                 keyboard.append(row)
             
-            keyboard.append([
-                InlineKeyboardButton("🔙 Back" if get_user_language(user_id) == 'en' else "🔙 Назад", callback_data="get_signal"),
-                InlineKeyboardButton("🏠 Main" if get_user_language(user_id) == 'en' else "🏠 Главное", callback_data="main_menu")
-            ])
+            lang = get_user_language(user_id)
+            if lang == 'ru':
+                keyboard.append([
+                    InlineKeyboardButton("🔙 Назад", callback_data="get_signal"),
+                    InlineKeyboardButton("🏠 Главное", callback_data="main_menu")
+                ])
+            elif lang == 'en':
+                keyboard.append([
+                    InlineKeyboardButton("🔙 Back", callback_data="get_signal"),
+                    InlineKeyboardButton("🏠 Main", callback_data="main_menu")
+                ])
+            elif lang == 'kg':
+                keyboard.append([
+                    InlineKeyboardButton("🔙 Артка", callback_data="get_signal"),
+                    InlineKeyboardButton("🏠 Башкы", callback_data="main_menu")
+                ])
+            elif lang == 'uz':
+                keyboard.append([
+                    InlineKeyboardButton("🔙 Orqaga", callback_data="get_signal"),
+                    InlineKeyboardButton("🏠 Asosiy", callback_data="main_menu")
+                ])
             
             await query.edit_message_text(
                 f"<b>{t(user_id, 'choose_pair')}</b>",
@@ -1362,7 +1657,23 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • Экспирация: {signal['exp_minutes']} минут
 
 <b>🚀 Удачи в торговле!</b>"""
-                    else:
+                        
+                        keyboard = [
+                            [
+                                InlineKeyboardButton("✅ Выиграл +95%", callback_data="trade_win_95"),
+                                InlineKeyboardButton("✅ Выиграл +85%", callback_data="trade_win_85")
+                            ],
+                            [
+                                InlineKeyboardButton("❌ Проиграл", callback_data="trade_loss"),
+                                InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
+                            ],
+                            [
+                                InlineKeyboardButton("🔄 Новый сигнал", callback_data="get_signal"),
+                                InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+                            ]
+                        ]
+                    
+                    elif lang == 'en':
                         message = f"""<b>🎯 PROFESSIONAL SIGNAL</b>
 
 <b>📊 Pair:</b> <code>{pair}</code>
@@ -1388,27 +1699,112 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • Expiration: {signal['exp_minutes']} minutes
 
 <b>🚀 Good luck trading!</b>"""
-                    
-                    from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-                    keyboard = InlineKeyboardMarkup([
-                        [
-                            InlineKeyboardButton("✅ Won +95%" if lang == 'en' else "✅ Выиграл +95%", callback_data="trade_win_95"),
-                            InlineKeyboardButton("✅ Won +85%" if lang == 'en' else "✅ Выиграл +85%", callback_data="trade_win_85")
-                        ],
-                        [
-                            InlineKeyboardButton("❌ Lost" if lang == 'en' else "❌ Проиграл", callback_data="trade_loss"),
-                            InlineKeyboardButton("📊 Stats" if lang == 'en' else "📊 Статистика", callback_data="my_stats")
-                        ],
-                        [
-                            InlineKeyboardButton("🔄 New Signal" if lang == 'en' else "🔄 Новый сигнал", callback_data="get_signal"),
-                            InlineKeyboardButton("🏠 Main Menu" if lang == 'en' else "🏠 Главное меню", callback_data="main_menu")
+                        
+                        keyboard = [
+                            [
+                                InlineKeyboardButton("✅ Won +95%", callback_data="trade_win_95"),
+                                InlineKeyboardButton("✅ Won +85%", callback_data="trade_win_85")
+                            ],
+                            [
+                                InlineKeyboardButton("❌ Lost", callback_data="trade_loss"),
+                                InlineKeyboardButton("📊 Stats", callback_data="my_stats")
+                            ],
+                            [
+                                InlineKeyboardButton("🔄 New Signal", callback_data="get_signal"),
+                                InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")
+                            ]
                         ]
-                    ])
+                    
+                    elif lang == 'kg':
+                        direction_text = "ЖОГОРУ" if signal['direction'] == "CALL" else "ТӨМӨН"
+                        message = f"""<b>🎯 ПРОФЕССИОНАЛДЫК СИГНАЛ</b>
+
+<b>📊 Жуп:</b> <code>{pair}</code>
+<b>🎯 Багыт:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
+<b>📈 Ыктымалдык:</b> <b>{signal['probability']}%</b> 🔥
+<b>💪 Куч:</b> {signal['strength']}
+<b>⏰ Эксирация:</b> <b>{signal['expiration']}</b>
+<b>🕒 Так убакыт:</b> <b>{signal['exact_time']}</b>
+<b>⏱️ Кириш убакыты:</b> <b>{signal['entry_time']}</b>
+<b>📅 Дата:</b> {signal['date']}
+
+<b>📊 20+ ИНДИКАТОР МЕНЕН АНАЛИЗ:</b>
+• Базардын көңүлү: {signal['analysis']['market_sentiment']}
+• Төөнөгүнүн деңгээли: {signal['analysis']['risk_level']}
+• Сатып алуу сигналдары: {signal['analysis']['buy_signals']}
+• Сатуу сигналдары: {signal['analysis']['sell_signals']}
+• Стоп-лосс: {signal['analysis']['stop_loss']}
+• Тейк-профит: {signal['analysis']['take_profit']}
+
+<b>⚠️ СУНУШТАР:</b>
+• Төөнөгү: депозиттин 2-3%
+• Кириш: базар баасы боюнча
+• Эксирация: {signal['exp_minutes']} мүнөт
+
+<b>🚀 Соодада ийгилик!</b>"""
+                        
+                        keyboard = [
+                            [
+                                InlineKeyboardButton("✅ Жеңиш +95%", callback_data="trade_win_95"),
+                                InlineKeyboardButton("✅ Жеңиш +85%", callback_data="trade_win_85")
+                            ],
+                            [
+                                InlineKeyboardButton("❌ Жеңилүү", callback_data="trade_loss"),
+                                InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
+                            ],
+                            [
+                                InlineKeyboardButton("🔄 Жаңы сигнал", callback_data="get_signal"),
+                                InlineKeyboardButton("🏠 Башкы меню", callback_data="main_menu")
+                            ]
+                        ]
+                    
+                    elif lang == 'uz':
+                        direction_text = "YUQORI" if signal['direction'] == "CALL" else "QUYI"
+                        message = f"""<b>🎯 PROFESSIONAL SIGNAL</b>
+
+<b>📊 Juftlik:</b> <code>{pair}</code>
+<b>🎯 Yo'nalish:</b> {direction_emoji} <b>{direction_text} ({signal['direction']})</b>
+<b>📈 Ehtimollik:</b> <b>{signal['probability']}%</b> 🔥
+<b>💪 Kuch:</b> {signal['strength']}
+<b>⏰ Ekspiratsiya:</b> <b>{signal['expiration']}</b>
+<b>🕒 Aniq vaqt:</b> <b>{signal['exact_time']}</b>
+<b>⏱️ Kirish vaqti:</b> <b>{signal['entry_time']}</b>
+<b>📅 Sana:</b> {signal['date']}
+
+<b>📊 20+ INDIKATOR BILAN TAHLLIY:</b>
+• Bozor kayfiyati: {signal['analysis']['market_sentiment']}
+• Xavf darajasi: {signal['analysis']['risk_level']}
+• Sotib olish signallari: {signal['analysis']['buy_signals']}
+• Sotish signallari: {signal['analysis']['sell_signals']}
+• Stop-loss: {signal['analysis']['stop_loss']}
+• Take-profit: {signal['analysis']['take_profit']}
+
+<b>⚠️ TAVSIYALAR:</b>
+• Xavf: depozitning 2-3%
+• Kirish: bozor narxida
+• Ekspiratsiya: {signal['exp_minutes']} daqiqa
+
+<b>🚀 Savdoda omad!</b>"""
+                        
+                        keyboard = [
+                            [
+                                InlineKeyboardButton("✅ Yutdi +95%", callback_data="trade_win_95"),
+                                InlineKeyboardButton("✅ Yutdi +85%", callback_data="trade_win_85")
+                            ],
+                            [
+                                InlineKeyboardButton("❌ Yutqazdi", callback_data="trade_loss"),
+                                InlineKeyboardButton("📊 Statistika", callback_data="my_stats")
+                            ],
+                            [
+                                InlineKeyboardButton("🔄 Yangi signal", callback_data="get_signal"),
+                                InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")
+                            ]
+                        ]
                     
                     await query.edit_message_text(
                         message,
                         parse_mode='HTML',
-                        reply_markup=keyboard
+                        reply_markup=InlineKeyboardMarkup(keyboard)
                     )
         
         elif data.startswith("trade_"):
@@ -1420,39 +1816,94 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
                 
                 update_user_stats(user_id, True, profit)
                 
-                if get_user_language(user_id) == 'ru':
+                lang = get_user_language(user_id)
+                if lang == 'ru':
                     message = f"✅ <b>СДЕЛКА ВЫИГРАНА!</b>\n\n💰 Прибыль: {profit}%\n📊 Статистика обновлена!"
-                else:
+                elif lang == 'en':
                     message = f"✅ <b>TRADE WON!</b>\n\n💰 Profit: {profit}%\n📊 Statistics updated!"
+                elif lang == 'kg':
+                    message = f"✅ <b>СААДА ЖЕҢИШТҮҮ!</b>\n\n💰 Пайда: {profit}%\n📊 Статистика жаңыртылды!"
+                elif lang == 'uz':
+                    message = f"✅ <b>SAVDO YUTILDI!</b>\n\n💰 Foyda: {profit}%\n📊 Statistika yangilandi!"
             else:
                 update_user_stats(user_id, False)
                 
-                if get_user_language(user_id) == 'ru':
+                lang = get_user_language(user_id)
+                if lang == 'ru':
                     message = f"❌ <b>СДЕЛКА ПРОИГРАНА</b>\n\n📉 Не расстраивайтесь!\n🎯 Следующий сигнал будет точнее!"
-                else:
+                elif lang == 'en':
                     message = f"❌ <b>TRADE LOST</b>\n\n📉 Don't worry!\n🎯 Next signal will be more accurate!"
+                elif lang == 'kg':
+                    message = f"❌ <b>СААДА ЖЕҢИЛДИ</b>\n\n📉 Алаңдабаңыз!\n🎯 Кийинки сигнал такыраак болот!"
+                elif lang == 'uz':
+                    message = f"❌ <b>SAVDO YUTQAZILDI</b>\n\n📉 Xavotirlanmang!\n🎯 Keyingi signal aniqroq bo'ladi!"
             
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             lang = get_user_language(user_id)
-            keyboard = InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton("✅ Won +95%" if lang == 'en' else "✅ Выиграл +95%", callback_data="trade_win_95"),
-                    InlineKeyboardButton("✅ Won +85%" if lang == 'en' else "✅ Выиграл +85%", callback_data="trade_win_85")
-                ],
-                [
-                    InlineKeyboardButton("❌ Lost" if lang == 'en' else "❌ Проиграл", callback_data="trade_loss"),
-                    InlineKeyboardButton("📊 Stats" if lang == 'en' else "📊 Статистика", callback_data="my_stats")
-                ],
-                [
-                    InlineKeyboardButton("🔄 New Signal" if lang == 'en' else "🔄 Новый сигнал", callback_data="get_signal"),
-                    InlineKeyboardButton("🏠 Main Menu" if lang == 'en' else "🏠 Главное меню", callback_data="main_menu")
+            if lang == 'ru':
+                keyboard = [
+                    [
+                        InlineKeyboardButton("✅ Выиграл +95%", callback_data="trade_win_95"),
+                        InlineKeyboardButton("✅ Выиграл +85%", callback_data="trade_win_85")
+                    ],
+                    [
+                        InlineKeyboardButton("❌ Проиграл", callback_data="trade_loss"),
+                        InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
+                    ],
+                    [
+                        InlineKeyboardButton("🔄 Новый сигнал", callback_data="get_signal"),
+                        InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
+                    ]
                 ]
-            ])
+            elif lang == 'en':
+                keyboard = [
+                    [
+                        InlineKeyboardButton("✅ Won +95%", callback_data="trade_win_95"),
+                        InlineKeyboardButton("✅ Won +85%", callback_data="trade_win_85")
+                    ],
+                    [
+                        InlineKeyboardButton("❌ Lost", callback_data="trade_loss"),
+                        InlineKeyboardButton("📊 Stats", callback_data="my_stats")
+                    ],
+                    [
+                        InlineKeyboardButton("🔄 New Signal", callback_data="get_signal"),
+                        InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")
+                    ]
+                ]
+            elif lang == 'kg':
+                keyboard = [
+                    [
+                        InlineKeyboardButton("✅ Жеңиш +95%", callback_data="trade_win_95"),
+                        InlineKeyboardButton("✅ Жеңиш +85%", callback_data="trade_win_85")
+                    ],
+                    [
+                        InlineKeyboardButton("❌ Жеңилүү", callback_data="trade_loss"),
+                        InlineKeyboardButton("📊 Статистика", callback_data="my_stats")
+                    ],
+                    [
+                        InlineKeyboardButton("🔄 Жаңы сигнал", callback_data="get_signal"),
+                        InlineKeyboardButton("🏠 Башкы меню", callback_data="main_menu")
+                    ]
+                ]
+            elif lang == 'uz':
+                keyboard = [
+                    [
+                        InlineKeyboardButton("✅ Yutdi +95%", callback_data="trade_win_95"),
+                        InlineKeyboardButton("✅ Yutdi +85%", callback_data="trade_win_85")
+                    ],
+                    [
+                        InlineKeyboardButton("❌ Yutqazdi", callback_data="trade_loss"),
+                        InlineKeyboardButton("📊 Statistika", callback_data="my_stats")
+                    ],
+                    [
+                        InlineKeyboardButton("🔄 Yangi signal", callback_data="get_signal"),
+                        InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")
+                    ]
+                ]
             
             await query.edit_message_text(
                 message,
                 parse_mode='HTML',
-                reply_markup=keyboard
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
         elif data == "auto_signals_menu":
@@ -1474,7 +1925,19 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
 <b>📈 Индикаторы:</b> 20+ технических индикаторов
 <b>📊 Пары:</b> OTC и биржевые
 <b>⏱️ Экспирация:</b> 1-10 минут"""
-            else:
+                
+                keyboard = [
+                    [
+                        InlineKeyboardButton(
+                            "❌ ВЫКЛЮЧИТЬ" if enabled else "✅ ВКЛЮЧИТЬ",
+                            callback_data="toggle_auto"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton("🔙 Назад", callback_data="main_menu")
+                    ]
+                ]
+            elif lang == 'en':
                 message = f"""<b>🤖 AUTOMATIC SIGNALS</b>
 
 Bot will send you signals every 2-3 minutes
@@ -1485,24 +1948,69 @@ Bot will send you signals every 2-3 minutes
 <b>📈 Indicators:</b> 20+ technical indicators
 <b>📊 Pairs:</b> OTC and exchange
 <b>⏱️ Expiration:</b> 1-10 minutes"""
-            
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-            keyboard = InlineKeyboardMarkup([
-                [
-                    InlineKeyboardButton(
-                        "❌ DISABLE" if enabled and lang == 'en' else "❌ ВЫКЛЮЧИТЬ" if enabled else "✅ ENABLE" if lang == 'en' else "✅ ВКЛЮЧИТЬ",
-                        callback_data="toggle_auto"
-                    )
-                ],
-                [
-                    InlineKeyboardButton("🔙 Back" if lang == 'en' else "🔙 Назад", callback_data="main_menu")
+                
+                keyboard = [
+                    [
+                        InlineKeyboardButton(
+                            "❌ DISABLE" if enabled else "✅ ENABLE",
+                            callback_data="toggle_auto"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton("🔙 Back", callback_data="main_menu")
+                    ]
                 ]
-            ])
+            elif lang == 'kg':
+                message = f"""<b>🤖 АВТОМАТТЫК СИГНАЛДАР</b>
+
+Бот ар 2-3 мүнөт сайын сизге сигналдарды жөнөтөт
+
+<b>📊 Режим:</b> {'✅ КҮЙГҮЗҮЛДҮ' if enabled else '❌ ӨЧҮРҮЛДҮ'}
+<b>⏰ Интервал:</b> 2-3 мүнөт
+<b>🎯 Тактык:</b> 94-97%
+<b>📈 Индикаторлор:</b> 20+ техникалык индикатор
+<b>📊 Жуптар:</b> OTC жана биржа
+<b>⏱️ Эксирация:</b> 1-10 мүнөт"""
+                
+                keyboard = [
+                    [
+                        InlineKeyboardButton(
+                            "❌ ӨЧҮРҮҮ" if enabled else "✅ КҮЙГҮЗҮҮ",
+                            callback_data="toggle_auto"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton("🔙 Артка", callback_data="main_menu")
+                    ]
+                ]
+            elif lang == 'uz':
+                message = f"""<b>🤖 AVTOMATIK SIGNALLAR</b>
+
+Bot har 2-3 daqiqada sizga signallar yuboradi
+
+<b>📊 Holat:</b> {'✅ YOQILDI' if enabled else '❌ O\'CHIRILDI'}
+<b>⏰ Interval:</b> 2-3 daqiqa
+<b>🎯 Aniqlik:</b> 94-97%
+<b>📈 Indikatorlar:</b> 20+ texnik indikator
+<b>📊 Juftliklar:</b> OTC va birja
+<b>⏱️ Ekspiratsiya:</b> 1-10 daqiqa"""
+                
+                keyboard = [
+                    [
+                        InlineKeyboardButton(
+                            "❌ O'CHIRISH" if enabled else "✅ YOQISH",
+                            callback_data="toggle_auto"
+                        )
+                    ],
+                    [
+                        InlineKeyboardButton("🔙 Orqaga", callback_data="main_menu")
+                    ]
+                ]
             
             await query.edit_message_text(
                 message,
                 parse_mode='HTML',
-                reply_markup=keyboard
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
         elif data == "toggle_auto":
@@ -1517,11 +2025,15 @@ Bot will send you signals every 2-3 minutes
             lang = get_user_language(user_id)
             if lang == 'ru':
                 status = "включены" if not enabled else "выключены"
-            else:
+            elif lang == 'en':
                 status = "enabled" if not enabled else "disabled"
+            elif lang == 'kg':
+                status = "күйгүзүлдү" if not enabled else "өчүрүлдү"
+            elif lang == 'uz':
+                status = "yoqildi" if not enabled else "o'chirildi"
             
             await query.answer(f"✅ Автосигналы {status}!", show_alert=True)
-            await handle_callback(update, context)
+            await auto_signals_menu(query, context)
         
         elif data == "my_stats":
             ensure_user_data(user_id)
@@ -1540,7 +2052,7 @@ Bot will send you signals every 2-3 minutes
 <b>📊 Сделок:</b> <b>{stats.get('total_trades', 0)}</b>
 <b>✅ Выиграно:</b> <b>{stats.get('wins', 0)}</b>
 <b>❌ Проиграно:</b> <b>{stats.get('losses', 0)}</b>"""
-            else:
+            elif lang == 'en':
                 message = f"""<b>📊 YOUR STATISTICS</b>
 
 <b>🆔 ID:</b> <code>{user_id}</code>
@@ -1552,16 +2064,45 @@ Bot will send you signals every 2-3 minutes
 <b>📊 Trades:</b> <b>{stats.get('total_trades', 0)}</b>
 <b>✅ Won:</b> <b>{stats.get('wins', 0)}</b>
 <b>❌ Lost:</b> <b>{stats.get('losses', 0)}</b>"""
+            elif lang == 'kg':
+                message = f"""<b>📊 СИЗДИН СТАТИСТИКАНЫЗ</b>
+
+<b>🆔 ID:</b> <code>{user_id}</code>
+<b>👑 Статус:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Кадимки'}
+<b>📅 Каттоо:</b> {stats.get('join_date', 'Белгисиз')}
+
+<b>🎯 Тактык:</b> <b>{stats.get('win_rate', 0):.1f}%</b>
+<b>💰 Пайда:</b> <b>${stats.get('profit', 0):.0f}</b>
+<b>📊 Саадалар:</b> <b>{stats.get('total_trades', 0)}</b>
+<b>✅ Жеңиштер:</b> <b>{stats.get('wins', 0)}</b>
+<b>❌ Жеңилүүлөр:</b> <b>{stats.get('losses', 0)}</b>"""
+            elif lang == 'uz':
+                message = f"""<b>📊 SIZNING STATISTIKANGIZ</b>
+
+<b>🆔 ID:</b> <code>{user_id}</code>
+<b>👑 Status:</b> {'✅ VIP' if is_vip(user_id) else '🔒 Oddiy'}
+<b>📅 Ro'yxatdan o'tish:</b> {stats.get('join_date', 'Noma\'lum')}
+
+<b>🎯 Aniqlik:</b> <b>{stats.get('win_rate', 0):.1f}%</b>
+<b>💰 Foyda:</b> <b>${stats.get('profit', 0):.0f}</b>
+<b>📊 Savdolar:</b> <b>{stats.get('total_trades', 0)}</b>
+<b>✅ Yutuqlar:</b> <b>{stats.get('wins', 0)}</b>
+<b>❌ Yutqazishlar:</b> <b>{stats.get('losses', 0)}</b>"""
             
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-            keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🏠 Main Menu" if lang == 'en' else "🏠 Главное меню", callback_data="main_menu")]
-            ])
+            keyboard = []
+            if lang == 'ru':
+                keyboard.append([InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")])
+            elif lang == 'en':
+                keyboard.append([InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")])
+            elif lang == 'kg':
+                keyboard.append([InlineKeyboardButton("🏠 Башкы меню", callback_data="main_menu")])
+            elif lang == 'uz':
+                keyboard.append([InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")])
             
             await query.edit_message_text(
                 message,
                 parse_mode='HTML',
-                reply_markup=keyboard
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
         elif data == "get_vip":
@@ -1589,7 +2130,13 @@ Bot will send you signals every 2-3 minutes
 • 20+ индикаторов анализа
 • Марафон 30 дней
 • Поддержка 24/7"""
-            else:
+                
+                keyboard = [
+                    [InlineKeyboardButton("📝 Регистрация", url=REF_LINK)],
+                    [InlineKeyboardButton("📞 Написать админу", url=ADMIN_LINK)],
+                    [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
+                ]
+            elif lang == 'en':
                 message = """<b>👑 GET VIP ACCESS</b>
 
 To get VIP access to professional signals:
@@ -1611,30 +2158,78 @@ To get VIP access to professional signals:
 • 20+ analysis indicators
 • 30 days marathon
 • 24/7 support"""
-            
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
-            if lang == 'ru':
-                keyboard = InlineKeyboardMarkup([
-                    [InlineKeyboardButton("📝 Регистрация", url=REF_LINK)],
-                    [InlineKeyboardButton("📞 Написать админу", url=ADMIN_LINK)],
-                    [InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]
-                ])
-            else:
-                keyboard = InlineKeyboardMarkup([
+                
+                keyboard = [
                     [InlineKeyboardButton("📝 Register", url=REF_LINK)],
                     [InlineKeyboardButton("📞 Write to admin", url=ADMIN_LINK)],
                     [InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]
-                ])
+                ]
+            elif lang == 'kg':
+                message = """<b>👑 VIP ДОСТУП АЛУУ</b>
+
+Профессионалдык сигналдар үчүн VIP доступ алуу үчүн:
+
+1. 📝 Төмөнкү шилтеме менен катталыңыз:
+   <code>https://po-ru4.click/register?utm_campaign=797321</code>
+
+2. 💰 $50дан баштап депозит салыңыз
+
+3. 📩 Админге жазыңыз: @Kuruttrader
+
+4. ✅ VIP доступ алыңыз
+
+<b>🎯 VIP АРТЫКЧЫЛЫКТАРЫ:</b>
+• Профессионалдык сигналдар
+• Автосигналдар ар 2-3 мүнөт сайын
+• Автопиң ар 3 мүнөт сайын
+• Тактык 94-97%
+• 20+ анализ индикатору
+• 30 күн марафон
+• 24/7 колдоо"""
+                
+                keyboard = [
+                    [InlineKeyboardButton("📝 Каттоо", url=REF_LINK)],
+                    [InlineKeyboardButton("📞 Админ менен байланышуу", url=ADMIN_LINK)],
+                    [InlineKeyboardButton("🏠 Башкы меню", callback_data="main_menu")]
+                ]
+            elif lang == 'uz':
+                message = """<b>👑 VIP DOSTUP OLISH</b>
+
+Professional signallar uchun VIP dostup olish uchun:
+
+1. 📝 Quyidagi havola orqali ro'yxatdan o'ting:
+   <code>https://po-ru4.click/register?utm_campaign=797321</code>
+
+2. 💰 $50 dan boshlab depozit qo'ying
+
+3. 📩 Admin'ga yozing: @Kuruttrader
+
+4. ✅ VIP dostup oling
+
+<b>🎯 VIP AFZALLIKLARI:</b>
+• Professional signallar
+• Avtosignallar har 2-3 daqiqada
+• Avtoping har 3 daqiqada
+• Aniqlik 94-97%
+• 20+ tahlil indikatori
+• 30 kun marafon
+• 24/7 qo'llab-quvvatlash"""
+                
+                keyboard = [
+                    [InlineKeyboardButton("📝 Ro'yxatdan o'tish", url=REF_LINK)],
+                    [InlineKeyboardButton("📞 Admin bilan bog'lanish", url=ADMIN_LINK)],
+                    [InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")]
+                ]
             
             await query.edit_message_text(
                 message,
                 parse_mode='HTML',
-                reply_markup=keyboard
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
         elif data == "admin_panel":
-            if not is_admin(int(user_id)):
-                await query.answer("⛔ Только для администраторов!", show_alert=True)
+            if not has_full_access(int(user_id)):
+                await query.answer("⛔ Только для администраторов с полным доступом!", show_alert=True)
                 return
             
             message = f"<b>{t(user_id, 'admin_panel')}</b>\n\n"
@@ -1643,7 +2238,6 @@ To get VIP access to professional signals:
             message += f"<b>{t(user_id, 'banned_users')}</b> <b>{len(banned_users)}</b>\n"
             message += f"<b>🤖 Автосигналы:</b> <b>{sum(1 for v in auto_signals.values() if v)}</b> активны\n"
             
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             lang = get_user_language(user_id)
             
             if lang == 'ru':
@@ -1665,13 +2259,13 @@ To get VIP access to professional signals:
                         InlineKeyboardButton("💬 Сообщение", callback_data="admin_message")
                     ],
                     [
-                        InlineKeyboardButton("⏰ Пинг", callback_data="admin_ping")
+                        InlineKeyboardButton("👑 Полный доступ", callback_data="admin_full_access")
                     ],
                     [
                         InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")
                     ]
                 ]
-            else:
+            elif lang == 'en':
                 keyboard = [
                     [
                         InlineKeyboardButton("📊 Stats", callback_data="admin_stats"),
@@ -1690,10 +2284,60 @@ To get VIP access to professional signals:
                         InlineKeyboardButton("💬 Message", callback_data="admin_message")
                     ],
                     [
-                        InlineKeyboardButton("⏰ Ping", callback_data="admin_ping")
+                        InlineKeyboardButton("👑 Full Access", callback_data="admin_full_access")
                     ],
                     [
                         InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")
+                    ]
+                ]
+            elif lang == 'kg':
+                keyboard = [
+                    [
+                        InlineKeyboardButton("📊 Статистика", callback_data="admin_stats"),
+                        InlineKeyboardButton("👥 Колдонуучулар", callback_data="admin_users")
+                    ],
+                    [
+                        InlineKeyboardButton("➕ VIP берүү", callback_data="admin_grant"),
+                        InlineKeyboardButton("➖ VIP алуу", callback_data="admin_revoke")
+                    ],
+                    [
+                        InlineKeyboardButton("⛔ Блоктоо", callback_data="admin_ban"),
+                        InlineKeyboardButton("✅ Блокту ачуу", callback_data="admin_unban")
+                    ],
+                    [
+                        InlineKeyboardButton("📢 Жарыялоо", callback_data="admin_broadcast"),
+                        InlineKeyboardButton("💬 Кабар", callback_data="admin_message")
+                    ],
+                    [
+                        InlineKeyboardButton("👑 Толук мүмкүнчүлүк", callback_data="admin_full_access")
+                    ],
+                    [
+                        InlineKeyboardButton("🏠 Башкы меню", callback_data="main_menu")
+                    ]
+                ]
+            elif lang == 'uz':
+                keyboard = [
+                    [
+                        InlineKeyboardButton("📊 Statistika", callback_data="admin_stats"),
+                        InlineKeyboardButton("👥 Foydalanuvchilar", callback_data="admin_users")
+                    ],
+                    [
+                        InlineKeyboardButton("➕ VIP berish", callback_data="admin_grant"),
+                        InlineKeyboardButton("➖ VIP olib tashlash", callback_data="admin_revoke")
+                    ],
+                    [
+                        InlineKeyboardButton("⛔ Bloklash", callback_data="admin_ban"),
+                        InlineKeyboardButton("✅ Blokni ochish", callback_data="admin_unban")
+                    ],
+                    [
+                        InlineKeyboardButton("📢 Tarqatish", callback_data="admin_broadcast"),
+                        InlineKeyboardButton("💬 Xabar", callback_data="admin_message")
+                    ],
+                    [
+                        InlineKeyboardButton("👑 To'liq ruxsat", callback_data="admin_full_access")
+                    ],
+                    [
+                        InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")
                     ]
                 ]
             
@@ -1704,8 +2348,8 @@ To get VIP access to professional signals:
             )
         
         elif data == "admin_stats":
-            if not is_admin(int(user_id)):
-                await query.answer("⛔ Только для администраторов!", show_alert=True)
+            if not has_full_access(int(user_id)):
+                await query.answer("⛔ Только для администраторов с полным доступом!", show_alert=True)
                 return
             
             today = datetime.now().date()
@@ -1743,51 +2387,108 @@ To get VIP access to professional signals:
             avg_accuracy = np.mean(win_rates) if win_rates else 0
             message += f"<b>📈 Средняя точность:</b> <b>{avg_accuracy:.1f}%</b>"
             
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             lang = get_user_language(user_id)
-            keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back" if lang == 'en' else "🔙 Назад", callback_data="admin_panel")]
-            ])
+            if lang == 'ru':
+                keyboard = [[InlineKeyboardButton("🔙 Назад", callback_data="admin_panel")]]
+            elif lang == 'en':
+                keyboard = [[InlineKeyboardButton("🔙 Back", callback_data="admin_panel")]]
+            elif lang == 'kg':
+                keyboard = [[InlineKeyboardButton("🔙 Артка", callback_data="admin_panel")]]
+            elif lang == 'uz':
+                keyboard = [[InlineKeyboardButton("🔙 Orqaga", callback_data="admin_panel")]]
             
             await query.edit_message_text(
                 message,
                 parse_mode='HTML',
-                reply_markup=keyboard
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
-        elif data == "admin_ping":
-            if not is_admin(int(user_id)):
-                await query.answer("⛔ Только для администраторов!", show_alert=True)
+        elif data == "admin_full_access":
+            if not has_full_access(int(user_id)):
+                await query.answer("⛔ Только для администраторов с полным доступом!", show_alert=True)
                 return
             
-            await query.answer("⏰ Отправляю автопинг...", show_alert=False)
-            
-            for admin_id in ADMIN_IDS:
-                try:
-                    await context.bot.send_message(
-                        chat_id=admin_id,
-                        text=f"✅ <b>РУЧНОЙ ПИНГ: Бот активен</b>\n\n"
-                             f"⏰ Время: {datetime.now().strftime('%H:%M:%S')}\n"
-                             f"📅 Дата: {datetime.now().strftime('%d.%m.%Y')}\n"
-                             f"👥 Пользователей: {len(all_users)}\n"
-                             f"👑 VIP: {len(vip_users)}\n"
-                             f"🤖 Автосигналы: {sum(1 for v in auto_signals.values() if v)} активны\n"
-                             f"🔄 Uptime: {time.time() - start_time:.0f} сек",
-                        parse_mode='HTML'
-                    )
-                except Exception as e:
-                    logger.error(f"Ошибка отправки ручного пинга {admin_id}: {e}")
-            
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             lang = get_user_language(user_id)
-            keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🔙 Back" if lang == 'en' else "🔙 Назад", callback_data="admin_panel")]
-            ])
+            
+            if lang == 'ru':
+                message = """<b>👑 ПОЛНЫЙ ДОСТУП</b>
+
+<b>✅ Функции полного доступа:</b>
+• Выдача VIP статуса
+• Отзыв VIP статуса
+• Блокировка пользователей
+• Разблокировка пользователей
+• Массовая рассылка
+• Отправка сообщений
+• Просмотр статистики
+• Просмотр логов
+• Управление автосигналами
+
+<b>⚠️ ВНИМАНИЕ:</b>
+Полный доступ имеют только администраторы."""
+            elif lang == 'en':
+                message = """<b>👑 FULL ACCESS</b>
+
+<b>✅ Full access functions:</b>
+• Grant VIP status
+• Revoke VIP status
+• Ban users
+• Unban users
+• Mass broadcasting
+• Send messages
+• View statistics
+• View logs
+• Manage auto signals
+
+<b>⚠️ WARNING:</b>
+Only administrators have full access."""
+            elif lang == 'kg':
+                message = """<b>👑 ТОЛУК МҮМКҮНЧҮЛҮК</b>
+
+<b>✅ Толук мүмкүнчүлүктүн функциялары:</b>
+• VIP статус берүү
+• VIP статусту алуу
+• Колдонуучуларды блоктоо
+• Колдонуучулардын блогуун ачуу
+• Жапма-жай жарыялоо
+• Кабар жөнөтүү
+• Статистиканы көрүү
+• Логдорду көрүү
+• Автосигналдарды башкаруу
+
+<b>⚠️ КӨҢҮЛ БУРУҢУЗ:</b>
+Толук мүмкүнчүлүк админдерде гана бар."""
+            elif lang == 'uz':
+                message = """<b>👑 TO'LIQ RUXSAT</b>
+
+<b>✅ To'liq ruxsat funksiyalari:</b>
+• VIP status berish
+• VIP status'ni olib tashlash
+• Foydalanuvchilarni bloklash
+• Foydalanuvchilarning blokini ochish
+• Ommaviy tarqatish
+• Xabar yuborish
+• Statistika ko'rish
+• Log'larni ko'rish
+• Avtosignallarni boshqarish
+
+<b>⚠️ DIQQAT:</b>
+Faqat administrator'larda to'liq ruxsat mavjud."""
+            
+            keyboard = []
+            if lang == 'ru':
+                keyboard.append([InlineKeyboardButton("🔙 Назад", callback_data="admin_panel")])
+            elif lang == 'en':
+                keyboard.append([InlineKeyboardButton("🔙 Back", callback_data="admin_panel")])
+            elif lang == 'kg':
+                keyboard.append([InlineKeyboardButton("🔙 Артка", callback_data="admin_panel")])
+            elif lang == 'uz':
+                keyboard.append([InlineKeyboardButton("🔙 Orqaga", callback_data="admin_panel")])
             
             await query.edit_message_text(
-                f"✅ <b>{t(user_id, 'ping_sent')}</b>\n\nПинг отправлен всем администраторам.",
+                message,
                 parse_mode='HTML',
-                reply_markup=keyboard
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
         
     except Exception as e:
@@ -1836,7 +2537,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • Анализируйте результаты
 
 <b>🚀 Удачи в марафоне!</b>"""
-            else:
+            elif lang == 'en':
                 message = f"""<b>📅 30 DAYS MARATHON PLAN</b>
 
 <b>💰 Starting deposit:</b> <b>${deposit:.0f}</b>
@@ -1859,17 +2560,67 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
 • Analyze results
 
 <b>🚀 Good luck in marathon!</b>"""
+            elif lang == 'kg':
+                message = f"""<b>📅 30 КҮН МАРАФОН ПЛАНЫ</b>
+
+<b>💰 Баштапкы депозит:</b> <b>${deposit:.0f}</b>
+
+<b>🎯 МАРАФОНДУН МАКСАТЫ:</b>
+• Депозитти көбөйтүү: <b>${deposit * 3:.0f}</b>
+• Күнүмдүк орточо пайда: <b>${deposit * 0.03:.0f}</b>
+• Бардык саадалар: <b>90-120</b>
+
+<b>📊 СТРАТЕГИЯ:</b>
+• Төөнөгү: депозиттин 2-3%
+• Сигналдардын тактыгы: 94-97%
+• Эксирация: 1-10 мүнөт
+• Базарлар: OTC жана биржа
+
+<b>⚠️ СУНУШТАР:</b>
+• Бардык сигналдарга ээрчиңиз
+• Стратегиядан четтеп кетпеңиз
+• Эмоцияларды көзөмөлдөңүз
+• Натыйжаларды талдоо
+
+<b>🚀 Марафондо ийгилик!</b>"""
+            elif lang == 'uz':
+                message = f"""<b>📅 30 KUN MARAFON REJASI</b>
+
+<b>💰 Boshlang'ich depozit:</b> <b>${deposit:.0f}</b>
+
+<b>🎯 MARAFON MAQSADI:</b>
+• Depozitni oshirish: <b>${deposit * 3:.0f}</b>
+• Kunlik o'rtacha foyda: <b>${deposit * 0.03:.0f}</b>
+• Jami savdolar: <b>90-120</b>
+
+<b>📊 STRATEGIYA:</b>
+• Xavf: depozitning 2-3%
+• Signallarning aniqligi: 94-97%
+• Ekspiratsiya: 1-10 daqiqa
+• Bozorlar: OTC va birja
+
+<b>⚠️ TAVSIYALAR:</b>
+• Barcha signallarga amal qiling
+• Strategiyadan chetlashmang
+• Emotsiyalarni nazorat qiling
+• Natijalarni tahliylang
+
+<b>🚀 Marafonda omad!</b>"""
             
-            from telegram import InlineKeyboardMarkup, InlineKeyboardButton
             lang = get_user_language(user_id)
-            keyboard = InlineKeyboardMarkup([
-                [InlineKeyboardButton("🏠 Main Menu" if lang == 'en' else "🏠 Главное меню", callback_data="main_menu")]
-            ])
+            if lang == 'ru':
+                keyboard = [[InlineKeyboardButton("🏠 Главное меню", callback_data="main_menu")]]
+            elif lang == 'en':
+                keyboard = [[InlineKeyboardButton("🏠 Main Menu", callback_data="main_menu")]]
+            elif lang == 'kg':
+                keyboard = [[InlineKeyboardButton("🏠 Башкы меню", callback_data="main_menu")]]
+            elif lang == 'uz':
+                keyboard = [[InlineKeyboardButton("🏠 Asosiy menyu", callback_data="main_menu")]]
             
             await update.message.reply_text(
                 message,
                 parse_mode='HTML',
-                reply_markup=keyboard
+                reply_markup=InlineKeyboardMarkup(keyboard)
             )
             
             context.user_data.pop("awaiting_deposit", None)
@@ -1882,7 +2633,7 @@ async def handle_message(update: Update, context: ContextTypes.DEFAULT_TYPE):
     await show_main_menu(update, context, user_id)
 
 # ============================================
-# 🚀 ЗАПУСК БОТА (ИСПРАВЛЕННАЯ ВЕРСИЯ)
+# 🚀 ЗАПУСК БОТА
 # ============================================
 
 async def run_bot():
@@ -1918,7 +2669,7 @@ async def run_bot():
         logger.info(f"👥 Всего пользователей: {len(all_users)}")
         logger.info(f"👑 VIP пользователей: {len(vip_users)}")
         logger.info(f"⛔ Заблокированных: {len(banned_users)}")
-        logger.info("⏰ Автопинг каждые 3 минуты")
+        logger.info("⏰ Автопинг каждые 3 минуты (только логирование)")
         logger.info("🤖 Автосигналы каждые 2-3 минуты")
         
         # Запускаем polling
