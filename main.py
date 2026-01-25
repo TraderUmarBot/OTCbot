@@ -1941,7 +1941,7 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             elif lang == 'uz':
                 message = f"<b>🤖 AVTOMATIK SIGNALLAR</b>\n\n"
                 message += f"Bot har 2-3 daqiqada sizga signallar yuboradi\n\n"
-                message += f"<b>📊 Holat:</b> {'✅ YOQILDI' if enabled else \"❌ O'CHIRILDI\"}\n"
+                message += f'<b>📊 Holat:</b> {"✅ YOQILDI" if enabled else "❌ O\'CHIRILDI"}\n'
                 message += f"<b>⏰ Interval:</b> 2-3 daqiqa\n"
                 message += f"<b>🎯 Aniqlik:</b> 94-97%\n"
                 message += f"<b>📈 Indikatorlar:</b> 20+ texnik indikator\n"
