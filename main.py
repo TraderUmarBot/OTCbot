@@ -443,7 +443,7 @@ TEXTS = {
         'admin_panel': "⚡ Админ панель",
         'auto_signals': "🤖 Автосигналы",
         'back': "🔙 Назад",
-        'next': "➡️ Далее",
+        'next': "➡️ Вперед",
         'prev': "⬅️ Назад",
         'main_menu_btn': "🏠 Главное меню",
         'page': "Страница {current}/{total}"
@@ -815,52 +815,70 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
             category = MARKET_CATEGORIES[category_id]
             pairs = category['pairs']
             
-            # Показываем первые 8 пар (пагинация простая)
-            keyboard = []
-            for i, pair in enumerate(pairs[:8]):
-                keyboard.append([InlineKeyboardButton(pair, callback_data=f"pair_{category_id}_{i}")])
+            # Сохраняем текущую категорию для пагинации
+            context.user_data['current_category'] = category_id
+            context.user_data['current_page'] = 1
+            context.user_data['pairs_per_page'] = 8
             
-            keyboard.append([
-                InlineKeyboardButton(get_text(user_id, 'back'), callback_data="get_signal"),
-                InlineKeyboardButton(get_text(user_id, 'main_menu_btn'), callback_data="main_menu")
-            ])
-            
-            await query.edit_message_text(
-                f"{get_text(user_id, 'choose_pair')}\n\n<b>{category['name']}</b>\n📊 Всего пар: {len(pairs)}",
-                parse_mode='HTML',
-                reply_markup=InlineKeyboardMarkup(keyboard)
-            )
+            # Показываем первую страницу пар
+            await show_pairs_page(query, user_id, context.user_data['current_page'], category_id)
+        
+        # ПАГИНАЦИЯ ВПЕРЕД
+        elif data.startswith("next_page_"):
+            try:
+                category_id = data.replace("next_page_", "")
+                current_page = context.user_data.get('current_page', 1)
+                context.user_data['current_page'] = current_page + 1
+                await show_pairs_page(query, user_id, context.user_data['current_page'], category_id)
+            except Exception as e:
+                logger.error(f"Ошибка пагинации вперед: {e}")
+                await query.answer("❌ Ошибка перехода", show_alert=True)
+        
+        # ПАГИНАЦИЯ НАЗАД
+        elif data.startswith("prev_page_"):
+            try:
+                category_id = data.replace("prev_page_", "")
+                current_page = context.user_data.get('current_page', 1)
+                if current_page > 1:
+                    context.user_data['current_page'] = current_page - 1
+                    await show_pairs_page(query, user_id, context.user_data['current_page'], category_id)
+                else:
+                    await query.answer("Вы на первой странице", show_alert=True)
+            except Exception as e:
+                logger.error(f"Ошибка пагинации назад: {e}")
+                await query.answer("❌ Ошибка перехода", show_alert=True)
         
         # ВЫБОР ПАРЫ
         elif data.startswith("pair_"):
-    if not is_vip(user_id):
-        await query.answer(get_text(user_id, 'require_vip'), show_alert=True)
-        return
+            if not is_vip(user_id):
+                await query.answer(get_text(user_id, 'require_vip'), show_alert=True)
+                return
 
-    try:
-        _, category_id, pair_index = data.split("_")
-        pair_index = int(pair_index)
+            try:
+                _, category_id, pair_index = data.split("_")
+                pair_index = int(pair_index)
 
-        if category_id not in MARKET_CATEGORIES:
-            await query.answer("❌ Категория не найдена", show_alert=True)
-            return
+                if category_id not in MARKET_CATEGORIES:
+                    await query.answer("❌ Категория не найдена", show_alert=True)
+                    return
 
-        pairs = MARKET_CATEGORIES[category_id]['pairs']
+                pairs = MARKET_CATEGORIES[category_id]['pairs']
 
-        if not (0 <= pair_index < len(pairs)):
-            await query.answer("❌ Пара не найдена", show_alert=True)
-            return
+                if not (0 <= pair_index < len(pairs)):
+                    await query.answer("❌ Пара не найдена", show_alert=True)
+                    return
 
-        pair = pairs[pair_index]
+                pair = pairs[pair_index]
 
-        context.user_data['selected_pair'] = pair
-        context.user_data['selected_category'] = category_id
+                context.user_data['selected_pair'] = pair
+                context.user_data['selected_category'] = category_id
 
-        await show_expiration_selection(query, user_id, pair)
+                await show_expiration_selection(query, user_id, pair)
 
-    except Exception as e:
-        logger.error(f"Ошибка выбора пары {data}: {e}")
-       await query.answer("❌ Ошибка выбора пары", show_alert=True)
+            except Exception as e:
+                logger.error(f"Ошибка выбора пары {data}: {e}")
+                await query.answer("❌ Ошибка выбора пары", show_alert=True)
+        
         # ВЫБОР ЭКСПИРАЦИИ
         elif data.startswith("exp_"):
             if not is_vip(user_id):
@@ -1218,6 +1236,63 @@ async def handle_callback(update: Update, context: ContextTypes.DEFAULT_TYPE):
     except Exception as e:
         logger.error(f"Ошибка в callback {data}: {e}")
         await query.answer("⚠️ Произошла ошибка!", show_alert=True)
+
+async def show_pairs_page(query, user_id: str, page: int, category_id: str):
+    """Показать страницу пар с пагинацией"""
+    if category_id not in MARKET_CATEGORIES:
+        await query.answer("❌ Категория не найдена", show_alert=True)
+        return
+    
+    category = MARKET_CATEGORIES[category_id]
+    pairs = category['pairs']
+    pairs_per_page = 8
+    
+    # Вычисляем индексы для текущей страницы
+    start_idx = (page - 1) * pairs_per_page
+    end_idx = start_idx + pairs_per_page
+    total_pages = (len(pairs) + pairs_per_page - 1) // pairs_per_page
+    
+    # Формируем сообщение
+    message = f"{get_text(user_id, 'choose_pair')}\n\n"
+    message += f"<b>{category['name']}</b>\n"
+    message += f"📊 Всего пар: {len(pairs)}\n"
+    message += f"📄 {get_text(user_id, 'page', current=page, total=total_pages)}\n\n"
+    message += f"📋 Выберите пару:"
+    
+    # Формируем клавиатуру с парами текущей страницы
+    keyboard = []
+    for i in range(start_idx, min(end_idx, len(pairs))):
+        pair = pairs[i]
+        keyboard.append([InlineKeyboardButton(pair, callback_data=f"pair_{category_id}_{i}")])
+    
+    # Кнопки пагинации
+    pagination_buttons = []
+    if page > 1:
+        pagination_buttons.append(InlineKeyboardButton(get_text(user_id, 'prev'), callback_data=f"prev_page_{category_id}"))
+    if page < total_pages:
+        pagination_buttons.append(InlineKeyboardButton(get_text(user_id, 'next'), callback_data=f"next_page_{category_id}"))
+    
+    if pagination_buttons:
+        keyboard.append(pagination_buttons)
+    
+    # Кнопки навигации
+    keyboard.append([
+        InlineKeyboardButton(get_text(user_id, 'back'), callback_data="get_signal"),
+        InlineKeyboardButton(get_text(user_id, 'main_menu_btn'), callback_data="main_menu")
+    ])
+    
+    if hasattr(query, 'edit_message_text'):
+        await query.edit_message_text(
+            message,
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
+    else:
+        await query.reply_text(
+            message,
+            parse_mode='HTML',
+            reply_markup=InlineKeyboardMarkup(keyboard)
+        )
 
 async def show_expiration_selection(query, user_id: str, pair: str):
     """Показать выбор экспирации"""
