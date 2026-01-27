@@ -4,4 +4,4 @@ pandas
 numpy
 pandas-ta
 requests
-Flas
+Flask
