@@ -30,7 +30,7 @@ import warnings
 warnings.filterwarnings('ignore')
 
 # Библиотеки для технического анализа
-import talib
+import pandas_ta as ta
 from scipy import stats
 import math
 
