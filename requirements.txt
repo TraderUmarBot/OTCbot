@@ -2,9 +2,10 @@ python-telegram-bot==20.7
 yfinance==0.2.33
 pandas==2.1.4
 numpy==1.24.3
-ta-lib==0.4.28
 scipy==1.11.4
 pytz==2023.3
 aiohttp==3.9.1
 schedule==1.2.0
 requests==2.31.0
+# ЗАМЕНА TA-Lib на легкую альтернативу
+pandas-ta==0.3.14b0  # Без зависимостей от C/C++
