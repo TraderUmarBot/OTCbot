@@ -1620,7 +1620,8 @@ def main():
         logger.info(f"🌍 Языки: Русский, Кыргызский")
         logger.info(f"🔧 Все функции: РАБОТАЮТ ИДЕАЛЬНО")
         logger.info("=" * 60)
-        
+        logger.critical(f"🔥 КРИТИЧЕСКАЯ ОШИБКА: {e}")
+
         # ============================================
 # 🚀 STABLE RENDER LAUNCH SYSTEM (24/7)
 # ============================================
@@ -1628,41 +1629,48 @@ def main():
 async def main():
     logger.info("🚀 Запуск KURUT AI INFINITY v15.0")
 
-    application = Application.builder().token(TOKEN).build()
+    try:
+        # Создаем приложение Telegram
+        application = Application.builder().token(TOKEN).build()
 
-    # Команды
-    application.add_handler(CommandHandler("start", start_command))
-    application.add_handler(CommandHandler("grant", grant_command))
-    application.add_handler(CommandHandler("revoke", revoke_command))
-    application.add_handler(CommandHandler("ban", ban_command))
-    application.add_handler(CommandHandler("unban", unban_command))
-    application.add_handler(CommandHandler("broadcast", broadcast_command))
+        # Команды
+        application.add_handler(CommandHandler("start", start_command))
+        application.add_handler(CommandHandler("grant", grant_command))
+        application.add_handler(CommandHandler("revoke", revoke_command))
+        application.add_handler(CommandHandler("ban", ban_command))
+        application.add_handler(CommandHandler("unban", unban_command))
+        application.add_handler(CommandHandler("broadcast", broadcast_command))
 
-    # Callback и сообщения
-    application.add_handler(CallbackQueryHandler(handle_callback))
-    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+        # Callback и сообщения
+        application.add_handler(CallbackQueryHandler(handle_callback))
+        application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
 
-    # Flask в отдельном потоке
-    flask_thread = threading.Thread(target=run_flask, daemon=True)
-    flask_thread.start()
+        # Flask в отдельном потоке
+        flask_thread = threading.Thread(target=run_flask, daemon=True)
+        flask_thread.start()
 
-    # Автопинг
-    pinger = AutoPingSystem()
-    pinger.start()
+        # Автопинг
+        pinger = AutoPingSystem()
+        pinger.start()
 
-    # Автосигналы
-    auto_signal_system = AutoSignalSystem(application)
-    auto_signal_system.start()
+        # Автосигналы
+        auto_signal_system = AutoSignalSystem(application)
+        auto_signal_system.start()
 
-    logger.info("✅ БОТ УСПЕШНО ЗАПУЩЕН 24/7 НА RENDER")
+        logger.info("✅ БОТ УСПЕШНО ЗАПУЩЕН 24/7 НА RENDER")
 
-    await application.initialize()
-    await application.start()
-    await application.bot.initialize()
-    await application.run_polling()
+        # Запуск бота
+        await application.initialize()
+        await application.start()
+        await application.bot.initialize()
+        await application.run_polling()
 
+    except Exception as e:
+        logger.critical(f"🔥 КРИТИЧЕСКАЯ ОШИБКА ПРИ ЗАПУСКЕ: {e}")
+
+# Точка входа
 if __name__ == "__main__":
     try:
         asyncio.run(main())
     except Exception as e:
-        logger.critical(f"🔥 КРИТИЧЕСКАЯ ОШИБКА: {e}")
+        logger.critical(f"🔥 КРИТИЧЕСКАЯ ОШИБКА ОСНОВНОГО ЦИКЛА: {e}")
