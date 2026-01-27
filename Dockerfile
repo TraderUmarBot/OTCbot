@@ -5,16 +5,18 @@ WORKDIR /app
 # Устанавливаем системные зависимости
 RUN apt-get update && apt-get install -y \
     gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Копируем зависимости
+# Копируем и устанавливаем зависимости
 COPY requirements.txt .
-
-# Устанавливаем Python зависимости
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Копируем код
 COPY . .
 
+# Создаем папку для данных
+RUN mkdir -p data
+
 # Запускаем бота
-CMD ["python", "main.py"]
+CMD ["python", "bot.py"]
