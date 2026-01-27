@@ -456,19 +456,24 @@ class MarketAnalyzer:
             # 9. Williams %R
             willr = talib.WILLR(high, low, close, timeperiod=14)
             indicators['willr'] = float(willr[-1])
-            
-            # 10. OBV (On Balance Volume)
-            obv = talib.OBV(close, volume)
-            indicators['obv'] = float(obv[-1])
-            indicators['obv_trend'] = "РОСТ" if obv[-1] > obv[-2] if len(obv) > 1 else 0 else "ПАДЕНИЕ"
-            
-            # 11. Momentum
-            momentum = talib.MOM(close, timeperiod=10)
-            indicators['momentum'] = float(momentum[-1])
-            
-            # 12. ROC (Rate of Change)
-            roc = talib.ROC(close, timeperiod=10)
-            indicators['roc'] = float(roc[-1])
+
+# 10. OBV (On Balance Volume)
+obv = talib.OBV(close, volume)
+
+if obv is not None and len(obv) > 1:
+    indicators['obv'] = float(obv[-1])
+    indicators['obv_trend'] = "РОСТ" if obv[-1] > obv[-2] else "ПАДЕНИЕ"
+else:
+    indicators['obv'] = 0.0
+    indicators['obv_trend'] = "НЕТ ДАННЫХ"
+
+# 11. Momentum
+momentum = talib.MOM(close, timeperiod=10)
+indicators['momentum'] = float(momentum[-1]) if momentum is not None and len(momentum) > 0 else 0.0
+
+# 12. ROC (Rate of Change)
+roc = talib.ROC(close, timeperiod=10)
+indicators['roc'] = float(roc[-1]) if roc is not None and len(roc) > 0 else 0.0
             
             # 13. Parabolic SAR
             sar = talib.SAR(high, low)
