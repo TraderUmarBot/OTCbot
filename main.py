@@ -1621,22 +1621,48 @@ def main():
         logger.info(f"🔧 Все функции: РАБОТАЮТ ИДЕАЛЬНО")
         logger.info("=" * 60)
         
-        # Запускаем бота
-        application.run_polling(allowed_updates=Update.ALL_TYPES, drop_pending_updates=True)
-        
-    except Exception as e:
-        logger.error(f"❌ Ошибка запуска: {e}")
-        import traceback
-        traceback.print_exc()
-        time.sleep(5)
-        main()  # Перезапуск при ошибке
+        # ============================================
+# 🚀 STABLE RENDER LAUNCH SYSTEM (24/7)
+# ============================================
+
+async def main():
+    logger.info("🚀 Запуск KURUT AI INFINITY v15.0")
+
+    application = Application.builder().token(TOKEN).build()
+
+    # Команды
+    application.add_handler(CommandHandler("start", start_command))
+    application.add_handler(CommandHandler("grant", grant_command))
+    application.add_handler(CommandHandler("revoke", revoke_command))
+    application.add_handler(CommandHandler("ban", ban_command))
+    application.add_handler(CommandHandler("unban", unban_command))
+    application.add_handler(CommandHandler("broadcast", broadcast_command))
+
+    # Callback и сообщения
+    application.add_handler(CallbackQueryHandler(handle_callback))
+    application.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+
+    # Flask в отдельном потоке
+    flask_thread = threading.Thread(target=run_flask, daemon=True)
+    flask_thread.start()
+
+    # Автопинг
+    pinger = AutoPingSystem()
+    pinger.start()
+
+    # Автосигналы
+    auto_signal_system = AutoSignalSystem(application)
+    auto_signal_system.start()
+
+    logger.info("✅ БОТ УСПЕШНО ЗАПУЩЕН 24/7 НА RENDER")
+
+    await application.initialize()
+    await application.start()
+    await application.bot.initialize()
+    await application.run_polling()
 
 if __name__ == "__main__":
     try:
-        main()
-    except KeyboardInterrupt:
-        logger.info("🛑 Бот остановлен пользователем")
+        asyncio.run(main())
     except Exception as e:
-        logger.error(f"💥 Критическая ошибка: {e}")
-        time.sleep(5)
-        main()  # Перезапуск при критической ошибке
+        logger.critical(f"🔥 КРИТИЧЕСКАЯ ОШИБКА: {e}")
