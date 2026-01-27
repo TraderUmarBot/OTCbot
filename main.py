@@ -15,7 +15,7 @@ import requests
 import pandas as pd
 import numpy as np
 from typing import Dict, List, Optional, Tuple, Any
-import talib
+import pandas_ta as ta
 from flask import Flask, request
 from telegram import (
     InlineKeyboardButton, 
