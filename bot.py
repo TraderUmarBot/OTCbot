@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 🤖 KURUT AI INFINITY - Самый точный бот для OTC рынка Pocket Option
-Версия для Replit - с автопином и полным функционалом
+ИСПРАВЛЕННАЯ ВЕРСИЯ - Без ошибок сериализации
 """
 
 import os
@@ -18,8 +18,6 @@ from typing import Dict, List, Optional, Tuple, Any
 from dataclasses import dataclass, asdict
 from enum import Enum
 from collections import defaultdict
-from http.server import HTTPServer, BaseHTTPRequestHandler
-import _thread
 
 import numpy as np
 import pandas as pd
@@ -91,42 +89,7 @@ EXPIRATIONS = {
 
 # Состояния
 (SELECT_LANGUAGE, MAIN_MENU, WAITING_FOR_BALANCE, SELECT_ASSET_TYPE,
- SELECT_CURRENCY_PAIR, SELECT_EXPIRY, TRADE_RESULT) = range(7)
-
-# ==================== АВТОПИН ДЛЯ REPLIT ====================
-class PingServer:
-    """Сервер для автопина на Replit"""
-    
-    @staticmethod
-    def start():
-        """Запуск HTTP сервера для автопина"""
-        class Handler(BaseHTTPRequestHandler):
-            def do_GET(self):
-                self.send_response(200)
-                self.send_header('Content-type', 'text/html')
-                self.end_headers()
-                self.wfile.write(b'KURUT AI INFINITY Bot is alive!')
-        
-        def run_server():
-            server = HTTPServer(('0.0.0.0', 8080), Handler)
-            print("✅ Ping server started on port 8080")
-            server.serve_forever()
-        
-        # Запускаем в отдельном потоке
-        _thread.start_new_thread(run_server, ())
-        
-        # Также пинг каждые 3 минуты
-        def ping_loop():
-            while True:
-                try:
-                    requests.get(f"https://{os.environ.get('REPL_SLUG')}.{os.environ.get('REPL_OWNER')}.repl.co", timeout=5)
-                    print(f"✅ Ping sent at {datetime.now().strftime('%H:%M:%S')}")
-                except:
-                    print(f"⚠️ Ping failed at {datetime.now().strftime('%H:%M:%S')}")
-                time.sleep(180)  # 3 минуты
-        
-        _thread.start_new_thread(ping_loop, ())
-        return True
+ SELECT_CURRENCY_PAIR, SELECT_EXPIRY, TRADE_RESULT, ADMIN_ACTIONS) = range(8)
 
 # ==================== ЛОГИРОВАНИЕ ====================
 logging.basicConfig(
@@ -143,33 +106,41 @@ logger = logging.getLogger(__name__)
 class Language(Enum):
     RUSSIAN = "ru"
     KYRGYZ = "kg"
+    
+    def __str__(self):
+        return self.value
 
 @dataclass
 class User:
     id: int
     username: Optional[str]
     first_name: str
-    language: Language = Language.RUSSIAN
+    language: str = "ru"  # Храним как строку, а не Enum
     has_access: bool = False
     balance: float = 0.0
     trades_won: int = 0
     trades_lost: int = 0
     total_trades: int = 0
     referral_id: str = ""
-    join_date: datetime = None
-    last_active: datetime = None
+    join_date: str = None
+    last_active: str = None
     
     def __post_init__(self):
         if self.join_date is None:
-            self.join_date = datetime.now()
+            self.join_date = datetime.now().isoformat()
         if self.last_active is None:
-            self.last_active = datetime.now()
+            self.last_active = datetime.now().isoformat()
     
     @property
     def win_rate(self) -> float:
         if self.total_trades == 0:
             return 0.0
         return (self.trades_won / self.total_trades) * 100
+    
+    @property
+    def language_enum(self):
+        """Конвертируем строку в Enum при необходимости"""
+        return Language(self.language)
 
 @dataclass
 class Signal:
@@ -178,9 +149,83 @@ class Signal:
     expiry: str
     confidence: float
     price: float
-    timestamp: datetime
+    timestamp: str
     indicators: Dict[str, Any]
     recommendation: str
+
+# ==================== ТЕКСТЫ НА ЯЗЫКАХ ====================
+TEXTS = {
+    "ru": {
+        "start": "🎯 Добро пожаловать в KURUT AI INFINITY!\n\nЯ - ваш персональный торговый помощник для OTC рынка Pocket Option.\n\nВыберите язык:",
+        "welcome": "👋 Добро пожаловать, {name}!\n\n📊 Я - KURUT AI INFINITY, самый точный торговый бот для OTC рынка Pocket Option.\n\n📈 Мои алгоритмы анализируют рынок с помощью 20+ математических индикаторов и выдают точные сигналы.",
+        "social_links": "📱 МОИ СОЦИАЛЬНЫЕ СЕТИ:\n\n🔗 Telegram канал: {telegram}\n💬 Telegram чат: {telegram_chat}\n📸 Instagram: {instagram}\n🎥 YouTube: {youtube}\n👤 Админ: {admin}",
+        "get_access": "🔐 ПОЛУЧИТЬ ДОСТУП\n\n📌 Ваш ID: {user_id}\n🔗 Реферальная ссылка: {ref_link}\n\n📝 Инструкция:\n1. Откройте новый аккаунт по ссылке выше\n2. Пополните баланс на 10$ или 20$\n3. Отправьте ваш ID админу: {admin}\n4. После подтверждения получите доступ к сигналам",
+        "access_granted": "✅ ДОСТУП АКТИВИРОВАН!\n\n🎉 Поздравляем! Теперь вам доступны все функции бота.",
+        "main_menu": "📊 ГЛАВНОЕ МЕНЮ\n\nВыберите опцию:",
+        "get_signal": "📈 ПОЛУЧИТЬ СИГНАЛ\n\nВыберите тип актива:",
+        "forex_pairs": "💱 ВАЛЮТНЫЕ ПАРЫ OTC\n\nВыберите пару:",
+        "stocks": "📊 АКЦИИ OTC\n\nВыберите актив:",
+        "crypto": "₿ КРИПТОВАЛЮТЫ OTC\n\nВыберите криптовалюту:",
+        "select_expiry": "⏰ ВЫБЕРИТЕ ЭКСПИРАЦИЮ\n\nВыберите время экспирации:",
+        "analyzing": "🔍 АНАЛИЗИРУЮ РЫНОК...\n\n📊 Запускаю 20+ математических индикаторов:\n• RSI, MACD, Bollinger Bands\n• Stochastic, Support/Resistance\n• Moving Averages, Volume анализ\n• Тренд анализ, Fibonacci\n\n⏳ Анализ займет 2-3 секунды...",
+        "signal_result": "🎯 СИГНАЛ СГЕНЕРИРОВАН!\n\n📊 Актив: {asset}\n🎯 Направление: {direction}\n⏱ Экспирация: {expiry}\n📈 Уверенность: {confidence}%\n💵 Текущая цена: {price}\n\n{recommendation}\n\n👇 Подтвердите результат сделки:",
+        "trade_won": "✅ СДЕЛКА ВЫИГРАНА!\n\nПоздравляем с успешной сделкой!",
+        "trade_lost": "❌ СДЕЛКА ПРОИГРАНА\n\nНе расстраивайтесь, следующая будет успешной!",
+        "marathon_start": "🏃‍♂️ МАРАФОН ТРЕЙДЕРА\n\nВведите ваш текущий баланс в долларах ($):\n\nПример: 100 или 250.50",
+        "marathon_calc": "📊 РАСЧЁТ МАРАФОНА\n\nНачальный баланс: ${balance}\nЕжедневная прибыль: +15%\n\n📈 30-ДНЕВНЫЙ РАСЧЁТ:\n{calculation}\n\n💡 Общая прибыль: ${total_profit}\n💰 Итоговый баланс: ${final_balance}",
+        "marathon_risk": "⚠️ УПРАВЛЕНИЕ РИСКАМИ\n\n📌 Для баланса ${balance}:\n\n🎯 Риск на сделку: 1-2%\n💰 Сумма риска: ${risk_amount}\n📊 Не использовать мартингейл\n🛑 Стоп-лосс: 2%\n✅ Тейк-профит: 3-5%\n\n⏱ Лучшее время: Азиатская и Европейская сессии",
+        "instruction": "📚 ИНСТРУКЦИЯ ПО БОТУ\n\nKURUT AI INFINITY использует:\n• 20+ математических индикаторов\n• Анализ OTC рынка Pocket Option\n• Точные сигналы с рекомендациями\n\n🎯 СТРАТЕГИЯ:\n1. Торгуйте только по сигналам бота\n2. Соблюдайте риск-менеджмент\n3. Не открывайте больше 3 сделок одновременно\n\n📱 КОНТАКТЫ:\nАдмин: {admin}",
+        "top_traders": "🏆 ТОП-5 ТРЕЙДЕРОВ\n\n{leaderboard}\n\n📊 Ваша позиция: #{position}",
+        "stats": "📊 ВАША СТАТИСТИКА\n\n👤 ID: {user_id}\n📅 Регистрация: {join_date}\n\n✅ Выиграно: {won}\n❌ Проиграно: {lost}\n📊 Всего: {total}\n🎯 Win Rate: {win_rate}%\n💰 Баланс: ${balance}",
+        "no_access": "❌ ДОСТУП ЗАКРЫТ\n\nДля получения доступа:\n1. Нажмите 'Получить доступ'\n2. Следуйте инструкции\n3. Отправьте ID админу",
+        "contact_admin": "👤 СВЯЗЬ С АДМИНОМ\n\nНапишите админу: {admin}\n\nОтправьте ваш ID: {user_id}",
+        "admin_menu": "⚙️ АДМИН ПАНЕЛЬ\n\nВыберите действие:",
+        "admin_grant": "Введите ID пользователя для выдачи доступа:",
+        "admin_granted": "✅ Доступ выдан пользователю ID: {user_id}",
+        "admin_stats": "📊 СТАТИСТИКА БОТА:\n\n👥 Пользователей: {total}\n✅ С доступом: {with_access}\n📈 Сделок: {trades}",
+        "error": "⚠️ Ошибка: {error}",
+        "back": "⬅️ Назад",
+        "next": "➡️ Далее",
+        "home": "🏠 Главное меню",
+        "refresh": "🔄 Обновить",
+        "loading": "⏳ Загрузка..."
+    },
+    "kg": {
+        "start": "🎯 KURUT AI INFINITY'ге кош келиңиз!\n\nМен Pocket Option OTC базары үчүн жеке соода жардамчысымын.\n\nТилди тандаңыз:",
+        "welcome": "👋 Кош келиңиз, {name}!\n\n📊 Мен - KURUT AI INFINITY, Pocket Option OTC базары үчүн эң так соода боту.\n\n📈 Менин алгоритмдерим 20+ математикалык индикаторлорду колдонуп базарды талдайт жана так сигналдарды берет.",
+        "social_links": "📱 МЕНИН СОЦИАЛДЫК ТАРМАКТАРЫМ:\n\n🔗 Telegram канал: {telegram}\n💬 Telegram чат: {telegram_chat}\n📸 Instagram: {instagram}\n🎥 YouTube: {youtube}\n👤 Админ: {admin}",
+        "get_access": "🔐 ДОСТУК АЛУУ\n\n📌 Сиздин ID: {user_id}\n🔗 Рефералдык шилтеме: {ref_link}\n\n📝 Нускама:\n1. Жаңы аккаунт ачыңыз\n2. Балансты 10$ же 20$ толтуруңуз\n3. ID'ңизди админге жөнөтүңүз: {admin}\n4. Расмий тастыктоодон кийин сигналдарга доступ аласыз",
+        "access_granted": "✅ ДОСТУК АКТИВДЕШТИРИЛДИ!\n\n🎉 Куттуктайбыз! Эми сизге боттун бардык функциялары жеткиликтүү.",
+        "main_menu": "📊 БАШКЫ МЕНЮ\n\nТандоо жасаңыз:",
+        "get_signal": "📈 СИГНАЛ АЛУУ\n\nАктивдин түрүн тандаңыз:",
+        "forex_pairs": "💱 ВАЛЮТА ЖУПТАРЫ OTC\n\nЖупту тандаңыз:",
+        "stocks": "📊 АКЦИЯЛАР OTC\n\nАктивди тандаңыз:",
+        "crypto": "₿ КРИПТОВАЛЮТАЛАР OTC\n\nКриптовалюта тандаңыз:",
+        "select_expiry": "⏰ ЭКСПИРАЦИЯ ТАНДАҢЫЗ\n\nЭкспирация убактысын тандаңыз:",
+        "analyzing": "🔍 БАЗАРДЫ ТАЛДАП ЖАТАМ...\n\n📊 20+ математикалык индикаторлор иштеп жатат:\n• RSI, MACD, Bollinger Bands\n• Stochastic, Support/Resistance\n• Moving Averages, Volume анализ\n• Тренд анализ, Fibonacci\n\n⏳ Талдоо 2-3 секундага созулат...",
+        "signal_result": "🎯 СИГНАЛ ТҮЗҮЛДҮ!\n\n📊 Актив: {asset}\n🎯 Багыт: {direction}\n⏱ Экспирация: {expiry}\n📈 Ишеним: {confidence}%\n💵 Азыркы баа: {price}\n\n{recommendation}\n\n👇 Сделканын натыйжасын ырастаңыз:",
+        "trade_won": "✅ СДЕЛКА УТУЛДУ!\n\nУткан сделкаңыз менен куттуктайбыз!",
+        "trade_lost": "❌ СДЕЛКА УТУЛДУ\n\nКайгырбаңыз, кийинкиси ийгиликтүү болот!",
+        "marathon_start": "🏃‍♂️ ТРЕЙДЕР МАРАФОНУ\n\nБалансыңызды доллар менен киргизиңиз ($):\n\nМисал: 100 же 250.50",
+        "marathon_calc": "📊 МАРАФОНДУН ЭСЕБИ\n\nБаштапкы баланс: ${balance}\nКүнүмдүк пайда: +15%\n\n📈 30-КҮНДҮК ЭСЕП:\n{calculation}\n\n💡 Жалпы пайда: ${total_profit}\n💰 Акыркы баланс: ${final_balance}",
+        "marathon_risk": "⚠️ ТӨРТҮНЧҮЛҮКТҮ БАШКАРУУ\n\n📌 Баланс үчүн ${balance}:\n\n🎯 Сделкага төртүнчүлүк: 1-2%\n💰 Төртүнчүлүк суммасы: ${risk_amount}\n📊 Мартингейл колдонбоңуз\n🛑 Стоп-лосс: 2%\n✅ Тейк-профит: 3-5%\n\n⏱ Эң жакшы убакыт: Азия жана Европа сессиялары",
+        "instruction": "📚 БОТ ТУУРАЛУУ НУСКАМА\n\nKURUT AI INFINITY колдонот:\n• 20+ математикалык индикаторлор\n• Pocket Option OTC базарын анализдөө\n• Нускамалар менен так сигналдар\n\n🎯 СТРАТЕГИЯ:\n1. Боттун сигналдары боюнча гана соода кылыңыз\n2. Төртүнчүлүктү башкарууну сактаңыз\n3. Бир эле учурда 3 сделкадан ашык ачпаңыз\n\n📱 БАЙЛАНЫШ:\nАдмин: {admin}",
+        "top_traders": "🏆 TOP-5 ТРЕЙДЕРЛЕР\n\n{leaderboard}\n\n📊 Сиздин позиция: #{position}",
+        "stats": "📊 СИЗДИН СТАТИСТИКАҢЫЗ\n\n👤 ID: {user_id}\n📅 Катталуу: {join_date}\n\n✅ Утулган: {won}\n❌ Утулган: {lost}\n📊 Баары: {total}\n🎯 Win Rate: {win_rate}%\n💰 Баланс: ${balance}",
+        "no_access": "❌ ДОСТУК ЖАБЫК\n\nДостук алуу үчүн:\n1. 'Достук алуу' баскычын басыңыз\n2. Нускаманы аткарыңыз\n3. ID'ңизди админге жөнөтүңүз",
+        "contact_admin": "👤 АДМИН МЕНЕН БАЙЛАНЫШ\n\nАдминге жазыңыз: {admin}\n\nID'ңизди жөнөтүңүз: {user_id}",
+        "admin_menu": "⚙️ АДМИН ПАНЕЛИ\n\nТандоо жасаңыз:",
+        "admin_grant": "Достук берүү үчүн колдонуучунун IDсин киргизиңиз:",
+        "admin_granted": "✅ ID колдонуучуга достук берилди: {user_id}",
+        "admin_stats": "📊 БОТТУН СТАТИСТИКАСЫ:\n\n👥 Колдонуучулар: {total}\n✅ Достугу бар: {with_access}\n📈 Сделкалар: {trades}",
+        "error": "⚠️ Ката: {error}",
+        "back": "⬅️ Артка",
+        "next": "➡️ Андан ары",
+        "home": "🏠 Башкы меню",
+        "refresh": "🔄 Жаңыртуу",
+        "loading": "⏳ Жүктөлүүдө..."
+    }
+}
 
 # ==================== МЕНЕДЖЕР ДАННЫХ ====================
 class DataManager:
@@ -195,10 +240,6 @@ class DataManager:
             "users": {str(uid): asdict(u) for uid, u in self.users.items()},
             "trades": self.trades
         }
-        # Конвертируем datetime в строку
-        for uid, user_data in data["users"].items():
-            user_data["join_date"] = user_data["join_date"].isoformat()
-            user_data["last_active"] = user_data["last_active"].isoformat()
         
         with open("data.json", "w", encoding="utf-8") as f:
             json.dump(data, f, ensure_ascii=False, indent=2)
@@ -211,11 +252,6 @@ class DataManager:
                     data = json.load(f)
                     
                     for uid, user_data in data.get("users", {}).items():
-                        # Конвертируем строку в datetime
-                        user_data["join_date"] = datetime.fromisoformat(user_data["join_date"])
-                        user_data["last_active"] = datetime.fromisoformat(user_data["last_active"])
-                        # Конвертируем строку в Language enum
-                        user_data["language"] = Language(user_data["language"])
                         self.users[int(uid)] = User(**user_data)
                     
                     self.trades = data.get("trades", [])
@@ -234,6 +270,7 @@ class DataManager:
                 id=user_id,
                 username=username,
                 first_name=first_name,
+                language="ru",
                 has_access=True,  # Админу сразу доступ
                 referral_id="ADMIN"
             )
@@ -242,6 +279,7 @@ class DataManager:
                 id=user_id,
                 username=username,
                 first_name=first_name,
+                language="ru",  # По умолчанию русский
                 referral_id=str(uuid.uuid4())[:8].upper()
             )
         
@@ -251,7 +289,7 @@ class DataManager:
     
     def update_user(self, user: User):
         """Обновить пользователя"""
-        user.last_active = datetime.now()
+        user.last_active = datetime.now().isoformat()
         self.users[user.id] = user
         self.save_data()
     
@@ -349,10 +387,8 @@ class OTC_Analyzer:
         
         return data
     
-    # ========== МАТЕМАТИЧЕСКИЕ ИНДИКАТОРЫ ==========
-    
     def calculate_rsi(self, prices: np.ndarray, period: int = 14) -> float:
-        """Расчет RSI - точный математический"""
+        """Расчет RSI"""
         if len(prices) < period + 1:
             return 50.0
         
@@ -368,7 +404,6 @@ class OTC_Analyzer:
         rs = up / down
         rsi = 100.0 - (100.0 / (1.0 + rs))
         
-        # Продолжаем расчет
         for i in range(period, len(deltas)):
             delta = deltas[i]
             if delta > 0:
@@ -391,7 +426,7 @@ class OTC_Analyzer:
         return min(max(rsi, 0), 100)
     
     def calculate_macd(self, prices: np.ndarray) -> Tuple[float, float, float]:
-        """Расчет MACD - математически точный"""
+        """Расчет MACD"""
         if len(prices) < 35:
             return 0.0, 0.0, 0.0
         
@@ -452,7 +487,6 @@ class OTC_Analyzer:
         
         k_fast = k_values[-1]
         
-        # Медленный стохастик (3-периодное SMA)
         if len(k_values) >= 3:
             d_slow = np.mean(k_values[-3:])
         else:
@@ -466,14 +500,9 @@ class OTC_Analyzer:
             current = prices[-1] if len(prices) > 0 else 100
             return {"support": current * 0.99, "resistance": current * 1.01}
         
-        # Используем кластеризацию для определения уровней
-        from scipy import stats
-        
-        # Находим частые ценовые уровни
         bins = np.linspace(np.min(prices), np.max(prices), 20)
         hist, edges = np.histogram(prices, bins=bins)
         
-        # Уровни с наибольшей частотой
         top_indices = np.argsort(hist)[-3:]
         levels = [(edges[i] + edges[i+1]) / 2 for i in top_indices]
         
@@ -490,7 +519,6 @@ class OTC_Analyzer:
         if len(prices) < 20:
             return {"direction": "НЕЙТРАЛЬНО", "strength": 0, "slope": 0}
         
-        # Линейная регрессия
         x = np.arange(len(prices))
         y = prices
         
@@ -512,7 +540,7 @@ class OTC_Analyzer:
         }
     
     def calculate_all_indicators(self, data: pd.DataFrame) -> Dict[str, Any]:
-        """РАСЧЕТ ВСЕХ 20+ ИНДИКАТОРОВ - МАТЕМАТИЧЕСКИ ТОЧНЫЙ"""
+        """РАСЧЕТ ВСЕХ 20+ ИНДИКАТОРОВ"""
         if data.empty or len(data) < 50:
             return {}
         
@@ -599,7 +627,7 @@ class OTC_Analyzer:
             if len(close) >= 10:
                 indicators['roc'] = round(((close[-1] - close[-10]) / close[-10]) * 100, 2)
             
-            # 13. CCI (Commodity Channel Index)
+            # 13. CCI
             if len(close) >= 20:
                 typical_price = (high[-20:] + low[-20:] + close[-20:]) / 3
                 sma_tp = np.mean(typical_price)
@@ -614,7 +642,7 @@ class OTC_Analyzer:
                 if highest != lowest:
                     indicators['willr'] = round(-100 * (highest - close[-1]) / (highest - lowest), 2)
             
-            # 15. OBV (On Balance Volume)
+            # 15. OBV
             obv = self._calculate_obv(close, volume)
             indicators['obv'] = round(obv[-1], 2) if len(obv) > 0 else 0
             
@@ -622,7 +650,7 @@ class OTC_Analyzer:
             indicators['mean_price'] = round(np.mean(close[-20:]), 5)
             indicators['std_price'] = round(np.std(close[-20:]), 5)
             
-            # 17. Fibonacci уровни
+            # 17. Fibonacci
             if len(close) >= 20:
                 fib_high = np.max(close[-20:])
                 fib_low = np.min(close[-20:])
@@ -697,14 +725,14 @@ class OTC_Analyzer:
             current_price = float(data['Close'].iloc[-1])
             
             # Анализируем индикаторы
-            signal_score = 50  # Нейтрально
+            signal_score = 50
             
             # 1. RSI анализ
             rsi = indicators.get('rsi', 50)
             if rsi < 35:
-                signal_score += 12  # Перепроданность
+                signal_score += 12
             elif rsi > 65:
-                signal_score -= 12  # Перекупленность
+                signal_score -= 12
             
             # 2. MACD анализ
             macd_hist = indicators.get('macd_hist', 0)
@@ -741,9 +769,9 @@ class OTC_Analyzer:
             distance_to_support = abs(current_price - support) / current_price
             distance_to_resistance = abs(current_price - resistance) / current_price
             
-            if distance_to_support < 0.005:  # Близко к поддержке
+            if distance_to_support < 0.005:
                 signal_score += 7
-            elif distance_to_resistance < 0.005:  # Близко к сопротивлению
+            elif distance_to_resistance < 0.005:
                 signal_score -= 7
             
             # Ограничиваем score
@@ -757,7 +785,7 @@ class OTC_Analyzer:
                 direction = "PUT"
                 confidence = 100 - signal_score
             else:
-                return None  # Нет четкого сигнала
+                return None
             
             # Генерируем рекомендацию
             recommendation = self._generate_recommendation(indicators, direction, expiry)
@@ -769,7 +797,7 @@ class OTC_Analyzer:
                 expiry=expiry,
                 confidence=round(confidence),
                 price=round(current_price, 5),
-                timestamp=datetime.now(),
+                timestamp=datetime.now().isoformat(),
                 indicators=indicators,
                 recommendation=recommendation
             )
@@ -784,7 +812,6 @@ class OTC_Analyzer:
         """Генерация текстовой рекомендации"""
         rec_lines = []
         
-        # Основной сигнал
         if direction == "CALL":
             rec_lines.append("🎯 СИГНАЛ НА ПОКУПКУ (CALL)")
             rec_lines.append("📈 Ожидается рост цены")
@@ -792,7 +819,6 @@ class OTC_Analyzer:
             rec_lines.append("🎯 СИГНАЛ НА ПРОДАЖУ (PUT)")
             rec_lines.append("📉 Ожидается падение цены")
         
-        # Обоснование
         rsi = indicators.get('rsi', 50)
         if rsi < 35:
             rec_lines.append("📊 RSI показывает перепроданность")
@@ -817,7 +843,6 @@ class OTC_Analyzer:
         elif stoch_signal == "ПЕРЕКУПЛЕН":
             rec_lines.append("📉 Stochastic в зоне перекупленности")
         
-        # Риск-менеджмент
         rec_lines.append("")
         rec_lines.append("⚠️ УПРАВЛЕНИЕ РИСКАМИ:")
         rec_lines.append(f"⏱ Экспирация: {expiry}")
@@ -827,87 +852,12 @@ class OTC_Analyzer:
         
         return "\n".join(rec_lines)
 
-# ==================== ТЕКСТЫ НА ЯЗЫКАХ ====================
-TEXTS = {
-    Language.RUSSIAN: {
-        "start": "🎯 Добро пожаловать в KURUT AI INFINITY!\n\nЯ - ваш персональный торговый помощник для OTC рынка Pocket Option.\n\nВыберите язык:",
-        "welcome": "👋 Добро пожаловать, {name}!\n\n📊 Я - KURUT AI INFINITY, самый точный торговый бот для OTC рынка Pocket Option.\n\n📈 Мои алгоритмы анализируют рынок с помощью 20+ математических индикаторов и выдают точные сигналы.",
-        "social_links": "📱 МОИ СОЦИАЛЬНЫЕ СЕТИ:\n\n🔗 Telegram канал: {telegram}\n💬 Telegram чат: {telegram_chat}\n📸 Instagram: {instagram}\n🎥 YouTube: {youtube}\n👤 Админ: {admin}",
-        "get_access": "🔐 ПОЛУЧИТЬ ДОСТУП\n\n📌 Ваш ID: {user_id}\n🔗 Реферальная ссылка: {ref_link}\n\n📝 Инструкция:\n1. Откройте новый аккаунт по ссылке выше\n2. Пополните баланс на 10$ или 20$\n3. Отправьте ваш ID админу: {admin}\n4. После подтверждения получите доступ к сигналам",
-        "access_granted": "✅ ДОСТУП АКТИВИРОВАН!\n\n🎉 Поздравляем! Теперь вам доступны все функции бота.",
-        "main_menu": "📊 ГЛАВНОЕ МЕНЮ\n\nВыберите опцию:",
-        "get_signal": "📈 ПОЛУЧИТЬ СИГНАЛ\n\nВыберите тип актива:",
-        "forex_pairs": "💱 ВАЛЮТНЫЕ ПАРЫ OTC\n\nВыберите пару:",
-        "stocks": "📊 АКЦИИ OTC\n\nВыберите актив:",
-        "crypto": "₿ КРИПТОВАЛЮТЫ OTC\n\nВыберите криптовалюту:",
-        "select_expiry": "⏰ ВЫБЕРИТЕ ЭКСПИРАЦИЮ\n\nВыберите время экспирации:",
-        "analyzing": "🔍 АНАЛИЗИРУЮ РЫНОК...\n\n📊 Запускаю 20+ математических индикаторов:\n• RSI, MACD, Bollinger Bands\n• Stochastic, Support/Resistance\n• Moving Averages, Volume анализ\n• Тренд анализ, Fibonacci\n\n⏳ Анализ займет 2-3 секунды...",
-        "signal_result": "🎯 СИГНАЛ СГЕНЕРИРОВАН!\n\n📊 Актив: {asset}\n🎯 Направление: {direction}\n⏱ Экспирация: {expiry}\n📈 Уверенность: {confidence}%\n💵 Текущая цена: {price}\n\n{recommendation}\n\n👇 Подтвердите результат сделки:",
-        "trade_won": "✅ СДЕЛКА ВЫИГРАНА!\n\nПоздравляем с успешной сделкой!",
-        "trade_lost": "❌ СДЕЛКА ПРОИГРАНА\n\nНе расстраивайтесь, следующая будет успешной!",
-        "marathon_start": "🏃‍♂️ МАРАФОН ТРЕЙДЕРА\n\nВведите ваш текущий баланс в долларах ($):\n\nПример: 100 или 250.50",
-        "marathon_calc": "📊 РАСЧЁТ МАРАФОНА\n\nНачальный баланс: ${balance}\nЕжедневная прибыль: +15%\n\n📈 30-ДНЕВНЫЙ РАСЧЁТ:\n{calculation}\n\n💡 Общая прибыль: ${total_profit}\n💰 Итоговый баланс: ${final_balance}",
-        "marathon_risk": "⚠️ УПРАВЛЕНИЕ РИСКАМИ\n\n📌 Для баланса ${balance}:\n\n🎯 Рик на сделку: 1-2%\n💰 Сумма риска: ${risk_amount}\n📊 Не использовать мартингейл\n🛑 Стоп-лосс: 2%\n✅ Тейк-профит: 3-5%\n\n⏱ Лучшее время: Азиатская и Европейская сессии",
-        "instruction": "📚 ИНСТРУКЦИЯ ПО БОТУ\n\nKURUT AI INFINITY использует:\n• 20+ математических индикаторов\n• Анализ OTC рынка Pocket Option\n• Точные сигналы с рекомендациями\n\n🎯 СТРАТЕГИЯ:\n1. Торгуйте только по сигналам бота\n2. Соблюдайте риск-менеджмент\n3. Не открывайте больше 3 сделок одновременно\n\n📱 КОНТАКТЫ:\nАдмин: {admin}",
-        "top_traders": "🏆 ТОП-5 ТРЕЙДЕРОВ\n\n{leaderboard}\n\n📊 Ваша позиция: #{position}",
-        "stats": "📊 ВАША СТАТИСТИКА\n\n👤 ID: {user_id}\n📅 Регистрация: {join_date}\n\n✅ Выиграно: {won}\n❌ Проиграно: {lost}\n📊 Всего: {total}\n🎯 Win Rate: {win_rate}%\n💰 Баланс: ${balance}",
-        "no_access": "❌ ДОСТУП ЗАКРЫТ\n\nДля получения доступа:\n1. Нажмите 'Получить доступ'\n2. Следуйте инструкции\n3. Отправьте ID админу",
-        "contact_admin": "👤 СВЯЗЬ С АДМИНОМ\n\nНапишите админу: {admin}\n\nОтправьте ваш ID: {user_id}",
-        "admin_menu": "⚙️ АДМИН ПАНЕЛЬ\n\nВыберите действие:",
-        "admin_grant": "Введите ID пользователя для выдачи доступа:",
-        "admin_granted": "✅ Доступ выдан пользователю ID: {user_id}",
-        "admin_stats": "📊 СТАТИСТИКА БОТА:\n\n👥 Пользователей: {total}\n✅ С доступом: {with_access}\n📈 Сделок: {trades}",
-        "error": "⚠️ Ошибка: {error}",
-        "back": "⬅️ Назад",
-        "next": "➡️ Далее",
-        "home": "🏠 Главное меню",
-        "refresh": "🔄 Обновить",
-        "loading": "⏳ Загрузка..."
-    },
-    Language.KYRGYZ: {
-        "start": "🎯 KURUT AI INFINITY'ге кош келиңиз!\n\nМен Pocket Option OTC базары үчүн жеке соода жардамчысымын.\n\nТилди тандаңыз:",
-        "welcome": "👋 Кош келиңиз, {name}!\n\n📊 Мен - KURUT AI INFINITY, Pocket Option OTC базары үчүн эң так соода боту.\n\n📈 Менин алгоритмдерим 20+ математикалык индикаторлорду колдонуп базарды талдайт жана так сигналдарды берет.",
-        "social_links": "📱 МЕНИН СОЦИАЛДЫК ТАРМАКТАРЫМ:\n\n🔗 Telegram канал: {telegram}\n💬 Telegram чат: {telegram_chat}\n📸 Instagram: {instagram}\n🎥 YouTube: {youtube}\n👤 Админ: {admin}",
-        "get_access": "🔐 ДОСТУК АЛУУ\n\n📌 Сиздин ID: {user_id}\n🔗 Рефералдык шилтеме: {ref_link}\n\n📝 Нускама:\n1. Жаңы аккаунт ачыңыз\n2. Балансты 10$ же 20$ толтуруңуз\n3. ID'ңизди админге жөнөтүңүз: {admin}\n4. Расмий тастыктоодон кийин сигналдарга доступ аласыз",
-        "access_granted": "✅ ДОСТУК АКТИВДЕШТИРИЛДИ!\n\n🎉 Куттуктайбыз! Эми сизге боттун бардык функциялары жеткиликтүү.",
-        "main_menu": "📊 БАШКЫ МЕНЮ\n\nТандоо жасаңыз:",
-        "get_signal": "📈 СИГНАЛ АЛУУ\n\nАктивдин түрүн тандаңыз:",
-        "forex_pairs": "💱 ВАЛЮТА ЖУПТАРЫ OTC\n\nЖупту тандаңыз:",
-        "stocks": "📊 АКЦИЯЛАР OTC\n\nАктивди тандаңыз:",
-        "crypto": "₿ КРИПТОВАЛЮТАЛАР OTC\n\nКриптовалюта тандаңыз:",
-        "select_expiry": "⏰ ЭКСПИРАЦИЯ ТАНДАҢЫЗ\n\nЭкспирация убактысын тандаңыз:",
-        "analyzing": "🔍 БАЗАРДЫ ТАЛДАП ЖАТАМ...\n\n📊 20+ математикалык индикаторлор иштеп жатат:\n• RSI, MACD, Bollinger Bands\n• Stochastic, Support/Resistance\n• Moving Averages, Volume анализ\n• Тренд анализ, Fibonacci\n\n⏳ Талдоо 2-3 секундага созулат...",
-        "signal_result": "🎯 СИГНАЛ ТҮЗҮЛДҮ!\n\n📊 Актив: {asset}\n🎯 Багыт: {direction}\n⏱ Экспирация: {expiry}\n📈 Ишеним: {confidence}%\n💵 Азыркы баа: {price}\n\n{recommendation}\n\n👇 Сделканын натыйжасын ырастаңыз:",
-        "trade_won": "✅ СДЕЛКА УТУЛДУ!\n\nУткан сделкаңыз менен куттуктайбыз!",
-        "trade_lost": "❌ СДЕЛКА УТУЛДУ\n\nКайгырбаңыз, кийинкиси ийгиликтүү болот!",
-        "marathon_start": "🏃‍♂️ ТРЕЙДЕР МАРАФОНУ\n\nБалансыңызды доллар менен киргизиңиз ($):\n\nМисал: 100 же 250.50",
-        "marathon_calc": "📊 МАРАФОНДУН ЭСЕБИ\n\nБаштапкы баланс: ${balance}\nКүнүмдүк пайда: +15%\n\n📈 30-КҮНДҮК ЭСЕП:\n{calculation}\n\n💡 Жалпы пайда: ${total_profit}\n💰 Акыркы баланс: ${final_balance}",
-        "marathon_risk": "⚠️ ТӨРТҮНЧҮЛҮКТҮ БАШКАРУУ\n\n📌 Баланс үчүн ${balance}:\n\n🎯 Сделкага төртүнчүлүк: 1-2%\n💰 Төртүнчүлүк суммасы: ${risk_amount}\n📊 Мартингейл колдонбоңуз\n🛑 Стоп-лосс: 2%\n✅ Тейк-профит: 3-5%\n\n⏱ Эң жакшы убакыт: Азия жана Европа сессиялары",
-        "instruction": "📚 БОТ ТУУРАЛУУ НУСКАМА\n\nKURUT AI INFINITY колдонот:\n• 20+ математикалык индикаторлор\n• Pocket Option OTC базарын анализдөө\n• Нускамалар менен так сигналдар\n\n🎯 СТРАТЕГИЯ:\n1. Боттун сигналдары боюнча гана соода кылыңыз\n2. Төртүнчүлүктү башкарууну сактаңыз\n3. Бир эле учурда 3 сделкадан ашык ачпаңыз\n\n📱 БАЙЛАНЫШ:\nАдмин: {admin}",
-        "top_traders": "🏆 TOP-5 ТРЕЙДЕРЛЕР\n\n{leaderboard}\n\n📊 Сиздин позиция: #{position}",
-        "stats": "📊 СИЗДИН СТАТИСТИКАҢЫЗ\n\n👤 ID: {user_id}\n📅 Катталуу: {join_date}\n\n✅ Утулган: {won}\n❌ Утулган: {lost}\n📊 Баары: {total}\n🎯 Win Rate: {win_rate}%\n💰 Баланс: ${balance}",
-        "no_access": "❌ ДОСТУК ЖАБЫК\n\nДостук алуу үчүн:\n1. 'Достук алуу' баскычын басыңыз\n2. Нускаманы аткарыңыз\n3. ID'ңизди админге жөнөтүңүз",
-        "contact_admin": "👤 АДМИН МЕНЕН БАЙЛАНЫШ\n\nАдминге жазыңыз: {admin}\n\nID'ңизди жөнөтүңүз: {user_id}",
-        "admin_menu": "⚙️ АДМИН ПАНЕЛИ\n\nТандоо жасаңыз:",
-        "admin_grant": "Достук берүү үчүн колдонуучунун IDсин киргизиңиз:",
-        "admin_granted": "✅ ID колдонуучуга достук берилди: {user_id}",
-        "admin_stats": "📊 БОТТУН СТАТИСТИКАСЫ:\n\n👥 Колдонуучулар: {total}\n✅ Достугу бар: {with_access}\n📈 Сделкалар: {trades}",
-        "error": "⚠️ Ката: {error}",
-        "back": "⬅️ Артка",
-        "next": "➡️ Андан ары",
-        "home": "🏠 Башкы меню",
-        "refresh": "🔄 Жаңыртуу",
-        "loading": "⏳ Жүктөлүүдө..."
-    }
-}
-
 # ==================== ГЛАВНЫЙ КЛАСС БОТА ====================
 class KurutAIBot:
     def __init__(self):
         self.application = None
         self.data_manager = DataManager()
         self.analyzer = OTC_Analyzer()
-        self.user_contexts = {}
     
     # ==================== ОСНОВНЫЕ ОБРАБОТЧИКИ ====================
     
@@ -920,32 +870,19 @@ class KurutAIBot:
         if not user_data:
             user_data = self.data_manager.create_user(user.id, user.username, user.first_name)
         
-        # Сохраняем язык пользователя
-        if 'language' not in context.user_data:
-            context.user_data['language'] = user_data.language
+        # Показываем выбор языка
+        keyboard = [
+            [InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru")],
+            [InlineKeyboardButton("🇰🇬 Кыргызча", callback_data="lang_kg")]
+        ]
+        reply_markup = InlineKeyboardMarkup(keyboard)
         
-        # Если это АДМИН - сразу доступ
-        if user.id == ADMIN_ID:
-            if not user_data.has_access:
-                self.data_manager.grant_access(user.id)
-                user_data = self.data_manager.get_user(user.id)
+        await update.message.reply_text(
+            "🎯 Добро пожаловать в KURUT AI INFINITY!\n\nВыберите язык / Тилди тандаңыз:",
+            reply_markup=reply_markup
+        )
         
-        # Показываем выбор языка (если еще не выбран)
-        if 'language_chosen' not in context.user_data:
-            keyboard = [
-                [InlineKeyboardButton("🇷🇺 Русский", callback_data="lang_ru")],
-                [InlineKeyboardButton("🇰🇬 Кыргызча", callback_data="lang_kg")]
-            ]
-            reply_markup = InlineKeyboardMarkup(keyboard)
-            
-            await update.message.reply_text(
-                "🎯 Добро пожаловать в KURUT AI INFINITY!\n\nВыберите язык / Тилди тандаңыз:",
-                reply_markup=reply_markup
-            )
-            return SELECT_LANGUAGE
-        
-        # Если язык уже выбран - показываем главное меню
-        return await self.show_main_menu(update, context, user_data)
+        return SELECT_LANGUAGE
     
     async def select_language(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработчик выбора языка"""
@@ -955,19 +892,25 @@ class KurutAIBot:
         user_id = query.from_user.id
         user = self.data_manager.get_user(user_id)
         
+        if not user:
+            user = self.data_manager.create_user(user_id, query.from_user.username, query.from_user.first_name)
+        
         if "lang_ru" in query.data:
-            user.language = Language.RUSSIAN
-            context.user_data['language'] = Language.RUSSIAN
+            user.language = "ru"
         elif "lang_kg" in query.data:
-            user.language = Language.KYRGYZ
-            context.user_data['language'] = Language.KYRGYZ
+            user.language = "kg"
         
         self.data_manager.update_user(user)
-        context.user_data['language_chosen'] = True
         
-        # Показываем социальные сети
+        # Получаем тексты на выбранном языке
         texts = TEXTS[user.language]
         
+        # Если это АДМИН - сразу даем доступ
+        if user.id == ADMIN_ID and not user.has_access:
+            self.data_manager.grant_access(user.id)
+            user = self.data_manager.get_user(user.id)
+        
+        # Показываем социальные сети
         social_text = texts["social_links"].format(
             telegram=SOCIAL_LINKS["telegram"],
             telegram_chat=SOCIAL_LINKS["telegram_chat"],
@@ -999,17 +942,17 @@ class KurutAIBot:
         
         return MAIN_MENU
     
-    async def show_main_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE, user: Optional[User] = None):
+    async def show_main_menu(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Показать главное меню"""
-        if isinstance(update, Update) and update.callback_query:
-            query = update.callback_query
-            await query.answer()
-            user_id = query.from_user.id
-        else:
-            user_id = update.effective_user.id
+        query = update.callback_query
+        await query.answer()
+        
+        user_id = query.from_user.id
+        user = self.data_manager.get_user(user_id)
         
         if not user:
-            user = self.data_manager.get_user(user_id)
+            await query.edit_message_text("❌ Ошибка: пользователь не найден")
+            return
         
         texts = TEXTS[user.language]
         
@@ -1038,18 +981,11 @@ class KurutAIBot:
         
         reply_markup = InlineKeyboardMarkup(keyboard)
         
-        if isinstance(update, Update) and update.callback_query:
-            await update.callback_query.edit_message_text(
-                text=texts["main_menu"],
-                reply_markup=reply_markup,
-                parse_mode=ParseMode.HTML
-            )
-        else:
-            await update.message.reply_text(
-                text=texts["main_menu"],
-                reply_markup=reply_markup,
-                parse_mode=ParseMode.HTML
-            )
+        await query.edit_message_text(
+            text=texts["main_menu"],
+            reply_markup=reply_markup,
+            parse_mode=ParseMode.HTML
+        )
         
         return MAIN_MENU
     
@@ -1342,9 +1278,12 @@ class KurutAIBot:
         user = self.data_manager.get_user(user_id)
         texts = TEXTS[user.language]
         
+        # Конвертируем дату
+        join_date = datetime.fromisoformat(user.join_date).strftime("%d.%m.%Y")
+        
         stats_text = texts["stats"].format(
             user_id=user.id,
-            join_date=user.join_date.strftime("%d.%m.%Y"),
+            join_date=join_date,
             won=user.trades_won,
             lost=user.trades_lost,
             total=user.total_trades,
@@ -1674,7 +1613,38 @@ class KurutAIBot:
         user_id = query.from_user.id
         user = self.data_manager.get_user(user_id)
         
-        return await self.show_main_menu(update, context, user)
+        texts = TEXTS[user.language]
+        
+        keyboard = []
+        
+        if user.has_access or user.id == ADMIN_ID:
+            keyboard.extend([
+                [InlineKeyboardButton("📈 Получить сигнал", callback_data="get_signal")],
+                [InlineKeyboardButton("📊 Статистика", callback_data="stats")],
+                [InlineKeyboardButton("🏆 Топ трейдеров", callback_data="top_traders")],
+                [InlineKeyboardButton("🏃‍♂️ Марафон", callback_data="marathon")],
+                [InlineKeyboardButton("📚 Инструкция", callback_data="instruction")]
+            ])
+        else:
+            keyboard.append([InlineKeyboardButton("🔐 Получить доступ", callback_data="get_access")])
+        
+        if user.id == ADMIN_ID:
+            keyboard.append([InlineKeyboardButton("⚙️ Админ панель", callback_data="admin_menu")])
+        
+        keyboard.extend([
+            [InlineKeyboardButton("📱 Соцсети", url=SOCIAL_LINKS["telegram"])],
+            [InlineKeyboardButton("👤 Связь с админом", callback_data="contact_admin")]
+        ])
+        
+        reply_markup = InlineKeyboardMarkup(keyboard)
+        
+        await query.edit_message_text(
+            text=texts["main_menu"],
+            reply_markup=reply_markup,
+            parse_mode=ParseMode.HTML
+        )
+        
+        return MAIN_MENU
     
     async def error_handler(self, update: Update, context: ContextTypes.DEFAULT_TYPE):
         """Обработчик ошибок"""
@@ -1707,10 +1677,6 @@ class KurutAIBot:
     
     async def run(self):
         """Запуск бота"""
-        # Запускаем автопинынг для Replit
-        PingServer.start()
-        logger.info("✅ Автопининг запущен")
-        
         # Создаем приложение
         self.application = Application.builder().token(BOT_TOKEN).build()
         
@@ -1774,6 +1740,19 @@ class KurutAIBot:
         
         # Настраиваем команды
         await self.setup_commands()
+        
+        # Запускаем автопининг для Replit
+        def start_ping():
+            while True:
+                try:
+                    requests.get("https://google.com", timeout=5)
+                    logger.info("✅ Ping sent")
+                except:
+                    pass
+                time.sleep(180)  # 3 минуты
+        
+        ping_thread = threading.Thread(target=start_ping, daemon=True)
+        ping_thread.start()
         
         # Запускаем бота
         logger.info("🤖 KURUT AI INFINITY запущен!")
