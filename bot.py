@@ -62,7 +62,7 @@ from telegram.ext import (
 from telegram.constants import ParseMode
 
 # ==================== КОНФИГУРАЦИЯ ====================
-BOT_TOKEN = "8578509228:AAFdsHJOSaNc0b1JrCnRwAbA-d4IVXI0Ip0"
+BOT_TOKEN = "8578509228:AAHK-fgI6QtYOZmRHlXVr3mqrxoUVXwx0LQ"
 ADMIN_ID = 6117199220
 ADMIN_USERNAME = "@Kuruttrader"
 
@@ -76,7 +76,7 @@ SOCIAL_LINKS = {
 }
 
 # Реферальная ссылка
-REFERRAL_LINK = "https://pocketoption.com/ru/?ref=KURUT2024"
+REFERRAL_LINK = "https://u3.shortink.io/register?utm_campaign=797321&utm_source=affiliate&utm_medium=sr&a=6KE9lr793exm8X&ac=kurut&code=50START"
 
 # OTC Пары для Pocket Option
 OTC_PAIRS = {
